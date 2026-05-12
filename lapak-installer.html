@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RKD Script Livechat — Tampermonkey Installer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;700;900&display=swap');
+
+  :root {
+    --p: #a855f7;
+    --b: #ef4444;
+    --pk: #ec4899;
+    --bg: #05010a;
+    --s: rgba(10, 5, 20, 0.85);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; cursor: default; }
+
+  body {
+    background: var(--bg);
+    color: #e9d5ff;
+    font-family: 'Outfit', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 60px 20px 80px;
+    overflow-x: hidden;
+  }
+
+  .cyber-bg {
+    position: fixed; inset: 0; z-index: -1;
+    background: linear-gradient(rgba(5, 1, 10, 0.7), rgba(5, 1, 10, 0.7)), 
+                url('jjk_bg_purple.png');
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+  }
+  /* CUSTOM CURSED ENERGY ANIMATION */
+  .cyber-bg::before {
+    content: '';
+    position: absolute; inset: -50%;
+    background: 
+      radial-gradient(circle at 30% 30%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 70% 70%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 50% 20%, rgba(239, 68, 68, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 40%, rgba(124, 58, 237, 0.1) 0%, transparent 40%);
+    filter: blur(80px);
+    animation: auraMove 20s ease-in-out infinite alternate;
+  }
+  @keyframes auraMove {
+    0% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.3) rotate(10deg); }
+    100% { transform: scale(1) rotate(-10deg); }
+  }
+
+  .grid {
+    position: absolute; width: 200%; height: 200%; top: -50%; left: -50%;
+    background-image: 
+      linear-gradient(rgba(168,85,247,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(168,85,247,0.08) 1px, transparent 1px);
+    background-size: 50px 50px;
+    transform: perspective(500px) rotateX(60deg);
+    animation: gridMove 20s linear infinite;
+  }
+
+  @keyframes gridMove {
+    0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+    100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+  }
+
+  .scanline {
+    position: fixed; inset: 0; z-index: 1000;
+    background: linear-gradient(to bottom, transparent 50%, rgba(168,85,247,0.03) 50%);
+    background-size: 100% 4px;
+    pointer-events: none; opacity: 0.15;
+  }
+
+  .scanline::after {
+    content: '';
+    position: absolute; top: 0; left: 0; width: 100%; height: 100px;
+    background: linear-gradient(to bottom, transparent, rgba(239,68,68,0.06), transparent);
+    animation: scan 8s linear infinite;
+  }
+
+  @keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  /* --- WRAPPER --- */
+  .wrap { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; }
+
+  .header { text-align: center; margin-bottom: 60px; }
+
+  /* --- DOMAIN AURA GLOWS (STABLE & CLEAN) --- */
+  .domain-glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+    filter: blur(120px);
+    opacity: 0.3;
+    animation: auraPulse 8s ease-in-out infinite alternate;
+  }
+  .glow-purple {
+    bottom: -200px; left: -200px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.4) 0%, transparent 70%);
+  }
+  .glow-red {
+    top: -200px; right: -200px;
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%);
+    animation-delay: -4s;
+  }
+  @keyframes auraPulse {
+    0% { transform: scale(1) translate(0, 0); opacity: 0.2; }
+    100% { transform: scale(1.2) translate(5%, 5%); opacity: 0.4; }
+  }
+
+  /* --- DOMAIN AURA GLOWS (STABLE & CLEAN) --- */
+  .domain-glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+    filter: blur(120px);
+    opacity: 0.3;
+    animation: auraPulse 8s ease-in-out infinite alternate;
+  }
+  .glow-purple {
+    bottom: -200px; left: -200px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.4) 0%, transparent 70%);
+  }
+  .glow-red {
+    top: -200px; right: -200px;
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%);
+    animation-delay: -4s;
+  }
+  @keyframes auraPulse {
+    0% { transform: scale(1) translate(0, 0); opacity: 0.2; }
+    100% { transform: scale(1.2) translate(5%, 5%); opacity: 0.4; }
+  }
+
+  .header-badge {
+    display: inline-block;
+    background: rgba(168,85,247,0.1);
+    border: 1px solid var(--p);
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--p);
+    margin-bottom: 24px;
+    box-shadow: 0 0 20px rgba(168,85,247,0.3);
+    font-family: 'Orbitron', sans-serif;
+    text-shadow: 0 0 10px rgba(168,85,247,0.6);
+  }
+
+  .glitch-title {
+    font-size: 48px;
+    font-weight: 900;
+    font-family: 'Orbitron', sans-serif;
+    color: #f3e8ff;
+    position: relative;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px rgba(168,85,247,0.6), 0 0 40px rgba(168,85,247,0.3);
+  }
+
+  .glitch-title::before, .glitch-title::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0.8;
+  }
+
+  .glitch-title::before {
+    left: 2px;
+    text-shadow: -2px 0 var(--pk);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 5s infinite linear alternate-reverse;
+  }
+
+  .glitch-title::after {
+    left: -2px;
+    text-shadow: -2px 0 var(--b);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim2 5s infinite linear alternate-reverse;
+  }
+
+  @keyframes glitch-anim {
+    0% { clip: rect(31px, 9999px, 94px, 0); }
+    5% { clip: rect(70px, 9999px, 71px, 0); }
+    100% { clip: rect(67px, 9999px, 62px, 0); }
+  }
+
+  @keyframes glitch-anim2 {
+    0% { clip: rect(65px, 9999px, 100px, 0); }
+    100% { clip: rect(10px, 9999px, 30px, 0); }
+  }
+
+  .header p { 
+    font-size: 14px; 
+    color: #a78bfa; 
+    max-width: 520px; 
+    margin: 0 auto; 
+    line-height: 1.8;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- STEPS --- */
+  .steps { display: flex; gap: 15px; justify-content: center; margin-bottom: 50px; flex-wrap: wrap; }
+  .step {
+    background: rgba(168,85,247,0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(168,85,247,0.3);
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-size: 12px;
+    color: #d8b4fe;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: 0.3s;
+    box-shadow: 0 0 15px rgba(168,85,247,0.1);
+  }
+  .step:hover { border-color: var(--p); transform: translateY(-2px); box-shadow: 0 0 20px rgba(168,85,247,0.3); }
+  .step-num {
+    background: linear-gradient(135deg, #7c3aed, #4c1d95);
+    color: #fff;
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 900; flex-shrink: 0;
+    box-shadow: 0 0 15px rgba(124,58,237,0.6);
+  }
+
+  /* --- CARDS --- */
+  .cards { display: flex; flex-direction: column; gap: 24px; }
+  .card {
+    background: rgba(10,5,20,0.9);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(168,85,247,0.25);
+    border-radius: 20px;
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    animation: float 6s ease-in-out infinite;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5), inset 0 0 15px rgba(168,85,247,0.05);
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .card-1 { animation-delay: 0s; }
+  .card-2 { animation-delay: 1s; }
+  .card-3 { animation-delay: 2s; }
+
+  .card:hover { 
+    border-color: rgba(168,85,247,0.6); 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(168,85,247,0.2);
+    transform: translateY(-12px) scale(1.02);
+  }
+
+  .card-icon {
+    font-size: 40px; flex-shrink: 0;
+    width: 70px; height: 70px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 18px;
+    background: rgba(168,85,247,0.1);
+    border: 1px solid rgba(168,85,247,0.3);
+    box-shadow: 0 0 15px rgba(168,85,247,0.15);
+  }
+
+  .card-info { flex: 1; min-width: 0; }
+  .card-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #c084fc; margin-bottom: 8px; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 8px rgba(168,85,247,0.4); }
+  .card-title { font-size: 18px; font-weight: 800; color: #f3e8ff; margin-bottom: 10px; }
+  .card-desc { font-size: 13px; color: #a78bfa; line-height: 1.6; }
+  .card-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 15px; }
+  .tag {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fca5a5;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* --- BUTTONS --- */
+  .btn-install {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #7c3aed, #4c1d95);
+    color: #fff;
+    border: 1px solid rgba(168,85,247,0.5);
+    border-radius: 12px;
+    padding: 16px 28px;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 0 20px rgba(124,58,237,0.4);
+    min-width: 130px;
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+  }
+  .btn-install:hover { 
+    transform: scale(1.05) rotate(1deg); 
+    box-shadow: 0 0 30px rgba(168,85,247,0.6);
+  }
+  .btn-install .btn-sub { font-size: 10px; font-weight: 400; opacity: 0.8; letter-spacing: 1px; font-family: 'Outfit', sans-serif; }
+  .btn-install.done { 
+    background: linear-gradient(135deg, #10b981, #059669); 
+    box-shadow: 0 0 20px rgba(16,185,129,0.4);
+    pointer-events: none;
+  }
+
+  .install-all-wrap { text-align: center; margin-top: 50px; }
+  .btn-all {
+    background: transparent;
+    border: 2px solid var(--p);
+    color: #f3e8ff;
+    border-radius: 15px;
+    padding: 18px 45px;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: 0.3s;
+    letter-spacing: 2px;
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+  }
+  .btn-all:hover { 
+    background: var(--p); 
+    color: #fff;
+    box-shadow: 0 0 30px rgba(168,85,247,0.5);
+    transform: scale(1.05);
+  }
+
+  .notice {
+    margin-top: 50px;
+    background: rgba(239,68,68,0.06);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-left: 4px solid #ef4444;
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 13px;
+    color: #a78bfa;
+    line-height: 1.8;
+  }
+  .notice strong { color: #ef4444; font-weight: 900; text-shadow: 0 0 8px rgba(239,68,68,0.4); }
+
+  #toast {
+    position: fixed;
+    bottom: 40px; left: 50%;
+    transform: translateX(-50%) translateY(50px);
+    background: rgba(10,5,20,0.95);
+    border: 2px solid var(--p);
+    border-radius: 12px;
+    padding: 15px 30px;
+    font-size: 14px;
+    color: #d8b4fe;
+    font-weight: 800;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 0 25px rgba(168,85,247,0.3);
+    font-family: 'Orbitron', sans-serif;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== RKD LOGO ===== */
+  .rkd-logo-wrap {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    margin: 0 auto 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rkd-halo {
+    position: absolute;
+    inset: -30px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 70%);
+    animation: rkdPulse 4s ease-in-out infinite;
+  }
+  @keyframes rkdPulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.9); }
+    50%      { opacity: 0.6; transform: scale(1.1); }
+  }
+
+  .rkd-svg {
+    width: 180px;
+    height: 180px;
+    animation: rkdDiscSpin 10s linear infinite;
+    filter: drop-shadow(0 0 30px #a855f7);
+    z-index: 2;
+  }
+
+  @keyframes rkdDiscSpin {
+    from { transform: rotateY(0deg); }
+    to { transform: rotateY(360deg); }
+  }
+
+  @media (max-width: 600px) {
+    .glitch-title { font-size: 32px; }
+    .card { flex-direction: column; text-align: center; }
+    .btn-install { width: 100%; }
+  }
+</style>
+</head><body>
+<div class="cyber-bg"><div class="grid"></div></div>
+<div class="scanline"></div>
+
+<!-- DOMAIN AURA GLOWS (STABLE & CLEAN) -->
+<div class="domain-glow glow-purple"></div>
+<div class="domain-glow glow-red"></div>
+
+
+<div class="wrap">
+  <div class="header">
+    <div class="rkd-logo-wrap">
+      <div class="rkd-halo"></div>
+      <svg class="rkd-svg" viewBox="0 0 160 160">
+        <defs>
+          <radialGradient id="discBg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#1a0533"/>
+            <stop offset="100%" stop-color="#0a0115"/>
+          </radialGradient>
+          <linearGradient id="rkdGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#f472b6"/>
+            <stop offset="50%" stop-color="#a855f7"/>
+            <stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+        <circle cx="80" cy="80" r="74" fill="url(#discBg)" stroke="rgba(168,85,247,0.6)" stroke-width="2" />
+        <text x="80" y="85" text-anchor="middle" dominant-baseline="middle" 
+              font-family="'Orbitron', sans-serif" font-weight="900" font-size="44" 
+              fill="url(#rkdGrad)" filter="url(#glow)">RKD</text>
+      </svg>
+    </div>
+    <div class="header-badge">RKD NEURAL INTERFACE v1.0</div>
+    <h1 class="glitch-title" data-text="RKD SCRIPT SUITE">RKD SCRIPT SUITE</h1>
+    <p>Premium automation & visual suite for LiveChat. Engineered for high performance and deep customization.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step"><span class="step-num">1</span> Buka Tampermonkey</div>
+    <div class="step"><span class="step-num">2</span> Pilih Plugin</div>
+    <div class="step"><span class="step-num">3</span> Konfirmasi System</div>
+  </div>
+
+  <div class="cards">
+    <div class="card card-1">
+      <div class="card-icon">✒️</div>
+      <div class="card-info">
+        <div class="card-label">PLUGIN_01</div>
+        <div class="card-title">Word Highlighter & Dashboard</div>
+        <div class="card-desc">Visual word marking with real-time drag-and-drop control. Built-in digital chronometer.</div>
+        <div class="card-tags">
+          <span class="tag">HOTKEY: CTRL+H</span>
+          <span class="tag">STORE: GM_STORAGE</span>
+        </div>
+      </div>
+      <button class="btn-install" onclick="doInstall(0, this)">
+        📦 INSTALL
+        <span class="btn-sub">LOAD LAPAK1</span>
+      </button>
+    </div>
+
+    <div class="card card-2">
+      <div class="card-icon">🛡️</div>
+      <div class="card-info">
+        <div class="card-label">PLUGIN_02</div>
+        <div class="card-title">Neural Shield: Anti-Spam</div>
+        <div class="card-desc">Real-time duplication analysis. Prevents outgoing spam with predictive neural warnings.</div>
+        <div class="card-tags">
+          <span class="tag">MODE: PASSIVE</span>
+          <span class="tag">ALERT: SHIELD_UI</span>
+        </div>
+      </div>
+      <button class="btn-install" onclick="doInstall(1, this)">
+        📦 INSTALL
+        <span class="btn-sub">LOAD LAPAK2</span>
+      </button>
+    </div>
+
+    <div class="card card-3">
+      <div class="card-icon">🌅</div>
+      <div class="card-info">
+        <div class="card-label">PLUGIN_03</div>
+        <div class="card-title">Wallpaper & Queue Indication</div>
+        <div class="card-desc">Deep background skinning with dynamic queue priority colors (Orange/Green/Critical Red).</div>
+        <div class="card-tags">
+          <span class="tag">UI: MANGA_SKIN</span>
+          <span class="tag">PRIO: DYNAMIC</span>
+        </div>
+      </div>
+      <button class="btn-install" onclick="doInstall(2, this)">
+        📦 INSTALL
+        <span class="btn-sub">LOAD LAPAK3</span>
+      </button>
+    </div>
+
+    <!-- KARTU KE-4 UNTUK EKSTENSI IMAGELENS OCR -->
+    <div class="card card-4" style="animation-delay: 3s; border-color: rgba(14, 165, 233, 0.4);">
+      <div class="card-icon" style="background: rgba(14, 165, 233, 0.1);">🔍</div>
+      <div class="card-info">
+        <div class="card-label" style="color: #0ea5e9;">EXTENSION_04</div>
+        <div class="card-title">ImageLens OCR Extension</div>
+        <div class="card-desc">Ekstensi Chrome pintar untuk menyalin teks dari gambar apapun dengan cara diseleksi (crop).</div>
+        <div class="card-tags">
+          <span class="tag" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: #10b981;">TYPE: CHROME EXTENSION</span>
+          <span class="tag">HOTKEY: ALT+SHIFT+I</span>
+        </div>
+      </div>
+      <a href="imagelens-ocr.zip" download style="text-decoration: none;">
+        <button class="btn-install" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); min-width: 130px;">
+          ⬇️ DOWNLOAD
+          <span class="btn-sub">FILE .ZIP</span>
+        </button>
+      </a>
+    </div>
+  </div>
+
+  <div class="install-all-wrap">
+    <button class="btn-all" onclick="installAll()">⚡ OVERDRIVE: INSTALL ALL</button>
+  </div>
+
+  <div class="notice">
+    <strong>INTERFACE PROTOCOL (TAMPERMONKEY):</strong> Klik Install → tab baru terbuka → Tampermonkey intersep <code>.user.js</code>.<br><br>
+    <strong>CARA INSTALL EKSTENSI IMAGELENS (CHROME EXT):</strong> Karena kebijakan keamanan Chrome, Ekstensi tidak bisa otomatis terinstall. Anda harus klik tombol Download di atas, lalu ekstrak file <code>.zip</code> nya. Setelah itu buka tab <code>chrome://extensions</code>, aktifkan "Developer Mode", dan klik "Load unpacked" lalu pilih folder yang sudah diekstrak.
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SCRIPTS = [
+  "// ==UserScript==\n// @name         LAPAK1 - Custom Chat Word Highlighter with Dashboard\n// @namespace    http://tampermonkey.net/\n// @version      1.0.0\n// @description  Highlight kata-kata penting di LiveChat dengan panel dashboard + jam digital\n// @author       Antigravity\n// @match        https://my.livechatinc.com/*\n// @icon         https://www.livechat.com/favicon.ico\n// @grant        GM_setValue\n// @grant        GM_getValue\n// @run-at       document-idle\n// ==/UserScript==\n\n(function () {\n  'use strict';\n  const DEFAULT_WORDS = [\n    { id: 1,  word: 'proses',    color: '#f97316', cs: false, on: true },\n    { id: 2,  word: 'gangguan',  color: '#f97316', cs: false, on: true },\n    { id: 3,  word: 'deposit',   color: '#22c55e', cs: false, on: true },\n    { id: 4,  word: 'depo',      color: '#22c55e', cs: false, on: true },\n    { id: 5,  word: 'read',      color: '#22c55e', cs: false, on: true },\n    { id: 6,  word: 'online',    color: '#22c55e', cs: false, on: true },\n    { id: 7,  word: 'withdraw',  color: '#ec4899', cs: false, on: true },\n    { id: 8,  word: 'wede',      color: '#ec4899', cs: false, on: true },\n    { id: 9,  word: 'penarikan', color: '#ec4899', cs: false, on: true },\n    { id: 10, word: 'witrdraw',  color: '#ec4899', cs: false, on: true },\n    { id: 11, word: 'lupa',      color: '#3b82f6', cs: false, on: true },\n    { id: 12, word: 'sent',      color: '#ef4444', cs: false, on: true },\n    { id: 13, word: 'babi',      color: '#ef4444', cs: false, on: true },\n    { id: 14, word: 'pepek',     color: '#ef4444', cs: false, on: true },\n    { id: 15, word: 'bujang',    color: '#ef4444', cs: false, on: true },\n    { id: 16, word: 'kontol',    color: '#ef4444', cs: false, on: true },\n    { id: 17, word: 'ajing',     color: '#ef4444', cs: false, on: true },\n    { id: 18, word: '3m',        color: '#ef4444', cs: false, on: true },\n    { id: 19, word: '4m',        color: '#ef4444', cs: false, on: true },\n    { id: 20, word: '5m',        color: '#ef4444', cs: false, on: true },\n    { id: 21, word: 'anjing',    color: '#ef4444', cs: false, on: true },\n    { id: 22, word: 'claim',     color: '#f97316', cs: false, on: true },\n    { id: 23, word: 'freespin',  color: '#a855f7', cs: false, on: true },\n    { id: 24, word: 'scatter',   color: '#ec4899', cs: false, on: true },\n  ];\n  const Store = {\n    get(k, d) { try { let v = GM_getValue(k); return v ? JSON.parse(v) : d; } catch (e) { try { let v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e2) { return d; } } },\n    set(k, v) { try { GM_setValue(k, JSON.stringify(v)); } catch (e) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e2) { } } }\n  };\n  let hlWords = Store.get('manga-hl-words', DEFAULT_WORDS);\n  let hlGlobalAktif = true;\n  function injectStyles() {\n    if (document.getElementById('lapak1-style')) return;\n    const s = document.createElement('style'); s.id = 'lapak1-style';\n    s.textContent = `#hl-panel { position: fixed; top: 50px; right: 24px; width: 320px; height: 500px; min-width: 280px; min-height: 350px; max-height: 90vh; background: #080812; border: 2px solid #a855f7; border-radius: 14px; box-shadow: 8px 8px 0 #a855f7; z-index: 999998; font-family: 'Segoe UI', sans-serif; color: #fff; display: none; flex-direction: column; overflow: hidden; resize: both; } #hl-panel.open { display: flex; } #hl-header { flex-shrink: 0; background: linear-gradient(135deg, #1e0a3c, #2d1060); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #a855f7; cursor: move; } #hl-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; } #hl-input-area { flex-shrink: 0; padding: 14px; background: #0f0f1a; border-bottom: 1px solid #2d1060; } #hl-list { flex: 1; overflow-y: auto; padding: 14px; scrollbar-width: thin; scrollbar-color: #7c3aed #080812; } #hl-list::-webkit-scrollbar { width: 6px; } #hl-list::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 10px; } #hl-datetime-box { margin-top: 8px; background: #000; border: 2px solid #a855f7; border-radius: 10px; padding: 10px; text-align: center; box-shadow: inset 0 0 10px rgba(168,85,247,0.4); } #hl-hari-tanggal { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #c084fc; margin-bottom: 4px; font-weight: bold; } #hl-jam { font-family: 'Courier New', Courier, monospace; font-size: 28px; font-weight: 900; color: #a855f7; text-shadow: 0 0 5px #a855f7, 0 0 10px #a855f7; line-height: 1; } .hl-item { display: flex; align-items: center; gap: 10px; background: #131326; border: 1.5px solid #2d1060; border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; } .hl-swatch { width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0; } .hl-btn { background: none; border: 1.5px solid #4b5563; border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: 10px; color: #fff; } .hl-on { border-color: #22c55e; color: #22c55e; }`;\n    document.head.appendChild(s);\n  }\n  function getContrast(h) {\n    const c = h.replace('#',''), r=parseInt(c.substr(0,2),16), g=parseInt(c.substr(2,2),16), b=parseInt(c.substr(4,2),16);\n    return (((r*299)+(g*587)+(b*114))/1000 >= 128) ? '#000000' : '#ffffff';\n  }\n  function updateHighlightStyles() {\n    let el = document.getElementById('lapak1-dynamic-hl-css');\n    if (!el) { el = document.createElement('style'); el.id = 'lapak1-dynamic-hl-css'; document.head.appendChild(el); }\n    let css = '';\n    hlWords.forEach(w => {\n      const id = `manga-hl-${w.color.replace('#', '')}`;\n      css += `::highlight(${id}) { background-color: ${w.color}; color: ${getContrast(w.color)}; text-shadow: 0.5px 0 0.1px currentColor; }\\n`;\n    });\n    el.textContent = css;\n  }\n  function applyHighlights() {\n    if (!hlGlobalAktif || !window.CSS || !CSS.highlights) return;\n    try {\n      CSS.highlights.clear();\n      const active = hlWords.filter(w => w.on && w.word.trim());\n      if (!active.length) return;\n      const hMap = {};\n      active.forEach(w => { const id = `manga-hl-${w.color.replace('#', '')}`; if (!hMap[id]) hMap[id] = new Highlight(); w.hlId = id; });\n      const chatArea = document.querySelector('[data-testid=\"messages-list\"]');\n      if (!chatArea) return;\n      const walker = document.createTreeWalker(chatArea, NodeFilter.SHOW_TEXT);\n      let node;\n      while ((node = walker.nextNode())) {\n        const t = node.nodeValue;\n        active.forEach(w => {\n          const rx = new RegExp(w.word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), w.cs ? 'g' : 'gi');\n          let m;\n          while ((m = rx.exec(t)) !== null) {\n            try { const range = new Range(); range.setStart(node, m.index); range.setEnd(node, m.index + m[0].length); hMap[w.hlId].add(range); } catch(e) {}\n          }\n        });\n      }\n      for (const id in hMap) CSS.highlights.set(id, hMap[id]);\n    } catch (e) { }\n  }\n  function buildPanel() {\n    if (document.getElementById('hl-panel')) return;\n    const p = document.createElement('div'); p.id = 'hl-panel';\n    p.innerHTML = `<div id=\"hl-header\"><div id=\"hl-header-left\"><div style=\"font-size:14px;font-weight:bold;color:#c084fc\">\ud83d\udd8a\ufe0f Penanda Kata</div><div style=\"font-size:9px;color:#a855f7;opacity:0.8\">Ctrl+H \u2192 buka/tutup panel</div><div id=\"hl-datetime-box\"><div id=\"hl-hari-tanggal\">...</div><div id=\"hl-jam\">00:00:00</div></div></div><button id=\"hl-close\" style=\"background:#7c3aed;border:none;color:#fff;border-radius:10px;width:34px;height:34px;cursor:pointer;font-weight:bold;box-shadow:0 0 10px rgba(124,58,237,0.5)\">\u2715</button></div><div id=\"hl-body\"><div id=\"hl-input-area\"><div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:12px\"><div style=\"font-size:11px;color:#c084fc;font-weight:bold;letter-spacing:1px\">\ud83c\udfa8 SOROTAN KATA</div><button id=\"hl-global-btn\" style=\"background:#7c3aed;border:none;color:#fff;border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;font-weight:bold\">\u2705 ON</button></div><div style=\"display:flex;gap:8px\"><input id=\"hl-input\" type=\"text\" placeholder=\"Ketik kata...\" style=\"flex:1;background:#050510;border:1.5px solid #2d1060;border-radius:8px;padding:8px 12px;color:#fff;font-size:12px\" /><input id=\"hl-color\" type=\"color\" value=\"#facc15\" style=\"width:38px;height:38px;background:none;border:1.5px solid #7c3aed;border-radius:8px;cursor:pointer\" /><button id=\"hl-add\" style=\"background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:0 14px;cursor:pointer;font-weight:bold;font-size:12px;box-shadow:0 4px 0 #5b21b6\">TAMBAH</button></div></div><div id=\"hl-list\"></div></div><div style=\"padding:12px 16px;background:#0f0f1a;border-top:1.5px solid #2d1060;display:flex;justify-content:space-between;align-items:center;flex-shrink:0\"><span style=\"font-size:9px;color:#4b5563\">Drag corner to resize</span><button id=\"hl-wipe\" style=\"background:none;border:1.5px solid #4b5563;color:#ef4444;border-radius:6px;padding:5px 12px;font-size:10px;cursor:pointer;font-weight:bold\">\ud83d\uddd1 RESET DATA</button></div>`;\n    document.body.appendChild(p);\n    document.getElementById('hl-global-btn').onclick = () => { hlGlobalAktif = !hlGlobalAktif; if (!hlGlobalAktif && CSS.highlights) CSS.highlights.clear(); renderPanel(); applyHighlights(); };\n    document.getElementById('hl-add').onclick = () => { const i = document.getElementById('hl-input'); if (i.value.trim()) { hlWords.push({ id: Date.now(), word: i.value.trim(), color: document.getElementById('hl-color').value, cs: false, on: true }); Store.set('manga-hl-words', hlWords); i.value = ''; updateHighlightStyles(); renderPanel(); applyHighlights(); } };\n    document.getElementById('hl-wipe').onclick = () => { if (confirm('Reset semua kata ke standar?')) { hlWords = DEFAULT_WORDS.map(w => ({...w})); Store.set('manga-hl-words', hlWords); updateHighlightStyles(); renderPanel(); applyHighlights(); } };\n    document.getElementById('hl-close').onclick = () => p.classList.remove('open');\n    const hdr = document.getElementById('hl-header'); let drag = false, sx, sy, ol, ot;\n    hdr.onmousedown = e => { drag = true; sx = e.clientX; sy = e.clientY; const r = p.getBoundingClientRect(); ol = r.left; ot = r.top; p.style.right = 'auto'; p.style.transform = 'none'; };\n    document.addEventListener('mousemove', e => { if (drag) { p.style.left = (ol + e.clientX - sx) + 'px'; p.style.top = (ot + e.clientY - sy) + 'px'; } });\n    document.addEventListener('mouseup', () => drag = false);\n  }\n  function renderPanel() {\n    const list = document.getElementById('hl-list'); if (!list) return; list.innerHTML = '';\n    hlWords.forEach(w => {\n      const item = document.createElement('div'); item.className = 'hl-item';\n      item.innerHTML = `<div class=\"hl-swatch\" style=\"background:${w.color}\"></div><div style=\"flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500\">${w.word}</div><button class=\"hl-btn ${w.on ? 'hl-on' : ''}\">${w.on ? 'ON' : 'OFF'}</button><button class=\"hl-btn hl-del\">\u2715</button>`;\n      const b = item.querySelectorAll('button');\n      b[0].onclick = () => { w.on = !w.on; Store.set('manga-hl-words', hlWords); renderPanel(); applyHighlights(); };\n      b[1].onclick = () => { hlWords = hlWords.filter(x => x.id !== w.id); Store.set('manga-hl-words', hlWords); updateHighlightStyles(); renderPanel(); applyHighlights(); };\n      list.appendChild(item);\n    });\n    const gb = document.getElementById('hl-global-btn');\n    if (gb) gb.textContent = hlGlobalAktif ? '\u2705 ON' : '\u26d4 OFF';\n  }\n  function init() {\n    injectStyles(); buildPanel(); updateHighlightStyles(); renderPanel();\n    const obs = new MutationObserver(() => { clearTimeout(window.lapak1Timer); window.lapak1Timer = setTimeout(applyHighlights, 120); });\n    obs.observe(document.body, { childList: true, subtree: true });\n    document.addEventListener('keydown', e => {\n      if (e.ctrlKey && e.code === 'KeyH') { e.preventDefault(); document.getElementById('hl-panel').classList.toggle('open'); renderPanel(); }\n      if (e.ctrlKey && e.code === 'KeyQ') { e.preventDefault(); document.getElementById('hl-global-btn')?.click(); }\n    });\n    setInterval(() => {\n      const now = new Date();\n      const h = document.getElementById('hl-hari-tanggal');\n      const j = document.getElementById('hl-jam');\n      if (h) h.textContent = `${['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][now.getDay()]}, ${now.getDate()} ${['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][now.getMonth()]} ${now.getFullYear()}`;\n      if (j) j.textContent = now.toLocaleTimeString('en-GB');\n    }, 1000);\n    setTimeout(applyHighlights, 2000);\n  }\n  if (document.body) init(); else document.addEventListener('DOMContentLoaded', init);\n})();\n",
+  "// ==UserScript==\n// @name         LAPAK2 - LiveChat Duplicate Message Highlighter - DANGER Neural Shield\n// @namespace    http://tampermonkey.net/\n// @version      1.0.0\n// @description  Deteksi pesan duplikat dengan Neural Shield alert + red border pada input\n// @author       Antigravity\n// @match        https://my.livechatinc.com/*\n// @icon         https://www.livechat.com/favicon.ico\n// @grant        none\n// @run-at       document-idle\n// ==/UserScript==\n\n(function () {\n  'use strict';\n  function injectStyles() {\n    if (document.getElementById('lapak2-style')) return;\n    const s = document.createElement('style'); s.id = 'lapak2-style';\n    s.textContent = `#neural-shield { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -40%); z-index: 9999999; width: 420px; background: #1a0505; border: 2px solid #ef4444; border-radius: 10px; padding: 14px 16px 12px; font-family: 'Segoe UI', sans-serif; color: #fff; box-shadow: 0 0 0 1px rgba(239,68,68,0.3), 0 8px 32px rgba(239,68,68,0.25); opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; } #neural-shield.visible { opacity: 1; pointer-events: all; transform: translate(-50%, -50%); } #neural-shield-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #ef4444; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; } #neural-shield-body { font-size: 12px; color: #d1d5db; line-height: 1.55; margin-bottom: 12px; } #ns-count-text { margin-top: 6px; color: #fbbf24; font-size: 11px; } #neural-shield-footer { display: flex; gap: 8px; justify-content: flex-end; } .ns-btn { border: none; border-radius: 6px; padding: 6px 14px; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.15s; letter-spacing: 0.5px; } .ns-btn-cancel { background: #1f1f2e; color: #9ca3af; border: 1.5px solid #374151; } .ns-btn-send { background: #450a0a; color: #ef4444; border: 1.5px solid #ef4444; } .ns-input-danger, .ns-input-danger:focus { outline: 2px solid #ef4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.2) !important; }`;\n    document.head.appendChild(s);\n  }\n  const dupHistory = {};\n  let nsHideTimer = null;\n  function buildShieldAlert() {\n    if (document.getElementById('neural-shield')) return;\n    const el = document.createElement('div'); el.id = 'neural-shield';\n    el.innerHTML = `<div id=\"neural-shield-title\"><span>\ud83d\udee1</span> NEURAL SHIELD: SPAM ALERT</div><div id=\"neural-shield-body\">Pesan yang Anda ketik terdeteksi <strong>100% duplikat</strong> dengan riwayat chat hari ini. Mohon lakukan variasi kata agar tidak terblokir sistem.<div id=\"ns-count-text\"></div></div><div id=\"neural-shield-footer\"><button class=\"ns-btn ns-btn-cancel\" id=\"ns-btn-cancel\">\u2716 Batal</button><button class=\"ns-btn ns-btn-send\" id=\"ns-btn-send\">\u26a1 Kirim Tetap</button></div>`;\n    document.body.appendChild(el);\n    document.getElementById('ns-btn-cancel').onclick = () => hideShield();\n    document.getElementById('ns-btn-send').onclick = () => { hideShield(); if (window._lapak2CB) window._lapak2CB(); };\n  }\n  function showShield(count, activeEl) {\n    const el = document.getElementById('neural-shield'); if (!el) return;\n    document.getElementById('ns-count-text').textContent = `Sudah dikirim ${count} kali sebelumnya.`;\n    el.classList.add('visible');\n    if (activeEl) activeEl.classList.add('ns-input-danger');\n    clearTimeout(nsHideTimer); nsHideTimer = setTimeout(() => hideShield(), 6000);\n  }\n  function hideShield() {\n    const el = document.getElementById('neural-shield');\n    if (el) el.classList.remove('visible');\n    clearTimeout(nsHideTimer);\n    document.querySelectorAll('.ns-input-danger').forEach(el => el.classList.remove('ns-input-danger'));\n    window._lapak2Force = false;\n  }\n  document.addEventListener('keydown', e => {\n    if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey) return;\n    if (document.getElementById('neural-shield')?.classList.contains('visible') || window._lapak2Force) return;\n    const active = document.activeElement;\n    if (!active || !(active.isContentEditable || active.tagName === 'TEXTAREA')) return;\n    const text = (active.tagName === 'TEXTAREA' ? active.value : active.innerText).trim();\n    if (!text) return;\n    const chatKey = document.querySelector('[aria-selected=\"true\"][data-id]')?.dataset.id || 'global';\n    const prev = dupHistory[chatKey];\n    if (prev && prev.text === text) {\n      prev.count++;\n      window._lapak2CB = () => {\n        window._lapak2Force = true;\n        active.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));\n        setTimeout(() => { window._lapak2Force = false; }, 300);\n      };\n      showShield(prev.count, active);\n      e.stopImmediatePropagation();\n      e.preventDefault();\n    } else {\n      dupHistory[chatKey] = { text, count: 1 };\n      hideShield();\n    }\n  }, true);\n  document.addEventListener('input', e => {\n    if (document.getElementById('neural-shield')?.classList.contains('visible')) hideShield();\n  }, true);\n  function init() { injectStyles(); buildShieldAlert(); }\n  if (document.body) init(); else document.addEventListener('DOMContentLoaded', init);\n})();\n",
+  "// ==UserScript==\n// @name         LAPAK3 - LiveChat Wallpaper + Left-Bar Chat Queue Indicator\n// @namespace    http://tampermonkey.net/\n// @version      1.0.0\n// @description  Wallpaper manga + indikator warna antrian chat di left-bar (orange/hijau/kedip merah)\n// @author       Antigravity\n// @match        https://my.livechatinc.com/*\n// @icon         https://www.livechat.com/favicon.ico\n// @grant        none\n// @run-at       document-idle\n// ==/UserScript==\n\n(function () {\n  'use strict';\n  const WALLPAPER_URL = 'https://socket-lapakmahjong.hokibgs.com/uploads/lapakmahjong/media/2026/02/media-1771946871466-912940853.png';\n  let wallpaperActive = true;\n  function injectWallpaper() {\n    if (!wallpaperActive) return;\n    let s = document.getElementById('lapak3-wallpaper');\n    if (!s) { s = document.createElement('style'); s.id = 'lapak3-wallpaper'; document.head.appendChild(s); }\n    s.textContent = `#app > div > div > main, [data-testid=\"chat-root\"], [data-testid=\"messages-list\"], .main-layout__content { background-image: url('${WALLPAPER_URL}') !important; background-repeat: no-repeat !important; background-position: center top !important; background-attachment: fixed !important; background-size: 27% auto !important; background-color: transparent !important; }`;\n  }\n  function removeWallpaper() { document.getElementById('lapak3-wallpaper')?.remove(); }\n  function injectQueueStyles() {\n    if (document.getElementById('lapak3-queue-style')) return;\n    const s = document.createElement('style'); s.id = 'lapak3-queue-style';\n    s.textContent = `.lc-antrian-orange { box-shadow: inset 4px 0 0 #f97316 !important; position: relative !important; } .lc-antrian-hijau { box-shadow: inset 4px 0 0 #22c55e !important; position: relative !important; } .lc-antrian-kedip { animation: lapak3Blink 1.8s infinite !important; position: relative !important; } @keyframes lapak3Blink { 0%, 100% { box-shadow: inset 5px 0 0 #ff0000; } 50% { box-shadow: inset 50px 0 35px -10px rgba(255,40,40,0.25); } }`;\n    document.head.appendChild(s);\n  }\n  function checkChatQueue() {\n    try {\n      document.querySelectorAll('a, [role=\"button\"], [role=\"row\"], li').forEach(item => {\n        if (item.closest('[data-testid=\"messages-list\"]')) return;\n        const it = item.innerText || '';\n        const hasTime = /\\d+[smh]/.test(it);\n        const isArchived = it.toLowerCase().includes('archived') || it.toLowerCase().includes('left the chat') || it.toLowerCase().includes('inactivity');\n        if (!hasTime && !isArchived) return;\n        item.classList.remove('lc-antrian-orange', 'lc-antrian-hijau', 'lc-antrian-kedip');\n        if (isArchived) return;\n        const timeMatch = it.match(/(\\d+)([smh])/);\n        let mins = 0;\n        if (timeMatch) { const val = parseInt(timeMatch[1]), unit = timeMatch[2]; if (unit === 'm') mins = val; else if (unit === 'h') mins = val * 60; }\n        if (mins >= 3) { item.classList.add('lc-antrian-kedip'); return; }\n        const hasUnread = item.querySelector('[class*=\"badge\"],[class*=\"unread\"],[class*=\"notification\"],[class*=\"count\"]');\n        item.classList.add(hasUnread ? 'lc-antrian-orange' : 'lc-antrian-hijau');\n      });\n    } catch(e) {}\n  }\n  let toastEl = null;\n  function injectToastStyle() {\n    if (document.getElementById('lapak3-toast-style')) return;\n    const s = document.createElement('style'); s.id = 'lapak3-toast-style';\n    s.textContent = `#lapak3-toast { position: fixed; bottom: 28px; right: 28px; z-index: 999999; padding: 10px 18px; border-radius: 8px; font-family: 'Comic Sans MS', sans-serif; font-size: 13px; font-weight: bold; color: #fff; pointer-events: none; opacity: 0; transform: translateY(10px); transition: 0.25s; } #lapak3-toast.show { opacity: 1; transform: translateY(0); } #lapak3-toast.toast-on { background:#1a1a2e; border:2px solid #a855f7; box-shadow:4px 4px 0 #a855f7; } #lapak3-toast.toast-off { background:#2a0a0a; border:2px solid #ef4444; box-shadow:4px 4px 0 #ef4444; }`;\n    document.head.appendChild(s);\n  }\n  function showToast(msg, type = 'on') {\n    if (!toastEl) { toastEl = document.createElement('div'); toastEl.id = 'lapak3-toast'; document.body.appendChild(toastEl); }\n    toastEl.textContent = msg; toastEl.className = `show toast-${type}`;\n    setTimeout(() => toastEl.classList.remove('show'), 2500);\n  }\n  function init() {\n    injectQueueStyles(); injectToastStyle();\n    const obs = new MutationObserver(() => { clearTimeout(window.lapak3Timer); window.lapak3Timer = setTimeout(() => { checkChatQueue(); injectWallpaper(); }, 150); });\n    obs.observe(document.body, { childList: true, subtree: true });\n    document.addEventListener('mousedown', e => { if (e.target.closest('a, [role=\"button\"], [role=\"row\"]')) setTimeout(checkChatQueue, 10); }, true);\n    document.addEventListener('keydown', e => {\n      if (!e.ctrlKey) return;\n      if (e.code === 'Insert') { e.preventDefault(); wallpaperActive = true; injectWallpaper(); showToast('\ud83c\udf04 Wallpaper ON', 'on'); }\n      if (e.code === 'Delete') { e.preventDefault(); wallpaperActive = false; removeWallpaper(); showToast('\ud83d\ude48 Wallpaper OFF', 'off'); }\n    });\n    setTimeout(() => { injectWallpaper(); checkChatQueue(); }, 2000);\n  }\n  if (document.body) init(); else document.addEventListener('DOMContentLoaded', init);\n})();\n"
+];
+
+const FILENAMES = ['lapak1.user.js', 'lapak2.user.js', 'lapak3.user.js'];
+
+function doInstall(idx, btn) {
+  try {
+    const filename = FILENAMES[idx];
+    // Files are in the same directory as this HTML page
+    window.open(filename, '_blank');
+
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✅ Terbuka<span class="btn-sub">cek tab Tampermonkey</span>';
+    btn.classList.add('done');
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('done'); }, 4000);
+    showToast('📦 ' + filename + ' — Tampermonkey install ✓');
+  } catch (err) {
+    console.error(err);
+    alert('Gagal membuka file. Error: ' + err.message);
+  }
+}
+
+function installAll() {
+  SCRIPTS.forEach((_, i) => {
+    setTimeout(() => {
+      const btn = document.querySelectorAll('.btn-install')[i];
+      doInstall(i, btn);
+    }, i * 1200);
+  });
+  showToast('📦 Membuka semua 3 script...');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
