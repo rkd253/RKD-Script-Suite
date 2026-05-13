@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LAPAK2 - Neural Shield: Anti-Spam
 // @namespace    http://tampermonkey.net/
-// @version      4.4.2
-// @description  Deteksi pesan duplikat dengan Neural Shield alert (High Sensitivity)
+// @version      4.4.3
+// @description  Real-time Duplicate Detection with Red Glow Warning
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
 // @icon         https://www.livechat.com/favicon.ico
@@ -26,9 +26,16 @@
       .dup-btns { display: flex; gap: 12px; }
       .dup-btn { flex: 1; border: none; border-radius: 12px; padding: 14px; cursor: pointer; font-weight: 900; transition: 0.3s; font-size: 14px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
       #dup-btn-cancel { background: #2d2d4a; color: #fff; border: 1px solid #4b5563; }
-      #dup-btn-cancel:hover { background: #3d3d5a; transform: translateY(-2px); }
-      #dup-btn-send { background: linear-gradient(135deg, #ef4444, #7f1d1d); color: #fff; box-shadow: 0 5px 15px rgba(239,68,68,0.4); }
-      #dup-btn-send:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(239,68,68,0.6); }
+      #dup-btn-send { background: linear-gradient(135deg, #ef4444, #7f1d1d); color: #fff; }
+      
+      /* Real-time Warning Effect */
+      .dup-warning-glow {
+        outline: 4px solid #ef4444 !important;
+        outline-offset: -2px !important;
+        box-shadow: inset 0 0 20px rgba(239,68,68,0.4), 0 0 25px rgba(239,68,68,0.6) !important;
+        transition: all 0.2s ease-in-out !important;
+        border-radius: 8px !important;
+      }
     `;
     document.head.appendChild(s);
   }
@@ -42,28 +49,62 @@
     ov.innerHTML = `
       <div id="dup-modal">
         <div style="font-size:50px; filter: drop-shadow(0 0 10px #ef4444)">⚠️</div>
-        <div class="dup-title">Anti-Spam Triggered</div>
+        <div class="dup-title">Pesan Duplikat!</div>
         <div id="dup-preview-text"></div>
         <div id="dup-counter-text"></div>
         <div class="dup-btns">
-          <button id="dup-btn-cancel" class="dup-btn">BATALKAN</button>
-          <button id="dup-btn-send" class="dup-btn">PAKSA KIRIM</button>
+          <button id="dup-btn-cancel" class="dup-btn">GANTI PESAN</button>
+          <button id="dup-btn-send" class="dup-btn">TETAP KIRIM</button>
         </div>
       </div>`;
     document.body.appendChild(ov);
-    document.getElementById('dup-btn-cancel').onclick = () => {
-        ov.classList.remove('visible');
-    };
+    document.getElementById('dup-btn-cancel').onclick = () => ov.classList.remove('visible');
     document.getElementById('dup-btn-send').onclick = () => { 
       ov.classList.remove('visible'); 
       if (window.dupCB) window.dupCB(); 
     };
   }
 
+  function checkRealtime(el) {
+    if (!el) return;
+    let text = "";
+    if (el.isContentEditable) text = el.innerText;
+    else if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') text = el.value;
+    else if (el.getAttribute('role') === 'textbox') text = el.textContent;
+    
+    text = text.trim();
+    if (!text || text.length < 2) {
+        el.classList.remove('dup-warning-glow');
+        return;
+    }
+
+    const chatKey = location.href.split('/').pop() || 'global';
+    const prev = dupHistory[chatKey];
+
+    // Cari elemen pembungkus kotak chat untuk dikasih efek merah
+    const wrapper = el.closest('[class*="InputWrapper"], [class*="ChatInput"], [class*="Editor"], [role="form"]') || el;
+
+    if (prev && prev.text === text) {
+      wrapper.classList.add('dup-warning-glow');
+    } else {
+      wrapper.classList.remove('dup-warning-glow');
+    }
+  }
+
   function init() {
     injectStyles(); buildDupModal();
     
-    // Monitor keydown secara agresif di semua tempat
+    // Listener saat mengetik (Real-time)
+    window.addEventListener('input', e => {
+      checkRealtime(e.target);
+    }, true);
+
+    // Listener saat fokus (Cek ulang)
+    window.addEventListener('focusin', e => {
+      checkRealtime(e.target);
+    }, true);
+
+    // Listener saat Enter (Blokir kalau duplikat)
     window.addEventListener('keydown', e => {
       if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey) return;
       if (window.dupForce) return;
@@ -71,7 +112,6 @@
       const active = document.activeElement;
       if (!active) return;
       
-      // Ambil teks dari input yang aktif
       let text = "";
       if (active.isContentEditable) text = active.innerText;
       else if (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT') text = active.value;
@@ -80,7 +120,6 @@
       text = text.trim();
       if (!text || text.length < 2) return;
 
-      // Cari ID chat unik (biasanya ada di URL atau elemen yang diseleksi)
       const chatKey = location.href.split('/').pop() || 'global';
       const prev = dupHistory[chatKey];
 
@@ -89,7 +128,6 @@
         
         window.dupCB = () => {
           window.dupForce = true;
-          // Trigger Enter ke elemen asal
           const ev = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
           active.dispatchEvent(ev);
           setTimeout(() => { window.dupForce = false; }, 800);
