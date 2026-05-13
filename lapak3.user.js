@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.4.0
-// @description  Wallpaper manga + indikator warna antrian chat
+// @version      4.4.2
+// @description  Wallpaper manga + indikator warna antrian chat (Force Transparency Mode)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
 // @icon         https://www.livechat.com/favicon.ico
@@ -32,11 +32,46 @@
     document.head.appendChild(s);
   }
 
-  function injectWallpaper() {
+  function applyForceTransparency() {
     if (!wallpaperActive) return;
-    let s = document.getElementById('mng-wallpaper-style');
-    if (!s) { s = document.createElement('style'); s.id = 'mng-wallpaper-style'; document.head.appendChild(s); }
-    s.textContent = \`#app > div > div > main, [data-testid="chat-root"], [data-testid="messages-list"], .main-layout__content { background-image: url('\${WALLPAPER_URL}') !important; background-repeat: no-repeat !important; background-position: center top !important; background-attachment: fixed !important; background-size: 27% auto !important; background-color: transparent !important; }\`;
+    
+    // List elemen yang harus transparan agar wallpaper kelihatan
+    const selectors = [
+      '#app > div > div > main',
+      '[data-testid="chat-root"]',
+      '[data-testid="messages-list"]',
+      '.main-layout__content',
+      '[class*="ChatRoot"]',
+      '[class*="MessagesList"]',
+      '[data-testid="chat-window"]',
+      '[class*="LayoutContent"]',
+      'section[class*="Content"]',
+      '[class*="ChatWrapper"]',
+      '[class*="WidgetWrapper"]',
+      '[class*="ChatWindow"]',
+      'main',
+      '.lc-main-layout'
+    ];
+
+    selectors.forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.style.backgroundColor = 'transparent';
+        el.style.backgroundImage = `url('${WALLPAPER_URL}')`;
+        el.style.backgroundRepeat = 'no-repeat';
+        el.style.backgroundPosition = 'center top';
+        el.style.backgroundAttachment = 'fixed';
+        el.style.backgroundSize = '27% auto';
+      }
+    });
+    
+    // Hapus background color pada elemen-elemen spesifik yang sering menutupi
+    const overlays = document.querySelectorAll('[class*="Backdrop"], [class*="Overlay"], [class*="Background"]');
+    overlays.forEach(ov => {
+        if (!ov.closest('#hl-panel') && !ov.closest('#dup-modal')) {
+            ov.style.backgroundColor = 'transparent';
+        }
+    });
   }
 
   function checkChatQueue() {
@@ -45,12 +80,12 @@
       allItems.forEach(item => {
         if (item.closest('[data-testid="messages-list"]')) return;
         const it = item.innerText || "";
-        const hasTime = /\\d+[smh]/.test(it);
+        const hasTime = /\d+[smh]/.test(it);
         const isArchived = it.toLowerCase().includes('archived') || it.toLowerCase().includes('left the chat') || it.toLowerCase().includes('inactivity');
         if (!hasTime && !isArchived) return;
         item.classList.remove('lc-antrian-orange','lc-antrian-hijau','lc-antrian-kedip');
         if (isArchived) return;
-        const timeMatch = it.match(/(\\d+)([smh])/);
+        const timeMatch = it.match(/(\d+)([smh])/);
         let mins = 0;
         if (timeMatch) { const val = parseInt(timeMatch[1]); const unit = timeMatch[2]; if (unit === 'm') mins = val; else if (unit === 'h') mins = val * 60; }
         if (mins >= 3) { item.classList.add('lc-antrian-kedip'); return; }
@@ -60,23 +95,25 @@
     } catch(e) { }
   }
 
-  function showToast(m, t = 'info') { if (!toastEl) { toastEl = document.createElement('div'); toastEl.id = 'mng-toast'; document.body.appendChild(toastEl); } toastEl.textContent = m; toastEl.className = \`show toast-\${t}\`; setTimeout(() => toastEl.classList.remove('show'), 2500); }
-  let toastEl = null;
-
   function init() {
     injectStyles();
+    
+    // Jalankan force transparency secara rutin
+    setInterval(applyForceTransparency, 1000);
+    
     const obs = new MutationObserver((mutations) => {
-      let n = false; for (const m of mutations) { if (m.target.nodeType !== 1) continue; if (m.target.closest && m.target.closest('#mng-toast')) continue; n = true; break; }
-      if (n) { clearTimeout(window.wTimer); window.wTimer = setTimeout(() => { checkChatQueue(); injectWallpaper(); }, 150); }
+      let n = false; for (const m of mutations) { if (m.target.nodeType !== 1) continue; n = true; break; }
+      if (n) { clearTimeout(window.wTimer); window.wTimer = setTimeout(() => { checkChatQueue(); applyForceTransparency(); }, 150); }
     });
     obs.observe(document.body, { childList: true, subtree: true });
-    document.addEventListener('mousedown', (e) => { if (e.target.closest('a') || e.target.closest('[role="button"]') || e.target.closest('[role="row"]')) { setTimeout(checkChatQueue, 10); } }, true);
+    
     document.addEventListener('keydown', e => {
       if (!e.ctrlKey) return;
-      if (e.code === 'Insert') { e.preventDefault(); wallpaperActive = true; injectWallpaper(); showToast('🌄 Wallpaper ON', 'on'); }
-      if (e.code === 'Delete') { e.preventDefault(); wallpaperActive = false; document.getElementById('mng-wallpaper-style')?.remove(); showToast('🙈 Wallpaper OFF', 'off'); }
+      if (e.code === 'Insert') { e.preventDefault(); wallpaperActive = true; applyForceTransparency(); }
+      if (e.code === 'Delete') { e.preventDefault(); wallpaperActive = false; location.reload(); }
     });
-    setTimeout(() => { injectWallpaper(); checkChatQueue(); }, 2000);
+    
+    setTimeout(() => { applyForceTransparency(); checkChatQueue(); }, 2000);
   }
 
   if (document.body) init(); else document.addEventListener('DOMContentLoaded', init);
