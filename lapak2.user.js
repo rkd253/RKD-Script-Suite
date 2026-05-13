@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LAPAK2 - Neural Shield: Anti-Spam
 // @namespace    http://tampermonkey.net/
-// @version      4.4.4
-// @description  Persistent Real-time Duplicate Detection with Brutal Red Glow
+// @version      4.4.5
+// @description  Persistent Real-time Duplicate Detection with Floating Alert & Red Glow
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
 // @icon         https://www.livechat.com/favicon.ico
@@ -14,7 +14,6 @@
 (function () {
   'use strict';
 
-  // Persistent Storage Helper
   const Store = {
     get(k, d) { try { let v = GM_getValue(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
     set(k, v) { try { GM_setValue(k, JSON.stringify(v)); } catch (e) { } }
@@ -35,19 +34,27 @@
       #dup-btn-cancel { background: #2d2d4a; color: #fff; border: 1px solid #4b5563; }
       #dup-btn-send { background: linear-gradient(135deg, #ef4444, #7f1d1d); color: #fff; }
       
-      /* Brutal Real-time Warning Effect */
+      /* Real-time Warning Effect */
       .dup-warning-glow {
-        box-shadow: 0 0 0 4px #ef4444 !important;
-        background-color: rgba(239,68,68,0.15) !important;
-        animation: dupPulse 1.5s infinite !important;
-        border-radius: 12px !important;
-        transition: all 0.3s ease !important;
+        box-shadow: 0 0 0 5px #ef4444 !important;
+        background-color: rgba(239,68,68,0.1) !important;
+        animation: dupPulse 1s infinite !important;
+        transition: all 0.2s ease !important;
       }
       @keyframes dupPulse {
-        0% { box-shadow: 0 0 0 4px rgba(239,68,68,0.8); }
-        50% { box-shadow: 0 0 0 8px rgba(239,68,68,0.4), 0 0 20px rgba(239,68,68,0.6); }
-        100% { box-shadow: 0 0 0 4px rgba(239,68,68,0.8); }
+        0%, 100% { box-shadow: 0 0 0 4px #ef4444; }
+        50% { box-shadow: 0 0 0 8px rgba(239,68,68,0.5), 0 0 20px rgba(239,68,68,0.4); }
       }
+
+      #dup-floating-alert {
+        position: absolute; top: -35px; left: 10px;
+        background: #ef4444; color: #fff; padding: 4px 12px;
+        border-radius: 6px; font-size: 11px; font-weight: 900;
+        text-transform: uppercase; letter-spacing: 1px;
+        display: none; animation: dupFadeIn 0.3s ease;
+        z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      }
+      @keyframes dupFadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     `;
     document.head.appendChild(s);
   }
@@ -66,7 +73,7 @@
         <div id="dup-counter-text"></div>
         <div class="dup-btns">
           <button id="dup-btn-cancel" class="dup-btn">GANTI PESAN</button>
-          <button id="dup-btn-send" class="dup-btn">PAKSA KIRIM</button>
+          <button id="dup-btn-send" class="dup-btn">TETAP KIRIM</button>
         </div>
       </div>`;
     document.body.appendChild(ov);
@@ -89,12 +96,29 @@
     const prev = dupHistory[chatKey];
 
     // Temukan container kotak chat yang paling pas
-    const container = el.closest('[class*="InputWrapper"], [class*="ChatInput"], [class*="Editor"], [role="form"]') || el;
+    const container = el.closest('[class*="InputWrapper"], [class*="ChatInput"], [class*="Editor"], [role="form"], [class*="Composer"]') || el.parentElement;
+    
+    // Floating alert handling
+    let fl = document.getElementById('dup-floating-alert');
+    if (!fl) {
+        fl = document.createElement('div');
+        fl.id = 'dup-floating-alert';
+        fl.textContent = '⚠️ DUPLIKAT TERDETEKSI';
+        document.body.appendChild(fl);
+    }
 
     if (text.length > 2 && prev && prev.text === text) {
       container.classList.add('dup-warning-glow');
+      
+      // Pindahkan floating alert ke atas container
+      const rect = container.getBoundingClientRect();
+      fl.style.display = 'block';
+      fl.style.position = 'fixed';
+      fl.style.top = (rect.top - 35) + 'px';
+      fl.style.left = rect.left + 'px';
     } else {
       container.classList.remove('dup-warning-glow');
+      fl.style.display = 'none';
     }
   }
 
@@ -124,7 +148,7 @@
 
       if (prev && prev.text === text) {
         prev.count++;
-        Store.set('rkd-dup-history', dupHistory); // Save updated count
+        Store.set('rkd-dup-history', dupHistory);
         
         window.dupCB = () => {
           window.dupForce = true;
@@ -134,14 +158,14 @@
         };
 
         document.getElementById('dup-preview-text').textContent = text;
-        document.getElementById('dup-counter-text').textContent = `Sudah ${prev.count}x terdeteksi duplikat!`;
+        document.getElementById('dup-counter-text').textContent = `Ditemukan ${prev.count}x pengulangan pesan!`;
         document.getElementById('dup-overlay').classList.add('visible');
 
         e.preventDefault();
         e.stopImmediatePropagation();
       } else {
         dupHistory[chatKey] = { text: text, count: 1 };
-        Store.set('rkd-dup-history', dupHistory); // Save new last message
+        Store.set('rkd-dup-history', dupHistory);
       }
     }, true);
   }
