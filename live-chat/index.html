@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RKD Dashboard Pro — Script & Extension Suite</title>
+<meta name="description" content="Premium automation dashboard for LiveChat scripts and Chrome extensions by RKD.">
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+<div class="cyber-bg"></div>
+<!-- Glowing Background Orbs -->
+<div class="glow-orb-1"></div>
+<div class="glow-orb-2"></div>
+<div class="glow-orb-3"></div>
+
+<div class="grid-overlay"></div>
+<div class="scanline"></div>
+
+<!-- Mobile Menu Toggle -->
+<button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <button class="desktop-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg viewBox="0 0 160 160">
+        <defs>
+          <radialGradient id="discBg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#1a0533"/>
+            <stop offset="100%" stop-color="#0a0115"/>
+          </radialGradient>
+          <linearGradient id="rkdG" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#f472b6"/>
+            <stop offset="50%" stop-color="#a855f7"/>
+            <stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+        </defs>
+        <circle cx="80" cy="80" r="74" fill="url(#discBg)" stroke="rgba(168,85,247,0.6)" stroke-width="2"/>
+        <text x="80" y="85" text-anchor="middle" dominant-baseline="middle"
+              font-family="'Orbitron', sans-serif" font-weight="900" font-size="44"
+              fill="url(#rkdG)">RKD</text>
+      </svg>
+    </div>
+    <div class="sidebar-brand">RKD SUITE</div>
+    <div class="sidebar-version">DASHBOARD PRO v2.0</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Main Menu</div>
+    <a href="#" class="nav-item active" onclick="switchTab('scripts', this)" id="nav-scripts">
+      <span class="icon">📦</span> Script Installer
+      <span class="nav-badge">3</span>
+    </a>
+    <a href="#" class="nav-item" onclick="switchTab('extensions', this)" id="nav-extensions">
+      <span class="icon">🧩</span> Extensions
+      <span class="nav-badge ext">2</span>
+    </a>
+
+    <div class="nav-label">Web Tools</div>
+    <a href="#" class="nav-item" onclick="switchTab('tools', this)" id="nav-tools">
+      <span class="icon">🧮</span> Calculators
+    </a>
+
+    <div class="nav-label">System</div>
+    <a href="#" class="nav-item" onclick="switchTab('guide', this)" id="nav-guide">
+      <span class="icon">📖</span> Panduan Install
+    </a>
+  </nav>
+
+  <!-- ===== CYBER HUD ANIMATION ===== -->
+  <div class="sidebar-hud">
+    <div class="hud-core">
+      <div class="hud-ring"></div>
+      <div class="hud-ring inner"></div>
+    </div>
+    <div class="hud-bars">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="hud-text">UPLINK ACTIVE</div>
+  </div>
+
+  <!-- SIGNATURE in Sidebar -->
+  <div class="sidebar-signature">
+    <div class="sig-label">— Tertanda Pembuat —</div>
+    <div class="sig-wrap">
+      <div class="sig-light"></div>
+      <div class="sig-glow"></div>
+      <img src="signature.png" alt="RKD Signature" class="sig-img">
+    </div>
+    <div class="sig-name">Made in By RKD</div>
+  </div>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">Script Installer</div>
+      <div class="topbar-sub">Tampermonkey one-click install suite</div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-dot"></div>
+      <span class="status-text">System Online</span>
+    </div>
+  </div>
+
+  <!-- ===== SECTION: SCRIPTS ===== -->
+  <div class="section active" id="sec-scripts">
+    <div class="section-title">Tampermonkey Scripts</div>
+    <div class="cards-grid">
+
+      <!-- Card 1 -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">✒️</div>
+          <div>
+            <div class="card-label">PLUGIN_01</div>
+            <div class="card-name">Word Highlighter & Dashboard</div>
+          </div>
+        </div>
+        <div class="card-desc">Visual word marking with real-time drag-and-drop control panel.</div>
+        <div class="card-tags">
+          <span class="tag red">HOTKEY: CTRL+H</span>
+          <span class="tag">STORE: GM_STORAGE</span>
+        </div>
+        <a href="lapak1.user.js" class="btn btn-red">
+          🔴 Install <span class="btn-sub">DOMAIN RED</span>
+        </a>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">🛡️</div>
+          <div>
+            <div class="card-label">PLUGIN_02</div>
+            <div class="card-name">Neural Shield: Anti-Spam</div>
+          </div>
+        </div>
+        <div class="card-desc">Real-time duplication analysis engine. Prevents outgoing spam messages.</div>
+        <div class="card-tags">
+          <span class="tag blue">MODE: PASSIVE</span>
+          <span class="tag">ALERT: SHIELD_UI</span>
+        </div>
+        <a href="lapak2.user.js" class="btn btn-blue">
+          🔵 Install <span class="btn-sub">DOMAIN BLUE</span>
+        </a>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">🌅</div>
+          <div>
+            <div class="card-label">PLUGIN_03</div>
+            <div class="card-name">Wallpaper & Queue Indication</div>
+          </div>
+        </div>
+        <div class="card-desc">Deep background skinning with dynamic queue priority indicator system.</div>
+        <div class="card-tags">
+          <span class="tag">UI: MANGA_SKIN</span>
+          <span class="tag green">PRIO: DYNAMIC</span>
+        </div>
+        <a href="lapak3.user.js" class="btn btn-purple">
+          💜 Install <span class="btn-sub">DOMAIN PURPLE</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="btn-all-wrap">
+      <button class="btn-all" onclick="installAll()">⚡ OVERDRIVE: INSTALL ALL</button>
+    </div>
+
+    <div class="notice">
+      <strong>INTERFACE PROTOCOL:</strong> Pastikan folder <code>live-chat</code> kamu berisi file <code>.user.js</code> agar instalasi sekali klik ini berjalan lancar.
+    </div>
+  </div>
+
+  <!-- ===== SECTION: EXTENSIONS ===== -->
+  <div class="section" id="sec-extensions">
+    <div class="section-title">Chrome Extensions</div>
+    <div class="cards-grid">
+
+      <div class="card" style="border-color: rgba(14,165,233,0.3);">
+        <div class="card-head">
+          <div class="card-icon" style="background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3);">🔍</div>
+          <div>
+            <div class="card-label" style="color: #0ea5e9;">EXTENSION_01</div>
+            <div class="card-name">ImageLens OCR Extension</div>
+          </div>
+        </div>
+        <div class="card-desc">Ekstensi Chrome pintar untuk menyalin teks dari gambar secara instan. Powered by Tesseract.js OCR engine.</div>
+        <div class="card-tags">
+          <span class="tag blue">TYPE: CHROME EXT</span>
+          <span class="tag">FORMAT: .ZIP</span>
+        </div>
+        <a href="imagelens-ocr.zip" download class="btn btn-cyan">
+          ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
+        </a>
+      </div>
+
+      <div class="card" style="border-color: rgba(245,158,11,0.3);">
+        <div class="card-head">
+          <div class="card-icon" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);">🎰</div>
+          <div>
+            <div class="card-label" style="color: #f59e0b;">EXTENSION_02</div>
+            <div class="card-name">Bonus Scatter Pro V2</div>
+          </div>
+        </div>
+        <div class="card-desc">Extension premium untuk automation bonus scatter. Fitur lengkap: auto-check status, ticket filler, dan dashboard terintegrasi.</div>
+        <div class="card-tags">
+          <span class="tag" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);color:#fcd34d;">TYPE: CHROME EXT</span>
+          <span class="tag" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);color:#fcd34d;">VERSION: 2.0</span>
+        </div>
+        <a href="Bonus_Scatter_ProV2.zip" download class="btn btn-gold">
+          ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== SECTION: TOOLS ===== -->
+  <div class="section" id="sec-tools">
+    <div class="section-title">Web Calculators</div>
+    <div class="cards-grid">
+      
+      <div class="card" style="border-color: rgba(34,197,94,0.2);">
+        <div class="card-head">
+          <div class="card-icon" style="background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3);">🀄</div>
+          <div>
+            <div class="card-label" style="color: #4ade80;">WEB_TOOL_01</div>
+            <div class="card-name">Calculator Mahjong</div>
+          </div>
+        </div>
+        <div class="card-desc">Alat hitung otomatis khusus untuk permainan Mahjong. Web app responsif, hitung instan & akurat.</div>
+        <div class="card-tags">
+          <span class="tag green">TYPE: WEB APP</span>
+          <span class="tag">NETLIFY HOST</span>
+        </div>
+        <a href="https://calculatormahjong.netlify.app/" target="_blank" class="btn" style="background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 4px 20px rgba(16,185,129,0.3);">
+          🌐 BUKA WEB APP <span class="btn-sub">NEW TAB</span>
+        </a>
+      </div>
+
+      <div class="card" style="border-color: rgba(239,68,68,0.2);">
+        <div class="card-head">
+          <div class="card-icon" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);">🔢</div>
+          <div>
+            <div class="card-label" style="color: #f87171;">WEB_TOOL_02</div>
+            <div class="card-name">Calculator Hadiah Togel 303</div>
+          </div>
+        </div>
+        <div class="card-desc">Sistem perhitungan otomatis untuk hadiah togel. Cepat, tepat, dan memudahkan rekapitulasi data harian.</div>
+        <div class="card-tags">
+          <span class="tag red">TYPE: WEB APP</span>
+          <span class="tag">GITHUB PAGES</span>
+        </div>
+        <a href="https://rkd253.github.io/calculatorhadiahtogel303/file%20upload/" target="_blank" class="btn" style="background: linear-gradient(135deg, #f43f5e, #be123c); box-shadow: 0 4px 20px rgba(244,63,94,0.3);">
+          🌐 BUKA WEB APP <span class="btn-sub">NEW TAB</span>
+        </a>
+      </div>
+
+      <div class="card" style="border-color: rgba(168,85,247,0.2);">
+        <div class="card-head">
+          <div class="card-icon" style="background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.3);">🧮</div>
+          <div>
+            <div class="card-label" style="color: #c084fc;">WEB_TOOL_03</div>
+            <div class="card-name">Calculator Standar</div>
+          </div>
+        </div>
+        <div class="card-desc">Kalkulator standar dengan desain cyberpunk premium. Mendukung fitur dasar matematika dengan layout grid glassmorphism.</div>
+        <div class="card-tags">
+          <span class="tag">TYPE: LOCAL APP</span>
+          <span class="tag">CYBER UI</span>
+        </div>
+        <a href="calc-standard.html" class="btn btn-purple">
+          🌐 BUKA KALKULATOR <span class="btn-sub">LOCAL</span>
+        </a>
+      </div>
+
+      <div class="card" style="border-color: rgba(14,165,233,0.2);">
+        <div class="card-head">
+          <div class="card-icon" style="background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3);">💱</div>
+          <div>
+            <div class="card-label" style="color: #7dd3fc;">WEB_TOOL_04</div>
+            <div class="card-name">Currency Converter</div>
+          </div>
+        </div>
+        <div class="card-desc">Kalkulator konversi mata uang lengkap. Otomatis mengambil kurs (exchange rates) real-time dari Live API.</div>
+        <div class="card-tags">
+          <span class="tag blue">TYPE: LOCAL APP</span>
+          <span class="tag">LIVE API</span>
+        </div>
+        <a href="calc-currency.html" class="btn btn-cyan">
+          🌐 BUKA KONVERTER <span class="btn-sub">LOCAL</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== SECTION: GUIDE ===== -->
+  <div class="section" id="sec-guide">
+    <div class="section-title">Panduan Instalasi</div>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">1️⃣</div>
+          <div>
+            <div class="card-label">STEP 1</div>
+            <div class="card-name">Klik Tombol Install / Download</div>
+          </div>
+        </div>
+        <div class="card-desc">Untuk <strong>Tampermonkey Script</strong>: klik tombol Install pada card script yang diinginkan. Tab baru akan terbuka otomatis.<br><br>Untuk <strong>Chrome Extension</strong>: klik Download, lalu extract file .ZIP yang terunduh.</div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">2️⃣</div>
+          <div>
+            <div class="card-label">STEP 2</div>
+            <div class="card-name">Konfirmasi di Tampermonkey / Chrome</div>
+          </div>
+        </div>
+        <div class="card-desc">Untuk <strong>Script</strong>: Tampermonkey akan menampilkan konfirmasi install, klik "Install".<br><br>Untuk <strong>Extension</strong>: Buka <code>chrome://extensions</code>, aktifkan Developer Mode, lalu klik "Load Unpacked" dan pilih folder yang sudah di-extract.</div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-icon">3️⃣</div>
+          <div>
+            <div class="card-label">STEP 3</div>
+            <div class="card-name">Selesai — Siap Digunakan!</div>
+          </div>
+        </div>
+        <div class="card-desc">Script atau Extension langsung aktif. Buka LiveChat dan fitur otomatis akan berjalan. Untuk mengatur preferensi, gunakan dashboard masing-masing plugin.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SECTION: ABOUT ===== -->
+  <div class="section" id="sec-about">
+    <div class="section-title">About This Project</div>
+    <div class="card" style="max-width:600px; margin: 0 auto;">
+      <div class="card-desc" style="text-align:center; font-size:14px; line-height:2;">
+        Suite automation premium yang dirancang khusus untuk meningkatkan produktivitas LiveChat Agent. Semua script dan extension dikembangkan dengan performa tinggi, UI modern, dan stabilitas maksimal.
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+function switchTab(tab, el) {
+  event.preventDefault();
+  // Hide all sections
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  // Deactivate all nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  // Show target
+  document.getElementById('sec-' + tab).classList.add('active');
+  el.classList.add('active');
+  // Update topbar
+  const titles = { scripts:'Script Installer', extensions:'Extensions', tools:'Web Calculators', guide:'Panduan Install', about:'About & Signature' };
+  document.getElementById('page-title').textContent = titles[tab] || tab;
+  // Close mobile sidebar
+  document.querySelector('.sidebar').classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('collapsed');
+  document.querySelector('.main').classList.toggle('expanded');
+}
+
+function installAll() {
+  const links = ['lapak1.user.js', 'lapak2.user.js', 'lapak3.user.js'];
+  links.forEach((url, i) => {
+    setTimeout(() => { window.open(url, '_blank'); }, i * 1200);
+  });
+  showToast('📦 Membuka semua 3 script...');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Generate Cyber Particles
+const particleLayer = document.createElement('div');
+particleLayer.className = 'cyber-particles';
+document.body.appendChild(particleLayer);
+for(let i=0; i<35; i++) {
+  let p = document.createElement('div');
+  p.className = 'c-particle';
+  p.style.left = Math.random() * 100 + 'vw';
+  p.style.animationDuration = (Math.random() * 4 + 3) + 's'; // 3s to 7s
+  p.style.animationDelay = Math.random() * 5 + 's';
+  particleLayer.appendChild(p);
+}
+</script>
+
+<script src="theme-manager.js"></script>
+</body>
+</html>
