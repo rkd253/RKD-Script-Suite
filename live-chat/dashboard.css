@@ -20,6 +20,25 @@ body {
   zoom: 90%; /* Global 10% zoom-out for super sleek look */
 }
 
+/* ===== CUSTOM SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(7, 2, 14, 0.95);
+  border-left: 1px solid rgba(168,85,247,0.2);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #a855f7, #7c3aed);
+  border-radius: 8px;
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.8);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #c084fc, #a855f7);
+  box-shadow: 0 0 10px rgba(168,85,247,0.6);
+}
+
 /* ===== BACKGROUND ===== */
 .cyber-bg {
   position: fixed; inset: 0; z-index: -1;
@@ -331,16 +350,16 @@ body {
 .ext-title { font-size: 18px; font-weight: 800; color: #f3e8ff; margin-bottom: 6px; }
 .ext-desc { font-size: 12px; color: #a78bfa; line-height: 1.6; }
 
-/* ===== CYBER HUD ANIMATION ===== */
-.sidebar-hud {
-  display: flex; flex-direction: column; align-items: center;
-  padding: 24px 0; border-top: 1px dashed rgba(168,85,247,0.3);
-  margin: 10px 16px 0;
+/* ===== CYBER HUD ANIMATION (TOPBAR) ===== */
+.topbar-hud {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(14,165,233,0.05); border: 1px solid rgba(14,165,233,0.2);
+  padding: 6px 14px; border-radius: 20px;
+  margin-right: 16px;
 }
 .hud-core {
-  position: relative; width: 44px; height: 44px;
+  position: relative; width: 22px; height: 22px;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 14px;
 }
 .hud-ring {
   position: absolute; inset: 0; border-radius: 50%;
@@ -348,17 +367,17 @@ body {
   animation: hudSpin 10s linear infinite;
 }
 .hud-ring.inner {
-  inset: 8px; border: 2px solid rgba(14,165,233,0.8);
+  inset: 5px; border: 2px solid rgba(14,165,233,0.8);
   border-top-color: transparent; border-bottom-color: transparent;
   animation: hudSpinReverse 5s linear infinite;
 }
 @keyframes hudSpin { 100% { transform: rotate(360deg); } }
 @keyframes hudSpinReverse { 100% { transform: rotate(-360deg); } }
 .hud-bars {
-  display: flex; gap: 4px; margin-bottom: 10px;
+  display: flex; gap: 3px;
 }
 .hud-bars span {
-  width: 4px; height: 16px; background: rgba(168,85,247,0.6);
+  width: 3px; height: 12px; background: rgba(168,85,247,0.6);
   border-radius: 2px;
   animation: hudBounce 1s ease-in-out infinite alternate;
 }
@@ -368,8 +387,8 @@ body {
 .hud-bars span:nth-child(5) { animation-delay: 0.8s; }
 @keyframes hudBounce { 100% { height: 4px; background: #38bdf8; box-shadow: 0 0 10px #38bdf8; } }
 .hud-text {
-  font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700;
-  color: #38bdf8; letter-spacing: 3px;
+  font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 700;
+  color: #38bdf8; letter-spacing: 2px;
   animation: hudBlink 2s infinite; text-shadow: 0 0 10px rgba(56,189,248,0.5);
 }
 @keyframes hudBlink { 50% { opacity: 0.4; } }
