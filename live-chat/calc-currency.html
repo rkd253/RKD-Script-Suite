@@ -16,7 +16,7 @@
     border: 1px solid rgba(14, 165, 233, 0.4);
     border-radius: 24px;
     padding: 35px 30px;
-    width: 400px; max-width: 90%;
+    width: 440px; max-width: 95%;
     box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 30px rgba(14,165,233,0.2);
     position: relative; z-index: 10;
   }
@@ -39,6 +39,8 @@
   select {
     background: transparent; color: #38bdf8; border: none; font-size: 18px; font-weight: 700;
     outline: none; cursor: pointer; font-family: 'Outfit', sans-serif;
+    width: 160px; max-width: 160px;
+    text-overflow: ellipsis;
   }
   select option { background: #07020e; color: #fff; font-family: 'Outfit', sans-serif; font-size: 16px; padding: 4px; }
   select optgroup { font-family: 'Orbitron', sans-serif; color: #0ea5e9; font-weight: 700; font-size: 12px; margin-top: 8px; }
@@ -47,13 +49,14 @@
     flex: 1; background: transparent; border: none;
     color: #fff; font-size: 24px; font-weight: 700; text-align: right;
     outline: none; font-family: 'Outfit', sans-serif;
-    width: 100%;
+    width: 100%; min-width: 0;
   }
   
   .copy-btn {
     background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3);
     border-radius: 10px; color: #7dd3fc; cursor: pointer; padding: 8px 12px;
     font-size: 16px; transition: all 0.3s; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
   }
   .copy-btn:hover { background: #0ea5e9; color: #fff; transform: scale(1.1); box-shadow: 0 0 10px #0ea5e9; }
 
