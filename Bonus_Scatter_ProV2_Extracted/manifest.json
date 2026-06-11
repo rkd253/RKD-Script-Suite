@@ -1,0 +1,94 @@
+{
+  "manifest_version": 3,
+  "name": "Bonus Scatter",
+  "version": "1.0.1",
+  "description": "Ekstensi otomatis untuk memeriksa transaksi dan mendeteksi scatter",
+  "permissions": ["tabs", "windows", "scripting", "activeTab", "storage", "declarativeNetRequestWithHostAccess", "alarms", "offscreen"],
+  "host_permissions": [
+    "https://*/transaction-record.html*",
+    "http://*/transaction-record.html*",
+    "https://agent.png777.com/*",
+    "http://localhost/*",
+    "https://localhost/*",
+    "https://smbabsen.site/*",
+    "https://127.0.0.1/*",
+    "https://*.masuk.fun/*",
+    "https://wbteam.cloud/*",
+    "https://ws.wbteam.cloud/*",
+    "https://*.wbteam.cloud/*",
+    "https://masuk.fun/*",
+    "https://public.u2uyu876x.com/*",
+    "https://public-api.u2uyu876x.com/*",
+    "https://bonussmb.com/*",
+    "https://script.google.com/*",
+    "http://iyakah.fun/*",
+    "https://new.glanters.site/*",
+    "https://*.smbabsen.site/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Bonus Scatter"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/transaction-record.html*",
+        "http://*/transaction-record.html*"
+      ],
+      "js": ["content.js"]
+    },
+    {
+      "matches": [
+        "https://bonussmb.com/*"
+      ],
+      "js": ["bonussmb-content.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "http://localhost/*",
+        "https://localhost/*",
+        "https://smbabsen.site/*",
+        "https://127.0.0.1/*",
+        "https://new.glanters.site/*",
+        "https://wbteam.cloud/*",
+        "https://iyakah.fun/*",
+        "https://mau.masuk.fun/*",
+        "http://*.masuk.fun/*",
+        "https://masuk.fun/*",
+        "https://ws.wbteam.cloud/*",
+        "https://*.wbteam.cloud/*",
+        "https://puli.masuk.fun/*",
+        "https://public.u2uyu876x.com/*",
+        "https://*.smbabsen.site/*"
+      ],
+      "js": ["bridge-scatter.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "Dasha taran.jpg",
+        "samurai_fog.png",
+        "countryside_village.png",
+        "signature.png",
+        "signature.png.png",
+        "index.css",
+        "index.globals.js",
+        "index.parse.js",
+        "index.results.js",
+        "index.integration.js",
+        "index.events.js",
+        "index.bg.js",
+        "inject-postback.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}

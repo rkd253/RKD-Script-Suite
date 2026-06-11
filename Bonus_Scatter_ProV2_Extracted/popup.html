@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Bonus Scatter</title>
+  <style>
+    :root {
+      --text:        #e8f4ff;
+      --muted:       #7ec8e3;
+      --primary:     #00d4ff;
+      --primary-dark:#0099cc;
+      --accent:      #00aaff;
+      --accent-glow: rgba(0,212,255,0.35);
+      --success:     #00e5a0;
+      --danger:      #ff4d6d;
+      --border:      rgba(0,180,255,0.25);
+      --border-bright: rgba(0,212,255,0.5);
+      --panel-bg:    rgba(0,20,50,0.82);
+      --input-bg:    rgba(0,10,30,0.75);
+      --table-head:  rgba(0,30,70,0.95);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      width: 460px;
+      color: var(--text);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Background layers */
+    #bgLayer {
+      position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(900px 400px at 20% -10%, rgba(0,150,255,0.3), transparent 60%),
+                  radial-gradient(700px 300px at 80% -20%, rgba(0,220,255,0.2), transparent 60%),
+                  #000e1f;
+      transition: background 0.5s ease;
+    }
+    #bgOverlay {
+      position: fixed; inset: 0; z-index: 1;
+      pointer-events: none;
+      transition: background 0.4s ease;
+    }
+    .content { position: relative; z-index: 2; }
+
+    /* ===== HEADER ===== */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px 10px;
+      background: rgba(0,15,40,0.75);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-bright);
+      box-shadow: 0 2px 20px rgba(0,180,255,0.15);
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #00aaff, #00e5ff);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 18px rgba(0,212,255,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-size: 1rem; font-weight: 800; letter-spacing: 1px;
+      background: linear-gradient(90deg, #00e5ff, #ffffff, #00aaff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1;
+      text-shadow: none;
+      filter: drop-shadow(0 0 8px rgba(0,212,255,0.8));
+    }
+
+    .brand-ver { font-size: 0.65rem; color: var(--muted); margin-top: 3px; letter-spacing: 0.3px; }
+
+    .theme-toggle-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 13px;
+      background: rgba(0,150,255,0.12);
+      border: 1px solid rgba(0,180,255,0.35);
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.73rem; color: var(--muted);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .theme-toggle-btn:hover {
+      background: rgba(0,180,255,0.22);
+      border-color: var(--primary);
+      color: var(--text);
+      box-shadow: 0 0 12px rgba(0,212,255,0.25);
+    }
+    .theme-toggle-btn .arrow { transition: transform 0.25s; display: inline-block; }
+    .theme-toggle-btn.open .arrow { transform: rotate(180deg); }
+
+    /* ===== TEMA PANEL ===== */
+    .tema-panel {
+      overflow: hidden; max-height: 0;
+      transition: max-height 0.35s ease;
+      background: rgba(0,12,35,0.97);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(0,180,255,0.3);
+    }
+    .tema-panel.open { max-height: 200px; }
+
+    .tema-inner { padding: 14px 16px 12px; }
+
+    .tema-label {
+      font-size: 0.68rem; color: var(--muted); font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+
+    .tema-grid {
+      display: grid; grid-template-columns: repeat(6, 1fr);
+      gap: 8px; margin-bottom: 12px;
+    }
+
+    .tema-item {
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      cursor: pointer;
+    }
+
+    .tema-swatch {
+      width: 38px; height: 38px; border-radius: 10px;
+      border: 2px solid transparent;
+      transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+    }
+    .tema-item:hover .tema-swatch { transform: scale(1.1); }
+    .tema-item.active .tema-swatch {
+      border-color: #00e5ff;
+      box-shadow: 0 0 14px rgba(0,229,255,0.6);
+      transform: scale(1.1);
+    }
+
+    .tema-swatch[data-bg="default"] { background: linear-gradient(135deg, #0066cc, #00ddff); }
+    .tema-swatch[data-bg="fire"]    { background: linear-gradient(135deg, #ef4444, #f97316); }
+    .tema-swatch[data-bg="ocean"]   { background: linear-gradient(135deg, #0099cc, #00ccff); }
+    .tema-swatch[data-bg="forest"]  { background: linear-gradient(135deg, #10b981, #059669); }
+    .tema-swatch[data-bg="galaxy"]  { background: linear-gradient(135deg, #4400cc, #cc00ff); }
+    .tema-swatch[data-bg="gold"]    { background: linear-gradient(135deg, #f0b429, #eab308); }
+
+    .tema-name { font-size: 0.6rem; color: var(--muted); text-align: center; }
+    .tema-item.active .tema-name { color: #00e5ff; font-weight: 700; }
+
+    .upload-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 9px 12px;
+      background: rgba(0,150,255,0.08);
+      border: 1px dashed rgba(0,180,255,0.3);
+      border-radius: 9px; cursor: pointer;
+      font-size: 0.8rem; color: var(--muted);
+      transition: all 0.2s;
+    }
+    .upload-btn:hover {
+      background: rgba(0,180,255,0.15);
+      border-color: var(--primary);
+      color: var(--text);
+      box-shadow: 0 0 10px rgba(0,212,255,0.2);
+    }
+    #bgImageInput { display: none; }
+
+    /* ===== PANEL UTAMA ===== */
+    .panel {
+      padding: 14px 16px 12px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 12px 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5),
+                  inset 0 1px 0 rgba(0,180,255,0.1),
+                  0 0 0 1px rgba(0,100,200,0.1);
+    }
+
+    /* Garis atas panel berkilau */
+    .panel::before {
+      content: '';
+      display: block;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,212,255,0.6), transparent);
+      margin: -14px -16px 12px;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .panel-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.93rem; font-weight: 700; margin-bottom: 10px; color: var(--text);
+    }
+    .panel-title::before {
+      content: '';
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--accent-glow), 0 0 20px var(--accent-glow);
+      display: inline-block; flex-shrink: 0;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 6px var(--accent-glow); }
+      50%       { box-shadow: 0 0 16px var(--accent-glow), 0 0 30px var(--accent-glow); }
+    }
+
+    label {
+      display: block; margin-top: 10px;
+      font-size: 0.8rem; color: var(--muted); font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    input, textarea {
+      width: 100%; padding: 8px 11px; margin-top: 5px;
+      background: var(--input-bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px; outline: none;
+      font-size: 0.83rem; font-family: inherit;
+      transition: border-color 160ms, box-shadow 160ms;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0,212,255,0.15), 0 0 10px rgba(0,212,255,0.1);
+    }
+    ::placeholder { color: rgba(100,160,200,0.5); }
+    textarea { height: 90px; resize: vertical; }
+
+    /* Tombol utama — glow biru */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      width: 100%; padding: 10px 12px; margin-top: 11px;
+      background: linear-gradient(180deg, #00aaff, #0077cc);
+      color: #fff; font-weight: 700; border: none; border-radius: 10px;
+      cursor: pointer; font-size: 0.86rem; font-family: inherit;
+      box-shadow: 0 6px 20px rgba(0,150,255,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+      transition: transform 120ms, box-shadow 200ms, filter 120ms;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.1);
+      box-shadow: 0 10px 28px rgba(0,180,255,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    .btn:active { transform: translateY(0); }
+
+    /* Tombol sekunder — cyan lebih terang */
+    .btn-secondary {
+      background: linear-gradient(180deg, rgba(0,200,255,0.18), rgba(0,150,220,0.18));
+      color: #00e5ff;
+      border: 1px solid rgba(0,200,255,0.4);
+      box-shadow: 0 4px 14px rgba(0,180,255,0.15);
+    }
+    .btn-secondary:hover {
+      background: linear-gradient(180deg, rgba(0,200,255,0.28), rgba(0,150,220,0.28));
+      box-shadow: 0 6px 20px rgba(0,212,255,0.3);
+    }
+
+    #status {
+      margin-top: 9px; font-size: 0.8em; color: var(--muted); min-height: 16px;
+    }
+
+    /* Table */
+    table {
+      width: 100%; margin-top: 11px;
+      border-collapse: separate; border-spacing: 0;
+      font-size: 0.8em;
+      border: 1px solid rgba(0,150,255,0.3);
+      border-radius: 10px; overflow: hidden;
+      background: rgba(0,10,30,0.6);
+    }
+    thead th {
+      text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 700; font-size: 0.68em;
+      background: var(--table-head);
+      color: #00e5ff; padding: 9px 7px;
+      border-bottom: 1px solid rgba(0,180,255,0.3);
+    }
+    tbody tr { background-color: rgba(0,15,40,0.7) !important; }
+    tbody tr:nth-child(even) { background-color: rgba(0,8,25,0.7) !important; }
+    tbody td {
+      border-bottom: 1px solid rgba(0,100,180,0.2);
+      padding: 7px 6px; text-align: center; color: var(--text);
+    }
+    tbody tr:hover { background-color: rgba(0,80,160,0.2) !important; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    #buttonContainer { display: flex; gap: 8px; margin-top: 9px; }
+    #clearBtn, #copyBtn {
+      width: 50%; padding: 8px 12px; border: none; border-radius: 10px;
+      cursor: pointer; color: #fff; font-weight: 600; font-size: 0.83rem; font-family: inherit;
+      transition: transform 120ms, filter 120ms;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    }
+    #clearBtn { background: linear-gradient(180deg, #ff4d6d, #cc1a35); }
+    #copyBtn  { background: linear-gradient(180deg, #00c8a0, #009970); }
+    #clearBtn:hover, #copyBtn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+    #clearBtn:active, #copyBtn:active { transform: translateY(0); }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(0,10,30,0.4); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,150,220,0.4); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0,200,255,0.6); }
+  </style>
+</head>
+<body>
+  <div id="bgLayer"></div>
+  <div id="bgOverlay"></div>
+
+  <div class="content">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        <div class="logo-icon">🎰</div>
+        <div>
+          <div class="brand-name">BONUS SCATTER</div>
+          <div class="brand-ver">v1.0.0 — Auto Checker</div>
+        </div>
+      </div>
+      <button class="theme-toggle-btn" id="themeToggleBtn" type="button">
+        🎨 Tema &amp; BG <span class="arrow">▼</span>
+      </button>
+    </div>
+
+    <!-- Tema Panel -->
+    <div class="tema-panel" id="temaPanel">
+      <div class="tema-inner">
+        <div class="tema-label">Pilih Background</div>
+        <div class="tema-grid">
+          <div class="tema-item active" data-bg="default">
+            <div class="tema-swatch" data-bg="default"></div>
+            <div class="tema-name">WDBOS</div>
+          </div>
+          <div class="tema-item" data-bg="fire">
+            <div class="tema-swatch" data-bg="fire"></div>
+            <div class="tema-name">Oranye</div>
+          </div>
+          <div class="tema-item" data-bg="ocean">
+            <div class="tema-swatch" data-bg="ocean"></div>
+            <div class="tema-name">Ocean</div>
+          </div>
+          <div class="tema-item" data-bg="forest">
+            <div class="tema-swatch" data-bg="forest"></div>
+            <div class="tema-name">Samurai</div>
+          </div>
+          <div class="tema-item" data-bg="galaxy">
+            <div class="tema-swatch" data-bg="galaxy"></div>
+            <div class="tema-name">Galaxy</div>
+          </div>
+          <div class="tema-item" data-bg="gold">
+            <div class="tema-swatch" data-bg="gold"></div>
+            <div class="tema-name">Pedesaan</div>
+          </div>
+        </div>
+        <div class="upload-btn" id="uploadBgBtn">
+          📂 Upload Foto Background Sendiri
+        </div>
+        <input type="file" id="bgImageInput" accept="image/*">
+      </div>
+    </div>
+
+    <!-- Main Panel -->
+    <div class="panel">
+      <div class="panel-title">Bonus Scatter Checker</div>
+
+      <label for="adminUrl">URL Dasar Admin</label>
+      <input type="url" id="adminUrl" placeholder="Contoh: https://agent.png777.com">
+
+      <label for="startDateInput">Tanggal Mulai</label>
+      <input type="date" id="startDateInput">
+
+      <label for="endDateInput">Tanggal Akhir</label>
+      <input type="date" id="endDateInput">
+
+      <label for="executorName">Nama Eksekutor</label>
+      <input type="text" id="executorName" placeholder="Masukkan nama Anda">
+
+      <label for="agentHeaders">Header Auth/Agent (paste)</label>
+      <textarea id="agentHeaders" placeholder="Contoh:&#10;X-Access-Token&#10;&lt;token&gt;&#10;X-Agent-Pkid&#10;1&#10;X-Agent-Role&#10;Leader&#10;X-Agent-Suid&#10;WDBOS&#10;X-Agent-User&#10;username&#10;X-Agent-UserId&#10;1872..."></textarea>
+
+      <button id="openWebBtn" class="btn btn-secondary" type="button">🌐 Buka Halaman Input</button>
+      <button id="startBtn" class="btn" type="button">🚀 Mulai Proses Otomatis</button>
+
+      <p id="status">Siap.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>User ID</th><th>Tx ID</th><th>Debet</th><th>Scatter</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="resultBody">
+          <tr><td colspan="5">Belum ada data</td></tr>
+        </tbody>
+      </table>
+
+      <div id="buttonContainer">
+        <button id="copyBtn">📋 Salin Hasil</button>
+        <button id="clearBtn">🗑️ Hapus Semua</button>
+      </div>
+    </div>
+
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
