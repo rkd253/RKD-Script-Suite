@@ -13,7 +13,7 @@
 (function () {
   'use strict';
 
-  const WALLPAPER_URL = 'https://socket-lapakmahjong.hokibgs.com/uploads/lapakmahjong/media/2026/02/media-1771946871466-912940853.png';
+  const WALLPAPER_URL = 'https://i.pinimg.com/1200x/60/5c/43/605c430a1aacae5c4ab829e1acb73b4e.jpg';
   let wallpaperActive = true;
 
   function injectStyles() {
@@ -55,12 +55,12 @@
     selectors.forEach(sel => {
       const el = document.querySelector(sel);
       if (el) {
-        el.style.backgroundColor = 'transparent';
+        el.style.backgroundColor = '#000000';
         el.style.backgroundImage = `url('${WALLPAPER_URL}')`;
         el.style.backgroundRepeat = 'no-repeat';
-        el.style.backgroundPosition = 'center top';
+        el.style.backgroundPosition = 'center center';
         el.style.backgroundAttachment = 'fixed';
-        el.style.backgroundSize = '27% auto';
+        el.style.backgroundSize = 'contain';
       }
     });
     
