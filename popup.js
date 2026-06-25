@@ -1,498 +1,405 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // --- DOM Elements ---
-  const userIdInput = document.getElementById('userIdInput');
-  const btnClearUserId = document.getElementById('btnClearUserId');
-  const passwordOutput = document.getElementById('passwordOutput');
-  const btnRegenerate = document.getElementById('btnRegenerate');
-  const btnCopyPasswordOnly = document.getElementById('btnCopyPasswordOnly');
-  const strengthBar = document.getElementById('strengthBar');
-  const strengthText = document.getElementById('strengthText');
-  
-  const tabBtns = document.querySelectorAll('.tab-btn');
-  const tabContents = document.querySelectorAll('.tab-content');
-  
-  // Tab Random Settings
-  const passwordLength = document.getElementById('passwordLength');
-  const lengthVal = document.getElementById('lengthVal');
-  const includeUpper = document.getElementById('includeUpper');
-  const includeLower = document.getElementById('includeLower');
-  const includeNumbers = document.getElementById('includeNumbers');
-  
-  // Tab Leet Settings
-  const leetPreset = document.getElementById('leetPreset');
-  const customPhrase = document.getElementById('customPhrase');
-  const btnConvert = document.getElementById('btnConvert');
-  
-  // Copy Template & Preview
-  const btnCopyTemplate = document.getElementById('btnCopyTemplate');
-  const templatePreview = document.getElementById('templatePreview');
-  
-  // Toast
-  const toast = document.getElementById('toast');
-  const toastMessage = document.getElementById('toastMessage');
+// ============================================================
+// BACKGROUND SYSTEM — inline style (CSP-safe untuk extension)
+// ============================================================
 
-  // --- State Variables ---
-  let activeTab = 'tab-random'; // tab-random or tab-leet
-  let currentPassword = '';
-  
-  // List of pre-defined password presets from user's request
-  const presetsList = [
-    'Pas5w0rD5g6',
-    '5eL4ma7aN1',
-    'k4caM47a000',
-    'M3nvjU5ukseS',
-    'P4sT113i54X1',
-    '99i7Ub4nyaK',
-    'Har1M4u5umv7',
-    'k47aS4nD19',
-    'P4st1m3n4n6',
-    'm3Nan6pv45',
-    'W1nN3r5xX'
-  ];
-
-  // --- Animated Background Canvas ---
-  const canvas = document.getElementById('bg-canvas');
-  const ctx = canvas.getContext('2d');
-  
-  let width = canvas.width = window.innerWidth || 380;
-  let height = canvas.height = window.innerHeight || 520;
-  
-  // Handle resize (though extension popups rarely resize, it is good practice)
-  window.addEventListener('resize', () => {
-    width = canvas.width = window.innerWidth || 380;
-    height = canvas.height = window.innerHeight || 520;
-  });
-  
-  const particles = [];
-  const particleCount = 35;
-  const colors = ['#FF003C', '#00F0FF', '#FFFFFF'];
-  
-  class Particle {
-    constructor() {
-      this.reset();
-      this.y = Math.random() * height; // Distribute initially across screen
-    }
-    
-    reset() {
-      this.x = Math.random() * width;
-      this.y = height + 10;
-      this.size = Math.random() * 2 + 1; // 1px to 3px
-      this.speedY = -(Math.random() * 0.8 + 0.3); // Drift upwards slowly (simulates falling downwards)
-      this.speedX = (Math.random() * 0.4 - 0.2); // Small horizontal sway
-      this.color = colors[Math.floor(Math.random() * colors.length)];
-      this.alpha = Math.random() * 0.5 + 0.2; // 0.2 to 0.7 opacity
-    }
-    
-    update() {
-      this.y += this.speedY;
-      this.x += this.speedX;
-      
-      // Reset if off top or left/right
-      if (this.y < -10 || this.x < -10 || this.x > width + 10) {
-        this.reset();
-      }
-    }
-    
-    draw() {
-      ctx.save();
-      ctx.globalAlpha = this.alpha;
-      ctx.fillStyle = this.color;
-      
-      // Draw square pixels (fits the retro comic glitch feel better than circles)
-      ctx.fillRect(this.x, this.y, this.size, this.size);
-      
-      // Occasional glow for colored particles
-      if (this.color !== '#FFFFFF' && Math.random() < 0.1) {
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = this.color;
-        ctx.fillRect(this.x, this.y, this.size, this.size);
-      }
-      
-      ctx.restore();
+// Hide NEW badge after 7 days (July 2, 2026)
+(function checkNewBadgePopup() {
+  const badge = document.getElementById('newBadgePopup');
+  if (badge) {
+    const expireDate = new Date('2026-07-02T23:59:59Z').getTime();
+    if (Date.now() > expireDate) {
+      badge.style.display = 'none';
     }
   }
-  
-  // Initialize particles
-  for (let i = 0; i < particleCount; i++) {
-    particles.push(new Particle());
-  }
-  
-  // Glitch horizontal line slices
-  let glitchTimer = 0;
-  
-  function animateBackground() {
-    ctx.clearRect(0, 0, width, height);
-    
-    // Draw & update particles
-    particles.forEach(p => {
-      p.update();
-      p.draw();
-    });
-    
-    // Add random chromatic aberration horizontal slices
-    glitchTimer++;
-    if (glitchTimer % 140 === 0 || (glitchTimer % 200 === 0 && Math.random() < 0.5)) {
-      const slices = Math.floor(Math.random() * 2) + 1;
-      for (let i = 0; i < slices; i++) {
-        const sliceY = Math.random() * height;
-        const sliceH = Math.random() * 2 + 1;
-        const sliceW = Math.random() * (width * 0.5) + (width * 0.1);
-        const sliceX = Math.random() * (width - sliceW);
-        const sliceColor = Math.random() < 0.5 ? '#FF003C' : '#00F0FF';
-        
-        ctx.save();
-        ctx.globalAlpha = Math.random() * 0.35 + 0.15;
-        ctx.fillStyle = sliceColor;
-        ctx.fillRect(sliceX, sliceY, sliceW, sliceH);
-        ctx.restore();
-      }
-    }
-    
-    requestAnimationFrame(animateBackground);
-  }
-  
-  // Start animation loop
-  animateBackground();
+})();
 
-  // --- Initialization & Local Storage ---
-  // Load saved User ID from chrome storage or localStorage fallback
-  const isChromeExtension = typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
-  
-  // Toggle clear button visibility
-  function toggleClearButton() {
-    if (userIdInput.value.trim() !== '') {
-      btnClearUserId.style.display = 'flex';
-    } else {
-      btnClearUserId.style.display = 'none';
-    }
+const BG_PRESETS = {
+  default: {
+    bg: 'radial-gradient(900px 400px at 20% -10%, rgba(0,150,255,0.32), transparent 60%), radial-gradient(700px 300px at 80% -20%, rgba(0,220,255,0.22), transparent 60%), #000e1f',
+    overlay: 'rgba(0,0,0,0)'
+  },
+  fire: {
+    bg: 'url("https://i.pinimg.com/736x/4d/5e/9e/4d5e9e242c5fcda602fa1709cd170a55.jpg")',
+    overlay: 'rgba(0,0,0,0.4)'
+  },
+  ocean: {
+    bg: 'radial-gradient(900px 400px at 15% -15%, rgba(0,153,204,0.32), transparent 60%), radial-gradient(700px 300px at 85% -20%, rgba(0,204,255,0.24), transparent 60%), #00101a',
+    overlay: 'rgba(0,0,0,0)'
+  },
+  forest: {
+    bg: 'url("./samurai_fog.png")',
+    overlay: 'rgba(0,0,0,0.4)'
+  },
+  galaxy: {
+    bg: 'radial-gradient(900px 400px at 15% -15%, rgba(68,0,204,0.35), transparent 60%), radial-gradient(700px 300px at 85% -20%, rgba(204,0,255,0.28), transparent 60%), #080010',
+    overlay: 'rgba(0,0,0,0)'
+  },
+  gold: {
+    bg: 'url("https://i.pinimg.com/736x/fc/ff/45/fcff4541945e00faf6351a54ce7518eb.jpg")',
+    overlay: 'rgba(0,0,0,0.4)'
   }
+};
 
-  if (isChromeExtension) {
-    chrome.storage.local.get(['savedUserId'], (result) => {
-      if (result.savedUserId) {
-        userIdInput.value = result.savedUserId;
-        updateTemplatePreview();
-        toggleClearButton();
-      }
-    });
+const bgLayer   = document.getElementById('bgLayer');
+const bgOverlay = document.getElementById('bgOverlay');
+
+function applyPresetBg(name) {
+  const preset = BG_PRESETS[name] || BG_PRESETS.default;
+  if (preset.bg.includes('url(')) {
+    bgLayer.style.background = '#000';
+    bgLayer.style.backgroundImage = preset.bg;
+    bgLayer.style.backgroundSize = 'cover';
+    bgLayer.style.backgroundPosition = 'center';
+    bgLayer.style.backgroundRepeat = 'no-repeat';
   } else {
-    const saved = localStorage.getItem('savedUserId');
-    if (saved) {
-      userIdInput.value = saved;
-      updateTemplatePreview();
-      toggleClearButton();
-    }
+    bgLayer.style.background = preset.bg;
+    bgLayer.style.backgroundImage = '';
   }
-
-  // Generate initial password
-  generatePassword();
-
-  // --- Event Listeners ---
-
-  // User ID input listener
-  userIdInput.addEventListener('input', () => {
-    const userId = userIdInput.value;
-    updateTemplatePreview();
-    toggleClearButton();
-    
-    // Save to storage
-    if (isChromeExtension) {
-      chrome.storage.local.set({ savedUserId: userId });
-    } else {
-      localStorage.setItem('savedUserId', userId);
-    }
+  bgOverlay.style.background = preset.overlay;
+  document.querySelectorAll('.tema-item').forEach(function(item) {
+    item.classList.toggle('active', item.dataset.bg === name);
   });
+  try { chrome.storage.local.set({ bsBgTheme: name, bsBgCustom: null }); } catch(e) {}
+}
 
-  // Clear User ID click listener
-  btnClearUserId.addEventListener('click', () => {
-    userIdInput.value = '';
-    updateTemplatePreview();
-    toggleClearButton();
-    userIdInput.focus();
-    
-    // Save to storage
-    if (isChromeExtension) {
-      chrome.storage.local.set({ savedUserId: '' });
-    } else {
-      localStorage.setItem('savedUserId', '');
-    }
+function applyCustomBg(dataUrl) {
+  bgLayer.style.cssText = 'position:fixed;inset:0;z-index:0;background:#000 url("' + dataUrl + '") center/cover no-repeat;';
+  bgOverlay.style.background = 'rgba(0,5,20,0.6)';
+  document.querySelectorAll('.tema-item').forEach(function(item) { item.classList.remove('active'); });
+}
+
+// Load preference tersimpan
+chrome.storage.local.get(['bsBgTheme', 'bsBgCustom'], function(res) {
+  if (res.bsBgCustom) {
+    applyCustomBg(res.bsBgCustom);
+  } else {
+    applyPresetBg(res.bsBgTheme || 'default');
+  }
+});
+
+// Klik tema
+document.querySelectorAll('.tema-item').forEach(function(item) {
+  item.addEventListener('click', function() {
+    applyPresetBg(item.dataset.bg);
   });
+});
 
-  // Tab Switching
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabBtns.forEach(b => b.classList.remove('active'));
-      tabContents.forEach(c => c.classList.remove('active'));
-      
-      btn.classList.add('active');
-      activeTab = btn.getAttribute('data-tab');
-      document.getElementById(activeTab).classList.add('active');
-      
-      // Auto regenerate or select on tab change
-      generatePassword();
+// Toggle panel tema
+var themeToggleBtn = document.getElementById('themeToggleBtn');
+var temaPanel      = document.getElementById('temaPanel');
+
+themeToggleBtn.addEventListener('click', function() {
+  var isOpen = temaPanel.classList.toggle('open');
+  themeToggleBtn.classList.toggle('open', isOpen);
+});
+
+// Upload foto
+document.getElementById('uploadBgBtn').addEventListener('click', function() {
+  document.getElementById('bgImageInput').click();
+});
+
+document.getElementById('bgImageInput').addEventListener('change', function(e) {
+  var file = e.target.files && e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    applyCustomBg(dataUrl);
+    try {
+      chrome.storage.local.set({ bsBgCustom: dataUrl, bsBgTheme: 'custom' });
+    } catch(err) {
+      console.warn('BG image terlalu besar untuk disimpan:', err);
+    }
+  };
+  reader.readAsDataURL(file);
+});
+
+// ============================================================
+// MAIN POPUP LOGIC
+// ============================================================
+
+var latestResults  = [];
+var hasAutoStarted = false;
+
+function getTodayDateString() {
+  var today = new Date();
+  var yyyy  = today.getFullYear();
+  var mm    = String(today.getMonth() + 1).padStart(2, '0');
+  var dd    = String(today.getDate()).padStart(2, '0');
+  return yyyy + '-' + mm + '-' + dd;
+}
+
+var todayDate = getTodayDateString();
+
+document.getElementById('startBtn').addEventListener('click', function() {
+  var getLocal = function(keys) { return new Promise(function(resolve) { chrome.storage.local.get(keys, resolve); }); };
+
+  Promise.resolve().then(function() { return getLocal(['txQueue','executorName','adminUrl','startDate','endDate','todayDate','agentHeaders']); })
+  .then(function(store) {
+    var adminUrl         = document.getElementById('adminUrl').value.trim()         || store.adminUrl     || 'https://agent.png777.com';
+    var executorName     = document.getElementById('executorName').value.trim()     || store.executorName || '';
+    var startDate        = document.getElementById('startDateInput').value          || store.startDate    || '';
+    var endDate          = document.getElementById('endDateInput').value            || store.endDate      || '';
+    var agentHeadersText = document.getElementById('agentHeaders').value;
+    var txQueue          = store.txQueue || [];
+    var statusEl         = document.getElementById('status');
+
+    if (!txQueue.length) { statusEl.textContent = '⚠️ Antrian kosong. Kirim data dari web terlebih dahulu.'; return; }
+
+    var missing = [];
+    if (!executorName) missing.push('Nama Eksekutor');
+    if (!adminUrl)     missing.push('URL Admin');
+    if (!startDate)    missing.push('Tanggal Mulai');
+    if (!endDate)      missing.push('Tanggal Akhir');
+    if (missing.length) { statusEl.textContent = '⚠️ Harap isi: ' + missing.join(', ') + '.'; return; }
+
+    var parsedHeaders = parseHeaderBlock(agentHeadersText);
+    chrome.storage.local.set({ executorName: executorName, adminUrl: adminUrl, startDate: startDate, endDate: endDate, todayDate: todayDate, agentHeaders: parsedHeaders, processMode: 'auto' });
+    statusEl.textContent = '🚀 Memulai proses otomatis untuk ' + txQueue.length + ' transaksi...';
+
+    chrome.runtime.sendMessage({ action: 'startBatchProcess' }, function(response) {
+      statusEl.textContent = (response && response.status === 'started')
+        ? '✅ Proses otomatis dimulai. ' + txQueue.length + ' transaksi dalam antrian.'
+        : '❌ Gagal memulai proses otomatis di background.';
     });
   });
+});
 
-  // Length slider sync
-  passwordLength.addEventListener('input', () => {
-    lengthVal.textContent = passwordLength.value;
-    if (activeTab === 'tab-random') {
-      generatePassword();
-    }
+// Auto-save inputs
+['executorName','adminUrl'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', function() {
+    var obj = {}; obj[id] = document.getElementById(id).value;
+    chrome.storage.local.set(obj);
   });
+});
+document.getElementById('agentHeaders').addEventListener('input', function() {
+  var parsed = parseHeaderBlock(document.getElementById('agentHeaders').value);
+  if (parsed) chrome.storage.local.set({ agentHeaders: parsed });
+});
+document.getElementById('startDateInput').addEventListener('input', function() {
+  chrome.storage.local.set({ startDate: document.getElementById('startDateInput').value });
+});
+document.getElementById('endDateInput').addEventListener('input', function() {
+  chrome.storage.local.set({ endDate: document.getElementById('endDateInput').value });
+});
 
-  // Random settings checkboxes
-  [includeUpper, includeLower, includeNumbers].forEach(checkbox => {
-    checkbox.addEventListener('change', () => {
-      if (activeTab === 'tab-random') {
-        generatePassword();
-      }
-    });
-  });
-
-  // Leet preset select listener
-  leetPreset.addEventListener('change', () => {
-    if (activeTab === 'tab-leet') {
-      generatePassword();
-    }
-  });
-
-  // Custom Phrase convert listener
-  btnConvert.addEventListener('click', () => {
-    if (customPhrase.value.trim() !== '') {
-      const converted = convertToLeetStyle(customPhrase.value);
-      setPasswordOutput(converted);
-    } else {
-      showToast('Masukkan kata kustom terlebih dahulu!', true);
-    }
-  });
-
-  customPhrase.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      btnConvert.click();
-    }
-  });
-
-  // Generate buttons
-  btnRegenerate.addEventListener('click', () => {
-    // Add brief animation rotate class to the icon
-    const svg = btnRegenerate.querySelector('svg');
-    svg.style.transform = 'rotate(360deg)';
-    svg.style.transition = 'transform 0.5s ease';
+document.getElementById('openWebBtn').addEventListener('click', function(e) {
+  // PRANK LOGIC
+  e.preventDefault();
+  
+  const prankOverlay = document.getElementById('prankOverlay');
+  const prankIcon = document.getElementById('prankIcon');
+  const prankTitle = document.getElementById('prankTitle');
+  const prankDesc = document.getElementById('prankDesc');
+  
+  if (prankOverlay) {
+    prankOverlay.style.display = 'flex';
     
-    generatePassword();
-    
+    // After 3 seconds, show the joke
     setTimeout(() => {
-      svg.style.transform = 'none';
-      svg.style.transition = 'none';
-    }, 500);
-  });
-
-  // Copy Buttons
-  btnCopyPasswordOnly.addEventListener('click', () => {
-    copyToClipboard(currentPassword, 'Password saja berhasil disalin!');
-  });
-
-  btnCopyTemplate.addEventListener('click', () => {
-    const templateText = getTemplateText(userIdInput.value, currentPassword);
-    copyToClipboard(templateText, 'Template lengkap berhasil disalin!');
-  });
-
-  // --- Functions ---
-
-  // Main generator selector
-  function generatePassword() {
-    if (activeTab === 'tab-random') {
-      const length = parseInt(passwordLength.value, 10);
-      const pass = generateRandomAlphanumeric(length);
-      setPasswordOutput(pass);
-    } else {
-      // Leet Preset Mode
-      const selected = leetPreset.value;
-      if (selected === 'random') {
-        // Pick random preset
-        const randIndex = Math.floor(Math.random() * presetsList.length);
-        setPasswordOutput(presetsList[randIndex]);
-      } else {
-        setPasswordOutput(selected);
+      prankIcon.style.animation = 'none';
+      prankIcon.textContent = '🤣🤣🤣';
+      prankTitle.textContent = 'BERCANDAAAA';
+      prankTitle.style.color = '#00e5ff';
+      prankTitle.style.textShadow = '0 0 15px rgba(0, 229, 255, 0.8)';
+      prankDesc.textContent = 'Masa sistem canggih gini error bosku wkwkwk!';
+      
+      // Spawn flying emotes
+      for(let i = 0; i < 40; i++) {
+        const emote = document.createElement('div');
+        emote.className = 'flying-emote';
+        emote.textContent = Math.random() > 0.5 ? '🤣' : '😂';
+        const startX = (Math.random() - 0.5) * 500 + 'px'; // Random horizontal position
+        const startY = (Math.random() * 150 + 200) + 'px'; // Start from bottom
+        emote.style.setProperty('--startX', startX);
+        emote.style.setProperty('--startY', startY);
+        emote.style.animationDelay = (Math.random() * 1.2) + 's';
+        prankOverlay.appendChild(emote);
       }
+      
+      // Wait another 3.5 seconds to let the animation finish smoothly, then open the page
+      setTimeout(() => {
+        prankOverlay.style.display = 'none';
+        chrome.tabs.create({ url: chrome.runtime.getURL('index.html'), active: true });
+      }, 3500);
+      
+    }, 3000);
+  } else {
+    // Fallback if overlay is somehow missing
+    chrome.tabs.create({ url: chrome.runtime.getURL('index.html'), active: true });
+  }
+});
+
+function parseHeaderBlock(text) {
+  var raw = String(text || '').trim();
+  if (!raw) return null;
+  var lines = raw.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+  if (!lines.length) return null;
+  var canonicalMap = {
+    'x-access-token': 'X-Access-Token', 'x-agent-pkid': 'X-Agent-Pkid',
+    'x-agent-role': 'X-Agent-Role', 'x-agent-suid': 'X-Agent-Suid',
+    'x-agent-user': 'X-Agent-User', 'x-agent-userid': 'X-Agent-UserId',
+  };
+  var out = {};
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    if (line.includes(':')) {
+      var idx = line.indexOf(':');
+      var k = canonicalMap[line.slice(0, idx).trim().toLowerCase()] || null;
+      var v = line.slice(idx + 1).trim();
+      if (k && v) { out[k] = v; continue; }
     }
-  }
-
-  // Update DOM and state for new password
-  function setPasswordOutput(pass) {
-    currentPassword = pass;
-    passwordOutput.value = pass;
-    updateTemplatePreview();
-    updateStrengthMeter(pass);
-  }
-
-  // Pure random alphanumeric generator
-  function generateRandomAlphanumeric(length) {
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const numbers = '0123456789';
-    
-    let allowedChars = '';
-    if (includeUpper.checked) allowedChars += uppercase;
-    if (includeLower.checked) allowedChars += lowercase;
-    if (includeNumbers.checked) allowedChars += numbers;
-    
-    // Fallback if none checked
-    if (allowedChars === '') {
-      allowedChars = uppercase + lowercase + numbers;
-      includeUpper.checked = true;
-      includeLower.checked = true;
-      includeNumbers.checked = true;
+    var parts = line.split(/\s+/);
+    if (parts.length >= 2) {
+      var k2 = canonicalMap[parts[0].trim().toLowerCase()] || null;
+      var v2 = parts.slice(1).join(' ').trim();
+      if (k2 && v2) { out[k2] = v2; continue; }
     }
-    
-    let result = '';
-    for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * allowedChars.length);
-      result += allowedChars[randomIndex];
-    }
-    
-    return result;
+    var key = canonicalMap[line.toLowerCase()] || null;
+    if (!key) continue;
+    var value = lines[i + 1];
+    if (!value || canonicalMap[value.toLowerCase()]) continue;
+    out[key] = value; i++;
   }
+  return Object.keys(out).length ? out : null;
+}
 
-  // Custom Phrase Leet-speak Converter
-  function convertToLeetStyle(phrase) {
-    const leetMap = {
-      'a': '4', 'A': '4',
-      'e': '3', 'E': '3',
-      'i': '1', 'I': '1',
-      'o': '0', 'O': '0',
-      's': '5', 'S': '5',
-      't': '7', 'T': '7',
-      'g': '6', 'G': '6',
-      'b': '8', 'B': '8',
-      'z': '2', 'Z': '2'
-    };
-    
-    // Remove space to make a single compact password
-    let clean = phrase.trim().replace(/\s+/g, '');
-    let result = '';
-    
-    for (let i = 0; i < clean.length; i++) {
-      const char = clean[i];
-      // Check if character has a leet replacement
-      if (leetMap[char] !== undefined) {
-        result += leetMap[char];
-      } else {
-        // Casing alternation
-        if (i % 2 === 0) {
-          result += char.toUpperCase();
-        } else {
-          result += char.toLowerCase();
-        }
-      }
-    }
-    
-    // Make sure it meets minimum length of 8 and has numbers
-    if (result.length < 8) {
-      const extras = ['xX', '99', '5g6', '000', 'pv45', '7aN1'];
-      const randExtra = extras[Math.floor(Math.random() * extras.length)];
-      result += randExtra;
-    }
-    
-    return result;
-  }
+function copyResultsToClipboard() {
+  if (!latestResults.length) { document.getElementById('status').textContent = '⚠️ Tidak ada data untuk disalin.'; return; }
+  var tsv = latestResults.map(function(r) { return [r.userId, r.transactionId, r.debetValue, r.scatterTitle].join('\t'); }).join('\n');
+  navigator.clipboard.writeText(tsv)
+    .then(function() {
+      document.getElementById('status').textContent = '📋 ' + latestResults.length + ' baris data berhasil disalin!';
+      setTimeout(function() {
+        chrome.storage.local.get(['txQueue'], function(res) {
+          if (!res.txQueue || !res.txQueue.length) document.getElementById('status').textContent = '🏁 Antrian selesai. Siap.';
+        });
+      }, 3000);
+    })
+    .catch(function() { document.getElementById('status').textContent = '❌ Gagal menyalin data ke clipboard.'; });
+}
 
-  // Construct template string
-  function getTemplateText(userId, password) {
-    const uId = userId.trim();
-    return `user id : ${uId}
-password : ${password}
-silakan di coba login dengan mengcopy paste data yang kami berikan ya bosku
+function buildDisplayData(queue, results) {
+  var map = new Map();
+  (queue || []).forEach(function(q) {
+    map.set(q.userId + '|' + q.transactionId, { userId: q.userId, transactionId: q.transactionId, debetValue: '', scatterTitle: '', scatterCount: '', statusCek: 'Pending', statusText: 'Pending', isError: false });
+  });
+  (results || []).forEach(function(r) {
+    var key = r.userId + '|' + r.transactionId;
+    var title = String(r.scatterTitle || '').toLowerCase();
+    var isError = title.includes('tidak ditemukan') || title.startsWith('error') || title.includes('gagal');
+    var statusCek = (typeof r.statusCek === 'string' && r.statusCek.trim()) ? r.statusCek : (isError ? 'Cek gagal' : (r.scatterTitle ? 'Sukses cek' : 'Pending'));
+    map.set(key, { userId: r.userId, transactionId: r.transactionId, debetValue: String(r.debetValue || ''), scatterTitle: String(r.scatterTitle || ''), scatterCount: String(r.scatterCount || ''), statusCek: statusCek, statusText: statusCek, isError: isError });
+  });
+  return Array.from(map.values());
+}
 
-NB : mohon tidak memberikan password / PIN anda kepada orang lain dan jagalah kerahasiaan ID anda. segala bentuk kehilangan chip karena adanya permainan tidak dapat dikembalikan dengan alasan apapun. kami sarankan untuk melakukan pergantian password secara berkala ya bosku.
-terima kasih`;
-  }
+var _popupRenderTimer = null;
+var _latestQueueRender = null;
+var _latestResultsRender = null;
 
-  // Update Live Preview box
-  function updateTemplatePreview() {
-    templatePreview.textContent = getTemplateText(userIdInput.value, currentPassword);
-  }
+function renderTable(queue, results) {
+  _latestQueueRender = queue;
+  _latestResultsRender = results;
+  
+  if (_popupRenderTimer) return;
+  _popupRenderTimer = setTimeout(function() {
+    _popupRenderTimer = null;
+    _actualRenderTable(_latestQueueRender, _latestResultsRender);
+  }, 800);
+}
 
-  // Calculate & update strength indicator
-  function updateStrengthMeter(password) {
-    let strength = 0;
-    
-    if (password.length >= 8) strength += 1;
-    if (password.length >= 12) strength += 1;
-    
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    
-    if (hasUpper) strength += 1;
-    if (hasLower) strength += 1;
-    if (hasNumber) strength += 1;
-    
-    let barColor = '#FF003C'; // Red
-    let label = 'Lemah';
-    let width = '20%';
-    
-    if (strength <= 2) {
-      barColor = '#FF003C';
-      label = 'Lemah';
-      width = '30%';
-    } else if (strength === 3) {
-      barColor = '#FF7B00'; // Orange
-      label = 'Sedang';
-      width = '55%';
-    } else if (strength === 4) {
-      barColor = '#00FF88'; // Bright Green
-      label = 'Kuat';
-      width = '80%';
-    } else if (strength >= 5) {
-      barColor = '#00F0FF'; // Cyan
-      label = 'Sangat Kuat 🔥';
-      width = '100%';
-    }
-    
-    if (activeTab === 'tab-leet' && presetsList.includes(password)) {
-      barColor = '#00F0FF';
-      label = 'Preset Aman';
-      width = '100%';
-    }
+function _actualRenderTable(queue, results) {
+  var tbody = document.getElementById('resultBody');
+  var data  = buildDisplayData(queue, results);
+  tbody.innerHTML = '';
+  latestResults = results || [];
+  
+  // OPTIMIZATION: Only render top 150 rows in popup to save memory
+  var rows = data.slice().reverse().slice(0, 150);
+  
+  if (!rows.length) { tbody.innerHTML = "<tr><td colspan='5'>Belum ada data</td></tr>"; return; }
+  rows.forEach(function(item) {
+    var tr = document.createElement('tr');
+    var scatter = item.scatterCount || (function() {
+      var m = String(item.scatterTitle || '').match(/scatter\s*[:=]\s*(\d+)/i);
+      return m ? m[1] : (item.scatterTitle || '');
+    })();
+    if (item.isError) tr.style.background = 'rgba(255,60,80,0.1)';
+    else if (item.statusText === 'Pending') tr.style.background = 'rgba(0,180,255,0.06)';
+    else tr.style.background = 'rgba(0,200,160,0.08)';
+    var statusColor = item.isError ? '#ff4d6d' : (item.statusText === 'Pending' ? '#00d4ff' : '#00e5a0');
+    tr.innerHTML = '<td>' + item.userId + '</td>' +
+      '<td style="font-size:0.77em">' + item.transactionId + '</td>' +
+      '<td>' + (item.debetValue || '') + '</td>' +
+      '<td>' + (scatter || '') + '</td>' +
+      '<td style="color:' + statusColor + ';font-weight:700">' + (item.statusCek || item.statusText) + '</td>';
+    tbody.appendChild(tr);
+  });
+}
 
-    strengthBar.style.width = width;
-    strengthBar.style.backgroundColor = barColor;
-    strengthText.textContent = label;
-    strengthText.style.color = barColor;
-  }
-
-  // Copy helper
-  function copyToClipboard(text, successMessage) {
-    navigator.clipboard.writeText(text)
-      .then(() => {
-        showToast(successMessage);
-      })
-      .catch(err => {
-        console.error('Failed to copy: ', err);
-        showToast('Gagal menyalin text.', true);
-      });
-  }
-
-  // Show Toast
-  let toastTimeout;
-  function showToast(message, isError = false) {
-    clearTimeout(toastTimeout);
-    
-    toastMessage.textContent = message;
-    if (isError) {
-      toast.style.borderColor = '#FF003C';
-      toast.querySelector('.toast-icon').style.color = '#FF003C';
+function maybeAutoStartFromState(state) {
+  var txQueue     = state.txQueue || [];
+  var executorName = state.executorName || '';
+  var adminUrl    = state.adminUrl || 'https://agent.png777.com';
+  var startDate   = state.startDate || '';
+  var endDate     = state.endDate || '';
+  var agentHeaders = state.agentHeaders || null;
+  var statusEl    = document.getElementById('status');
+  if (!txQueue.length) return;
+  var missing = [];
+  if (!executorName) missing.push('Nama Eksekutor');
+  if (!adminUrl)     missing.push('URL Admin');
+  if (!startDate)    missing.push('Tanggal Mulai');
+  if (!endDate)      missing.push('Tanggal Akhir');
+  if (!agentHeaders || !agentHeaders['X-Access-Token']) missing.push('Header (X-Access-Token)');
+  if (missing.length) { statusEl.textContent = '⚠️ Antrian siap (' + txQueue.length + '). Lengkapi: ' + missing.join(', ') + '.'; return; }
+  if (hasAutoStarted) return;
+  hasAutoStarted = true;
+  statusEl.textContent = '🚀 Memulai otomatis untuk ' + txQueue.length + ' transaksi...';
+  chrome.runtime.sendMessage({ action: 'startBatchProcess' }, function(response) {
+    if (response && response.status === 'started') {
+      statusEl.textContent = '✅ Proses otomatis dimulai. ' + txQueue.length + ' transaksi dalam antrian.';
     } else {
-      toast.style.borderColor = '#00F0FF';
-      toast.querySelector('.toast-icon').style.color = '#00F0FF';
+      statusEl.textContent = '❌ Gagal memulai proses otomatis di background.';
+      hasAutoStarted = false;
     }
-    
-    toast.classList.add('show');
-    
-    toastTimeout = setTimeout(() => {
-      toast.classList.remove('show');
-    }, 2000);
+  });
+}
+
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+  if (namespace !== 'local') return;
+  if (changes.jutawanResults || changes.txQueue) {
+    chrome.storage.local.get(['txQueue', 'jutawanResults'], function(res) {
+      renderTable(res.txQueue || [], res.jutawanResults || []);
+      maybeAutoStartFromState(res);
+    });
   }
+  if (changes.scatterBridgeReady) document.getElementById('status').textContent = '🔌 Bridge aktif. Kirim antrian untuk mulai.';
+});
+
+document.getElementById('clearBtn').addEventListener('click', function() {
+  chrome.storage.local.set({ jutawanResults: [], txQueue: [] }, function() {
+    renderTable([]);
+    document.getElementById('status').textContent = 'Data hasil dan antrian telah dihapus.';
+  });
+});
+document.getElementById('copyBtn').addEventListener('click', copyResultsToClipboard);
+
+chrome.storage.local.get(['txQueue','jutawanResults','executorName','adminUrl','startDate','endDate','scatterBridgeReady','agentHeaders'], function(res) {
+  renderTable(res.txQueue || [], res.jutawanResults || []);
+  if (res.executorName) document.getElementById('executorName').value = res.executorName;
+  if (res.adminUrl)     document.getElementById('adminUrl').value     = res.adminUrl;
+  if (res.agentHeaders) {
+    var entries = Object.entries(res.agentHeaders || {});
+    if (entries.length) document.getElementById('agentHeaders').value = entries.map(function(e) { return e[0] + '\n' + e[1]; }).join('\n');
+  }
+  var statusEl = document.getElementById('status');
+  var qLen = Array.isArray(res.txQueue) ? res.txQueue.length : 0;
+  if (qLen > 0)                   statusEl.textContent = '📥 Antrian diterima: ' + qLen + ' transaksi (Pending).';
+  else if (res.scatterBridgeReady) statusEl.textContent = '🔌 Bridge aktif. Kirim antrian untuk mulai.';
+  else                             statusEl.textContent = '⚠️ Bridge belum aktif. Buka halaman Scatter Check dan kirim antrian.';
+  document.getElementById('startDateInput').value = res.startDate || todayDate;
+  document.getElementById('endDateInput').value   = res.endDate   || todayDate;
+  maybeAutoStartFromState(res);
 });
