@@ -193,6 +193,15 @@
   <!-- ===== SECTION: EXTENSIONS ===== -->
   <div class="section" id="sec-extensions">
     <div class="section-title">Chrome Extensions</div>
+    
+    <div id="updateNotifV3" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; box-shadow: 0 0 15px rgba(236,72,153,0.2);">
+      <div style="font-size: 24px;">🎉</div>
+      <div>
+        <div style="color: #ec4899; font-weight: bold; margin-bottom: 4px; text-shadow: 0 0 5px rgba(236,72,153,0.5);">Update Terbaru: Bonus Scatter Pro V3 Premium!</div>
+        <div style="font-size: 13px; color: #e2e8f0; line-height: 1.4;">Telah hadir update super ringan dengan optimasi RAM/CPU, font premium, dan animasi "Kejutan" untuk prank! Yuk segera di-download.</div>
+      </div>
+    </div>
+
     <div class="cards-grid">
 
       <div class="card" style="border-color: rgba(14,165,233,0.3);">
@@ -220,7 +229,7 @@
             <div class="card-label" style="color: #f59e0b;">EXTENSION_02</div>
             <div class="card-name" style="display:flex; align-items:center;">
               Bonus Scatter Pro V3 Premium 
-              <span style="background: linear-gradient(135deg, #10b981, #047857); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: bold; box-shadow: 0 0 10px rgba(16,185,129,0.6); letter-spacing: 0.5px;">NEW UPDATE</span>
+              <span id="updateBadgeV3" style="background: linear-gradient(135deg, #ec4899, #be185d); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: bold; box-shadow: 0 0 10px rgba(236, 72, 153, 0.6); letter-spacing: 0.5px;">NEW UPDATE</span>
             </div>
           </div>
         </div>
@@ -482,6 +491,15 @@ for(let i=0; i<35; i++) {
   p.style.animationDuration = (Math.random() * 4 + 3) + 's'; // 3s to 7s
   p.style.animationDelay = Math.random() * 5 + 's';
   particleLayer.appendChild(p);
+}
+
+// Expire V3 update notification and badge after 3 days (June 28, 2026)
+const updateExpDate = new Date('2026-06-28T00:00:00');
+if (new Date() > updateExpDate) {
+  const badge = document.getElementById('updateBadgeV3');
+  const notif = document.getElementById('updateNotifV3');
+  if (badge) badge.style.display = 'none';
+  if (notif) notif.style.display = 'none';
 }
 </script>
 
