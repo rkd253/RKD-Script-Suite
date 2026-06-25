@@ -66,11 +66,16 @@ function requestRetryBonussmbInput({ userId, transactionId }, onDone) {
 
 function hydrateFromStorage() {
   if (!isExtensionPage()) return;
-  chrome.storage.local.get(['jutawanResults', 'executorName', 'adminUrl', 'startDate', 'endDate', 'agentHeaders'], (res) => {
+  chrome.storage.local.get(['jutawanResults', 'executorName', 'adminUrl', 'startDate', 'endDate', 'yesterdayDate', 'agentHeaders'], (res) => {
     if (res.executorName) el.executorName.value = String(res.executorName);
     if (res.adminUrl) el.adminUrl.value = String(res.adminUrl);
     if (res.startDate) el.startDate.value = String(res.startDate);
     if (res.endDate) el.endDate.value = String(res.endDate);
+    if (res.yesterdayDate && el.yesterdayDate) {
+      el.yesterdayDate.value = String(res.yesterdayDate);
+    } else if (el.yesterdayDate) {
+      el.yesterdayDate.value = yesterdayISO();
+    }
 
     const hdr = res.agentHeaders && typeof res.agentHeaders === 'object' ? res.agentHeaders : null;
     if (hdr) {

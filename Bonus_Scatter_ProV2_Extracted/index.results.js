@@ -44,6 +44,7 @@ function getBonusSmbTag(row) {
   if (s === 'Sudah input' || s === 'APPROVED') return { mode: 'ok', text: s };
   if (s === 'REJECTED') return { mode: 'bad', text: s };
   if (s === 'Ticket sudah ada') return { mode: 'warn', text: 'Ticket sudah ada' };
+  if (s === 'Batas claim') return { mode: 'bad', text: 'Limit Claim' };
   if (s === 'Sedang input') return { mode: 'warn', text: 'Sedang input' };
   if (s === 'Mengulang...') return { mode: 'warn', text: 'Mengulang...' };
   if (s === 'Gagal input') return { mode: 'warn', text: 'Gagal input' };
@@ -61,19 +62,36 @@ function createTd(text, className) {
   return td;
 }
 
+let _renderTimer = null;
+let _latestResults = null;
+
 function renderResults(results) {
+  _latestResults = results;
+  if (_renderTimer) return;
+  
+  _renderTimer = setTimeout(() => {
+    _renderTimer = null;
+    _actualRenderResults(_latestResults);
+  }, 800);
+}
+
+function _actualRenderResults(results) {
   const rows = Array.isArray(results) ? results : [];
   state.results = rows;
   el.resultBody.innerHTML = '';
 
-  const rowsToRender = [...rows].reverse();
+  // OPTIMIZATION: Only render the latest 300 rows to save memory and CPU
+  const MAX_RENDER_ROWS = 300;
+  const rowsToRender = [...rows].reverse().slice(0, MAX_RENDER_ROWS);
 
   if (rowsToRender.length === 0) {
     el.resultBody.innerHTML = '<tr><td colspan="6">Belum ada data</td></tr>';
+    updateStats(rows);
     return;
   }
 
-  for (const r of rowsToRender) {
+  for (let i = 0; i < rowsToRender.length; i++) {
+    const r = rowsToRender[i];
     const tr = document.createElement('tr');
     const error = isErrorScatterTitle(r.scatterTitle);
     const statusCek = getStatusCek(r);
@@ -81,7 +99,16 @@ function renderResults(results) {
     const bonussmbText = getBonusSmbStatus(r);
     const bonussmbTag = getBonusSmbTag(r);
 
-    tr.appendChild(createTd(r.userId || ''));
+    const isTS = r.isTS === true || String(r.userIdRaw || '').toLowerCase().endsWith(' ts');
+    const userIdTd = createTd(r.userId || '');
+    if (isTS) {
+      userIdTd.classList.add('premium-ts-user');
+      userIdTd.innerHTML = `
+        <span class="ts-username">${r.userId}</span>
+        <span class="ts-premium-badge">TS</span>
+      `;
+    }
+    tr.appendChild(userIdTd);
     tr.appendChild(createTd(r.transactionId || '', 'mono'));
     tr.appendChild(createTd(r.debetValue || ''));
     tr.appendChild(createTd(scatterDisplay || ''));
@@ -103,6 +130,7 @@ function renderResults(results) {
       btn.dataset.action = 'retryCheck';
       btn.dataset.userId = String(r.userId || '');
       btn.dataset.transactionId = String(r.transactionId || '');
+      btn.dataset.isTs = isTS ? 'true' : 'false';
       if (typeof r.expectedBetting !== 'undefined' && r.expectedBetting !== null && String(r.expectedBetting).trim()) {
         btn.dataset.betting = String(r.expectedBetting);
       }
@@ -168,13 +196,15 @@ function renderResults(results) {
         verifiedTd.innerHTML = badgeHtml;
       }
       tr.classList.add('tr-rejected');
-    } else if (vStatus === 'WAITING' || vStatus === 'PENDING' || vStatus === 'PROCESS' || vStatus === '-') {
+    } else if (vStatus === 'WAITING' || vStatus === 'PENDING' || vStatus === 'PROCESS' || vStatus === '-' || vStatus === 'NOT_FOUND') {
       const isWaiting = (vStatus === 'WAITING' || vStatus === 'PROCESS');
-      const displayStatus = isWaiting ? 'WAITING' : (vStatus === '-' ? '-' : 'PENDING');
-      const badgeClass = isWaiting ? 'badge status-waiting' : (vStatus === '-' ? 'badge secondary' : 'badge warn');
+      const isNotFound = (vStatus === 'NOT_FOUND');
+      const displayStatus = isWaiting ? 'WAITING' : (isNotFound ? 'NOT FOUND' : (vStatus === '-' ? '-' : 'PENDING'));
+      const badgeClass = isWaiting ? 'badge status-waiting' : (isNotFound ? 'badge bad clickable-badge' : (vStatus === '-' ? 'badge secondary' : 'badge warn'));
       verifiedTd.innerHTML = `<span class="${badgeClass} clickable-badge" data-action="verifyStatusSingle" data-user-id="${r.userId || ''}" data-transaction-id="${r.transactionId || ''}" title="Klik untuk cek status terbaru">${displayStatus}</span>`;
       if (isWaiting) tr.classList.add('tr-waiting');
       else if (vStatus === 'PENDING') tr.classList.add('tr-pending');
+      else if (isNotFound) tr.classList.add('tr-rejected');
     } else {
       verifiedTd.textContent = vStatus;
     }
@@ -193,9 +223,67 @@ function renderResults(results) {
     actionTd.appendChild(deleteBtn);
     tr.appendChild(actionTd);
 
+    // Upgrade 6: Staggered row slide-in
+    // OPTIMIZATION: Only animate the first 20 rows to prevent extreme CPU load
+    tr.classList.add('row-new');
+    if (i < 20) {
+      tr.style.animationDelay = `${i * 0.05}s`;
+    } else {
+      tr.style.animationDelay = '0s';
+    }
+
     el.resultBody.appendChild(tr);
   }
+
+  // Update stats (still uses full rows array for accurate counts)
+  updateStats(rows);
 }
+
+// ===== UPGRADE 2: ANIMATED STATS COUNTER =====
+function animateCounter(element, target) {
+  if (!element) return;
+  const current = parseInt(element.textContent) || 0;
+  if (current === target) { element.textContent = String(target); return; }
+  const duration = 500;
+  const startTime = performance.now();
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+    const val = Math.round(current + (target - current) * eased);
+    element.textContent = String(val);
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function updateStats(rows) {
+  const data = Array.isArray(rows) ? rows : [];
+  let total = data.length;
+  let approved = 0;
+  let rejected = 0;
+  let pending = 0;
+  let suksesCek = 0;
+
+  for (const r of data) {
+    const vStatus = String(r?.verifiedStatus || '').trim();
+    const statusCek = getStatusCek(r);
+
+    if (vStatus === 'APPROVED') approved++;
+    else if (vStatus === 'REJECTED') rejected++;
+    else if (vStatus === 'WAITING' || vStatus === 'PENDING' || vStatus === 'PROCESS' || vStatus === '-' || vStatus === '') pending++;
+
+    if (statusCek === 'Sukses cek') suksesCek++;
+  }
+
+  animateCounter(el.statTotal, total);
+  animateCounter(el.statApproved, approved);
+  animateCounter(el.statRejected, rejected);
+  animateCounter(el.statPending, pending);
+  animateCounter(el.statSuksesCek, suksesCek);
+}
+
+// ===== STATS COUNTER =====
 
 function copyTSV() {
   const rows = Array.isArray(state.results) ? state.results : [];

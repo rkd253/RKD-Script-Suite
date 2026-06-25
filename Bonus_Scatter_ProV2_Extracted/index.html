@@ -13,6 +13,7 @@
   <div id="rocket" style="display:none">🚀</div>
   <!-- Background Layers -->
   <div id="bgLayer"></div>
+  <video id="bgVideo" autoplay loop muted playsinline style="position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; display:none; pointer-events:none;"></video>
   <div id="bgOverlay"></div>
 
   <div class="wrap">
@@ -20,13 +21,11 @@
       <!-- Row 1: Branding + Clock -->
       <div class="header-top">
         <div class="brand">
-          <div class="logo" aria-hidden="true">
-            <div class="logoDot"></div>
-          </div>
+          <img class="logo" src="./lapak99_logo.png" alt="Logo" aria-hidden="true" />
           <div class="headerText">
             <div class="titleRow">
               <h1>BONUS SCATTER PRO</h1>
-              <div class="subtitle">Auto Checker v2.0</div>
+              <div class="subtitle">Auto Checker v3.0 Premium <span id="newBadge" class="badge-new-premium">NEW</span></div>
             </div>
           </div>
         </div>
@@ -42,11 +41,11 @@
           <span class="bgLabel">Tema:</span>
           <div class="bgBtns">
             <div class="bgBtn active" data-bg="default" title="Night Scenery"></div>
-            <div class="bgBtn" data-bg="fire" title="Oranye"></div>
-            <div class="bgBtn" data-bg="ocean" title="Ocean"></div>
-            <div class="bgBtn" data-bg="forest" title="Samurai"></div>
+            <div class="bgBtn" data-bg="fire" title="Samurai Fire Live"></div>
+            <div class="bgBtn" data-bg="ocean" title="Samurai Live"></div>
+            <div class="bgBtn" data-bg="forest" title="Samurai Fog"></div>
             <div class="bgBtn" data-bg="galaxy" title="Galaxy"></div>
-            <div class="bgBtn" data-bg="gold" title="Pedesaan"></div>
+            <div class="bgBtn" data-bg="gold" title="Samurai Gold Live"></div>
             <div class="bgBtn dasha" data-bg="dasha" title="Dasha Taran">👩</div>
             <div class="bgUploadBtn" title="Upload gambar background">🖼</div>
             <input type="file" id="bgImageInput" accept="image/*" style="display:none">
@@ -76,6 +75,12 @@
               <input id="userId" type="text" autocomplete="off" placeholder="Contoh: 123456" />
               <button type="button" id="resetUserIdBtn" class="btn-mini" title="Reset User ID">🔄</button>
             </div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+              <input type="checkbox" id="isTS" style="width: auto; margin: 0; cursor: pointer;" />
+              <label for="isTS" style="font-size: 11px; font-weight: bold; margin: 0; cursor: pointer; color: #ff99cc; display: inline-flex; align-items: center; gap: 4px;">
+                <span>Klaim Semalam (TS)</span>
+              </label>
+            </div>
             <p class="fieldHint">Akan dinormalisasi (spasi dipotong).</p>
           </div>
           <div>
@@ -96,7 +101,10 @@
         </div>
 
         <div class="row">
-          <button class="btn" id="sendBtn" type="button">🚀 Kirim &amp; Cek</button>
+          <button class="btn" id="sendBtn" type="button" style="display:flex;align-items:center;justify-content:center;gap:6px;">
+            <img src="icon_lightning.png" style="width:20px;height:20px;object-fit:contain;mix-blend-mode:screen;filter:drop-shadow(0 0 2px rgba(0,212,255,0.8));">
+            Kirim &amp; Cek
+          </button>
           <button class="btn secondary" id="copyBtn" type="button">📋 Salin Hasil</button>
           <button type="button" id="clearBtn" class="btn secondary">🗑️ Bersihkan</button>
           <button type="button" id="searchStatusBtn" class="btn secondary" style="display:none">🚀 Roket
@@ -122,6 +130,10 @@
             <div>
               <label for="endDate">Tanggal Akhir</label>
               <input id="endDate" type="date" />
+            </div>
+            <div>
+              <label for="yesterdayDate">Tanggal Semalam (Kemarin)</label>
+              <input id="yesterdayDate" type="date" />
             </div>
             <div style="grid-column: 1 / -1">
               <label for="agentHeaders">Header Auth/Agent (paste)</label>
@@ -159,7 +171,9 @@
           </div>
           <div class="moon-container">
             <div class="moon-wrap">
-              <div class="moon" id="targetMoon">🌕</div>
+              <div class="moon" id="targetMoon">
+                <img src="icon_dragon.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+              </div>
             </div>
           </div>
         </div>

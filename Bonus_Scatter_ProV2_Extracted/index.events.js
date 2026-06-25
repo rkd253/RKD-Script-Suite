@@ -1,3 +1,14 @@
+// Hide NEW badge after 7 days (July 2, 2026)
+(function checkNewBadge() {
+  const badge = document.getElementById('newBadge');
+  if (badge) {
+    const expireDate = new Date('2026-07-02T23:59:59Z').getTime();
+    if (Date.now() > expireDate) {
+      badge.style.display = 'none';
+    }
+  }
+})();
+
 async function showCenterNotif(text, duration = 3000) {
   const notif = el.centerNotif;
   if (!notif) return;
@@ -21,82 +32,160 @@ async function showCenterNotif(text, duration = 3000) {
   }, duration);
 }
 
-async function playRocketAnimation(customMsg = '') {
+async function playLightningAnimation(customMsg = '') {
   return new Promise((resolve) => {
-    const r = el.rocket;
     const moon = el.targetMoon;
     const btn = el.sendBtn;
     const userIdEl = el.userId;
     const ticketEl = el.ticketCode;
 
-    if (!r || !moon) {
-      resolve();
-      return;
+    if (!moon) { resolve(); return; }
+
+    // Helper: get center point of an element
+    function getCenter(elem) {
+      const r = elem.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     }
 
-    // Kembalikan ke roket terbang
-    r.innerHTML = '🚀';
+    // Helper: generate jagged lightning path between two points
+    function generateLightningPath(x1, y1, x2, y2, segments = 8) {
+      let path = `M ${x1} ${y1}`;
+      const dx = (x2 - x1) / segments;
+      const dy = (y2 - y1) / segments;
+      for (let i = 1; i < segments; i++) {
+        const jitterX = (Math.random() - 0.5) * 40;
+        const jitterY = (Math.random() - 0.5) * 20;
+        path += ` L ${x1 + dx * i + jitterX} ${y1 + dy * i + jitterY}`;
+      }
+      path += ` L ${x2} ${y2}`;
+      return path;
+    }
 
-    // 1. Position at button
-    const btnRect = btn.getBoundingClientRect();
-    r.style.display = 'block';
-    r.style.left = `${btnRect.left + btnRect.width / 2 - 20}px`;
-    r.style.top = `${btnRect.top}px`;
-    r.style.transform = 'rotate(-45deg)';
+    // Helper: draw a single lightning bolt between two points
+    function drawBolt(x1, y1, x2, y2, color = '#00d4ff', duration = 400) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'lightning-svg');
+      svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+      svg.style.cssText = `position:fixed;inset:0;width:100%;height:100%;z-index:9998;pointer-events:none;`;
+      
+      // Main bolt
+      const mainPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      mainPath.setAttribute('d', generateLightningPath(x1, y1, x2, y2, 10));
+      mainPath.setAttribute('fill', 'none');
+      mainPath.setAttribute('stroke', color);
+      mainPath.setAttribute('stroke-width', '3');
+      mainPath.setAttribute('stroke-linecap', 'round');
+      mainPath.setAttribute('filter', 'url(#lightning-glow)');
+      mainPath.style.cssText = 'animation: lightning-flash-bolt 0.3s ease-out forwards;';
+      
+      // Branch bolt (thinner, offset)
+      const branchPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const midX = x1 + (x2 - x1) * (0.3 + Math.random() * 0.3);
+      const midY = y1 + (y2 - y1) * (0.3 + Math.random() * 0.3);
+      const branchEndX = midX + (Math.random() - 0.5) * 80;
+      const branchEndY = midY + (Math.random() * 60);
+      branchPath.setAttribute('d', generateLightningPath(midX, midY, branchEndX, branchEndY, 4));
+      branchPath.setAttribute('fill', 'none');
+      branchPath.setAttribute('stroke', '#ffffff');
+      branchPath.setAttribute('stroke-width', '1.5');
+      branchPath.setAttribute('opacity', '0.7');
+      branchPath.style.cssText = 'animation: lightning-flash-bolt 0.25s ease-out 0.05s forwards;';
+      
+      // Glow filter
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      defs.innerHTML = `<filter id="lightning-glow"><feGaussianBlur stdDeviation="4" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+      
+      svg.appendChild(defs);
+      svg.appendChild(mainPath);
+      svg.appendChild(branchPath);
+      document.body.appendChild(svg);
+      
+      setTimeout(() => svg.remove(), duration);
+      return svg;
+    }
+
+    // Helper: create impact spark burst at a point
+    function createImpactSparks(x, y, count = 8) {
+      for (let i = 0; i < count; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'lightning-spark';
+        spark.style.left = x + 'px';
+        spark.style.top = y + 'px';
+        const angle = (Math.PI * 2 / count) * i + (Math.random() * 0.5);
+        const dist = 20 + Math.random() * 35;
+        spark.style.setProperty('--spark-dx', `${Math.cos(angle) * dist}px`);
+        spark.style.setProperty('--spark-dy', `${Math.sin(angle) * dist}px`);
+        document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), 500);
+      }
+    }
+
+    // Helper: full screen flash
+    function screenFlash(duration = 120) {
+      const flash = document.createElement('div');
+      flash.className = 'lightning-screen-flash';
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), duration);
+    }
+
+    // ===== SEQUENCE START =====
+    const btnCenter = getCenter(btn);
+    const userCenter = getCenter(userIdEl);
+    const ticketCenter = getCenter(ticketEl);
+    const moonCenter = getCenter(moon);
+
+    // Step 1: Flash + Lightning from Button to UserID
+    screenFlash(100);
+    drawBolt(btnCenter.x, btnCenter.y, userCenter.x, userCenter.y, '#00d4ff', 500);
+    createImpactSparks(userCenter.x, userCenter.y, 6);
+    userIdEl.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.8), inset 0 0 10px rgba(0, 212, 255, 0.3)';
 
     setTimeout(() => {
-      // 2. Fly to UserID
-      const userRect = userIdEl.getBoundingClientRect();
-      r.style.transition = 'all 0.8s ease-in-out';
-      r.style.left = `${userRect.left + 20}px`;
-      r.style.top = `${userRect.top}px`;
-      r.style.transform = 'rotate(-90deg) scale(1.2)';
+      // Step 2: Lightning from UserID to TicketCode
+      drawBolt(userCenter.x, userCenter.y, ticketCenter.x, ticketCenter.y, '#ffd700', 500);
+      createImpactSparks(ticketCenter.x, ticketCenter.y, 6);
+      ticketEl.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.8), inset 0 0 10px rgba(255, 215, 0, 0.3)';
+      userIdEl.style.boxShadow = '';
+
+      // Pick up values
+      const txId = ticketEl.value;
+      ticketEl.value = '';
+      el.betting.value = '';
+      el.bulk.value = '';
 
       setTimeout(() => {
-        // 3. Fly to TicketCode
-        const ticketRect = ticketEl.getBoundingClientRect();
-        r.style.left = `${ticketRect.left + 20}px`;
-        r.style.top = `${ticketRect.top}px`;
-        r.style.transform = 'rotate(-90deg) scale(1.4)';
+        // Step 3: BIG Lightning from TicketCode to Moon (Results)
+        screenFlash(150);
+        drawBolt(ticketCenter.x, ticketCenter.y, moonCenter.x, moonCenter.y, '#ffffff', 600);
+        drawBolt(ticketCenter.x + 10, ticketCenter.y - 5, moonCenter.x - 10, moonCenter.y + 5, '#00d4ff', 550);
+        createImpactSparks(moonCenter.x, moonCenter.y, 12);
+        ticketEl.style.boxShadow = '';
+
+        // Impact on moon
+        moon.classList.add('hit');
 
         setTimeout(() => {
-          // Pick up values
-          const txId = ticketEl.value;
-          ticketEl.value = ''; 
-          el.betting.value = ''; 
-          el.bulk.value = '';
+          moon.classList.remove('hit');
 
-          // 4. Fly to Moon (Results)
-          const moonRect = moon.getBoundingClientRect();
-          r.style.left = `${moonRect.left}px`;
-          r.style.top = `${moonRect.top}px`;
-          r.style.transform = 'rotate(135deg) scale(1)';
+          // Notification
+          if (customMsg) {
+            showCenterNotif(customMsg);
+          } else if (txId) {
+            showCenterNotif(`⚡ Tiket Berhasil Di-input!\n${txId}`);
+          } else {
+            showCenterNotif('⚡ Antrian Berhasil Di-input!');
+          }
 
-          setTimeout(() => {
-            // 5. Impact!
-            moon.textContent = '🌙'; 
-            moon.classList.add('hit');
-            r.style.display = 'none';
-            
-            // Notification
-            if (customMsg) {
-              showCenterNotif(customMsg);
-            } else if (txId) {
-              showCenterNotif(`🎯 Tiket Berhasil Di-input!\n${txId}`);
-            } else {
-              showCenterNotif('🎯 Antrian Berhasil Di-input!');
-            }
-
-            setTimeout(() => {
-              moon.classList.remove('hit');
-              resolve();
-            }, 800);
-          }, 1000);
-        }, 1000);
-      }, 800);
-    }, 100);
+          setTimeout(() => resolve(), 400);
+        }, 600);
+      }, 450);
+    }, 400);
   });
 }
+
+// Keep backward compat — alias for sendBtn handler
+const playRocketAnimation = playLightningAnimation;
+
 
 el.sendBtn.addEventListener('click', async () => {
   const bulkItems = parseBulk(el.bulk.value);
@@ -112,14 +201,16 @@ el.sendBtn.addEventListener('click', async () => {
 
   // Play animation first
   el.sendBtn.disabled = true;
-  el.targetMoon.textContent = '🌕'; 
   const msg = bulkItems.length > 0 ? `🎯 ${bulkItems.length} Tiket Antrian Berhasil Di-input!` : '';
   await playRocketAnimation(msg);
 
   if (bulkItems.length > 0) {
     postQueue(bulkItems);
   } else {
-    const item = { userId, userIdRaw, transactionId };
+    const isTS = (el.isTS && el.isTS.checked) || userIdRaw.toLowerCase().endsWith(' ts');
+    const finalUserIdRaw = (isTS && !userIdRaw.toLowerCase().endsWith(' ts')) ? `${userIdRaw} TS` : userIdRaw;
+    const item = { userId, userIdRaw: finalUserIdRaw, transactionId };
+    if (isTS) item.isTS = true;
     if (betting) item.betting = betting;
     postQueue([item]);
   }
@@ -153,25 +244,41 @@ if (el.searchStatusBtnHeader) {
   });
 }
 
-// Cursor Star Trail Logic
+// Clean & Fast Kunai Slash Trail
 document.addEventListener('mousemove', (e) => {
-  const star = document.createElement('div');
-  star.className = 'star-particle';
-  star.style.left = e.clientX + 'px';
-  star.style.top = e.clientY + 'px';
-  
-  // Randomize color a bit
-  const colors = ['#ffffff', '#00ffff', '#ff00ff', '#ffff00', '#00ff00'];
-  const color = colors[Math.floor(Math.random() * colors.length)];
-  star.style.background = color;
-  star.style.boxShadow = `0 0 15px ${color}, 0 0 30px ${color}`;
-  
-  document.body.appendChild(star);
-  
-  setTimeout(() => {
-    star.remove();
-  }, 800);
+  if (Math.random() < 0.35) { // Throttle generation rate for maximum performance
+    const p = document.createElement('div');
+    p.className = 'kunai-trail-particle';
+    p.style.left = e.clientX + 'px';
+    p.style.top = e.clientY + 'px';
+    
+    // Sleek metallic white and electric cyan slash trail colors
+    const colors = ['#ffffff', '#e6f7ff', '#00d4ff', '#80e5ff'];
+    const col = colors[Math.floor(Math.random() * colors.length)];
+    p.style.backgroundColor = col;
+    p.style.boxShadow = `0 0 6px ${col}, 0 0 10px rgba(0, 212, 255, 0.6)`;
+    
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 600);
+  }
 });
+
+// ===== UPGRADE 7: AMBIENT FLOATING PARTICLES (Ultra Light) =====
+// Created once on load, pure CSS animation, zero ongoing JS cost
+(function initAmbientParticles() {
+  const count = 10;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'ambient-particle';
+    const size = 4 + Math.random() * 8; // 4px to 12px
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.animationDuration = (15 + Math.random() * 25) + 's'; // 15s to 40s
+    p.style.animationDelay = (Math.random() * 20) + 's';
+    document.body.appendChild(p);
+  }
+})();
 
 // Force load signature image & Handle CSP Visibility
 const signImg = document.querySelector('.rkd-sign-img');
@@ -262,6 +369,7 @@ if (el.saveSettingsBtn) {
       if (config.executorName) configLines.push('  executorName:  "' + config.executorName + '",');
       if (config.startDate) configLines.push('  startDate:     "' + config.startDate + '",');
       if (config.endDate) configLines.push('  endDate:       "' + config.endDate + '",');
+      if (config.yesterdayDate) configLines.push('  yesterdayDate: "' + config.yesterdayDate + '",');
       if (config.todayDate) configLines.push('  todayDate:     "' + config.todayDate + '",');
       configLines.push('  processMode:   "' + (config.processMode || 'auto') + '",');
       configLines.push('  autoStatusCheck: ' + autoStatus + ',');
@@ -383,7 +491,9 @@ el.resultBody.addEventListener('click', (ev) => {
   btn.disabled = true;
   btn.textContent = 'Mengulang...';
 
-  const item = { userId, userIdRaw: userId, transactionId };
+  const isTS = btn.dataset.isTs === 'true';
+  const item = { userId, userIdRaw: isTS ? `${userId} TS` : userId, transactionId };
+  if (isTS) item.isTS = true;
   if (betting) item.betting = betting;
   postQueue([item]);
 

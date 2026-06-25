@@ -395,11 +395,11 @@ async function waitForTicketSaveResponse(timeoutMs) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     const text = String(document.body && document.body.innerText ? document.body.innerText : '');
-    if (text.includes('The ticket code has already been taken.')) {
+    if (text.includes('The ticket code has already been taken.') || text.toLowerCase().includes('already been taken')) {
       return { ok: false, code: 'ticket_taken', error: 'The ticket code has already been taken.' };
     }
-    if (text.toLowerCase().includes('already been taken')) {
-      return { ok: false, code: 'ticket_taken', error: 'The ticket code has already been taken.' };
+    if (text.includes('maksimal klaim') || text.includes('sudah mencapai maksimal') || text.includes('mencapai maksimal klaim')) {
+      return { ok: false, code: 'limit_reached', error: 'User ID ini sudah mencapai maksimal klaim 2 kali untuk Livechat!' };
     }
     await sleep(150);
   }
@@ -536,7 +536,7 @@ function getFieldStateSnapshot() {
   const claimRow = Array.from(document.querySelectorAll('div')).find((d) => String(d.textContent || '').trim() === 'Klaim melalui');
   const claimText = claimRow ? String((claimRow.closest('.flex') || claimRow.parentElement)?.textContent || '').trim() : '';
 
-  const hasBet = !!(document.querySelector('input[type="number"][placeholder="#######"]') || Array.from(document.querySelectorAll('input[type="number"]')).find((i) => i.getAttribute('placeholder') === '#######'));
+  const hasBet = !!(document.querySelector('input[placeholder="#######"]') || Array.from(document.querySelectorAll('input')).find((i) => i.getAttribute('placeholder') === '#######'));
   const scatterRoot = findScatterSelectRoot();
   const scatterDisabled = scatterRoot ? isScatterDisabled() : true;
 
@@ -672,9 +672,9 @@ async function fillTicket(payload) {
   let scatterRootNow = null;
   const settleStart = Date.now();
   while (Date.now() - settleStart < 5000) {
-    bettingInput = (formEl && formEl.querySelector('input[type="number"][placeholder="#######"]')) ||
-      document.querySelector('input[type="number"][placeholder="#######"]') ||
-      Array.from(document.querySelectorAll('input[type="number"]')).find((i) => i.getAttribute('placeholder') === '#######');
+    bettingInput = (formEl && formEl.querySelector('input[placeholder="#######"]')) ||
+      document.querySelector('input[placeholder="#######"]') ||
+      Array.from(document.querySelectorAll('input')).find((i) => i.getAttribute('placeholder') === '#######');
     scatterRootNow = findScatterSelectRoot();
     if (bettingInput && scatterRootNow) break;
     await sleep(250);

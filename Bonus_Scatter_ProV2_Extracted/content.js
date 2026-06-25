@@ -145,6 +145,66 @@ async function navigateCalendarTo(targetYear, targetMonth, todayYear, todayMonth
   }
 }
 
+function findDateInput(isStart) {
+  const keywords = isStart ? ['startdate', 'begintime', 'starttime', 'begindate', 'tanggalawal', 'tanggalmulai'] : ['enddate', 'endtime', 'enddate', 'tanggalakhir'];
+  
+  const selectors = isStart ? [
+    'input[name="startDate"]',
+    'input#startDate',
+    'input[name="beginTime"]',
+    'input#beginTime',
+    'input[name="startTime"]',
+    'input[name="beginDate"]',
+    '#beginTime',
+    '#startTime'
+  ] : [
+    'input[name="endDate"]',
+    'input#endDate',
+    'input[name="endTime"]',
+    'input#endTime',
+    'input[name="endDate"]',
+    '#endTime'
+  ];
+  
+  for (const sel of selectors) {
+    const el = document.querySelector(sel);
+    if (el) return el;
+  }
+  
+  const labels = Array.from(document.querySelectorAll('label, span, td, div'));
+  const targetLabel = labels.find(el => {
+    const txt = el.textContent.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    return keywords.some(k => txt.includes(k));
+  });
+  
+  if (targetLabel) {
+    if (targetLabel.tagName === 'LABEL' && targetLabel.getAttribute('for')) {
+      const el = document.getElementById(targetLabel.getAttribute('for'));
+      if (el) return el;
+    }
+    let parent = targetLabel.parentElement;
+    for (let i = 0; i < 3; i++) {
+      if (!parent) break;
+      const inputs = Array.from(parent.querySelectorAll('input')).filter(inp => inp.type !== 'hidden');
+      if (inputs.length > 0) return inputs[0];
+      parent = parent.parentElement;
+    }
+  }
+  
+  const allInputs = Array.from(document.querySelectorAll('input')).filter(inp => inp.type !== 'hidden');
+  for (const inp of allInputs) {
+    const name = String(inp.name || '').toLowerCase();
+    const id = String(inp.id || '').toLowerCase();
+    if (isStart) {
+      if (name.includes('start') || name.includes('begin') || id.includes('start') || id.includes('begin')) return inp;
+    } else {
+      if (name.includes('end') || id.includes('end')) return inp;
+    }
+  }
+  
+  return null;
+}
+
 /**
  * Mengatur Tanggal Mulai Pencarian pada Kalender Admin.
  * @param {string} startDate - Tanggal dalam format YYYY-MM-DD.
@@ -155,15 +215,27 @@ async function setStartDateInCalendar(startDate, todayDate) {
     const [year, month, day] = startDate.split('-');
     const [ty, tm] = todayDate ? todayDate.split('-') : [year, month];
     
-    // 1. Temukan dan klik input tanggal
-    const startDateInput = document.querySelector('input[name="startDate"]#startDate'); 
+    // 1. Temukan dan klik input tanggal secara robust
+    const startDateInput = findDateInput(true); 
     if (!startDateInput) {
         console.warn("⚠️ Element input 'startDate' tidak ditemukan!");
         return false;
     }
     
+    // Format tanggal dinamis: hilangkan leading zero jika format di input tidak menggunakannya (mis: 2026-6-25)
+    let formattedDate = startDate;
+    const currentVal = startDateInput.value.trim();
+    if (currentVal && currentVal.split('-').length === 3) {
+        const parts = currentVal.split('-');
+        const hasLeadingZeroInMonth = parts[1].startsWith('0');
+        const hasLeadingZeroInDay = parts[2].startsWith('0');
+        if (!hasLeadingZeroInMonth || !hasLeadingZeroInDay) {
+            formattedDate = `${year}-${parseInt(month, 10)}-${parseInt(day, 10)}`;
+        }
+    }
+    
     // Set nilai input dan picu event agar datepicker sinkron
-    startDateInput.value = startDate; 
+    startDateInput.value = formattedDate; 
     startDateInput.dispatchEvent(new Event('input', { bubbles: true }));
     startDateInput.dispatchEvent(new Event('change', { bubbles: true }));
     
@@ -245,15 +317,27 @@ async function setEndDateInCalendar(endDate, todayDate) {
     const [year, month, day] = endDate.split('-');
     const [ty, tm] = todayDate ? todayDate.split('-') : [year, month];
     
-    // 1. Temukan dan klik input tanggal untuk memicu kalender
-    const endDateInput = document.querySelector('input[name="endDate"]#endDate'); 
+    // 1. Temukan dan klik input tanggal untuk memicu kalender secara robust
+    const endDateInput = findDateInput(false); 
     if (!endDateInput) {
         console.warn("⚠️ Element input 'endDate' tidak ditemukan!");
         return false;
     }
     
+    // Format tanggal dinamis: hilangkan leading zero jika format di input tidak menggunakannya (mis: 2026-6-25)
+    let formattedDate = endDate;
+    const currentVal = endDateInput.value.trim();
+    if (currentVal && currentVal.split('-').length === 3) {
+        const parts = currentVal.split('-');
+        const hasLeadingZeroInMonth = parts[1].startsWith('0');
+        const hasLeadingZeroInDay = parts[2].startsWith('0');
+        if (!hasLeadingZeroInMonth || !hasLeadingZeroInDay) {
+            formattedDate = `${year}-${parseInt(month, 10)}-${parseInt(day, 10)}`;
+        }
+    }
+    
     // Set nilai input dan picu event agar datepicker sinkron
-    endDateInput.value = endDate; 
+    endDateInput.value = formattedDate; 
     endDateInput.dispatchEvent(new Event('input', { bubbles: true }));
     endDateInput.dispatchEvent(new Event('change', { bubbles: true }));
     
@@ -389,25 +473,53 @@ async function startProcess(userId, transactionId, token, mainTabId, startDate, 
       const originalHref = firstBtn.getAttribute('href') || '';
       const isJsUrl = originalHref.toLowerCase().startsWith('javascript:');
       
-      if (isJsUrl && originalHref.includes('__doPostBack')) {
-        const match = originalHref.match(/__doPostBack\('(.*?)'/);
-        if (match && match[1]) {
-          const eventTarget = match[1];
-          const form = document.getElementById('aspnetForm') || document.querySelector('form');
-          const targetInput = document.getElementById('__EVENTTARGET') || document.querySelector('input[name="__EVENTTARGET"]');
-          const argInput = document.getElementById('__EVENTARGUMENT') || document.querySelector('input[name="__EVENTARGUMENT"]');
-          
-          if (form && targetInput) {
-            console.log("🚀 Form-based __doPostBack submission for First page:", eventTarget);
-            targetInput.value = eventTarget;
-            if (argInput) argInput.value = '';
-            form.submit();
+      if (isJsUrl) {
+        // Case 1: href contains __doPostBack(...) → execute via background scripting to bypass CSP
+        if (originalHref.includes('__doPostBack')) {
+          const match = originalHref.match(/__doPostBack\(\s*'(.*?)'\s*,\s*'(.*?)'\s*\)/) || originalHref.match(/__doPostBack\(\s*'(.*?)'\s*\)/);
+          if (match && match[1]) {
+            const eventTarget = match[1];
+            const eventArgument = match[2] || '';
+            
+            console.log("🚀 Sending __doPostBack to background for First page (from href):", eventTarget, eventArgument);
+            chrome.runtime.sendMessage({ action: "executeDoPostBack", target: eventTarget, arg: eventArgument });
             return true;
           }
         }
+        
+        // Case 2: href is javascript:; but onclick has __doPostBack → execute via background
+        const onclickAttr = firstBtn.getAttribute('onclick') || '';
+        if (onclickAttr.includes('__doPostBack')) {
+          const match = onclickAttr.match(/__doPostBack\(\s*'(.*?)'\s*,\s*'(.*?)'\s*\)/) || onclickAttr.match(/__doPostBack\(\s*'(.*?)'\s*\)/);
+          if (match && match[1]) {
+            const eventTarget = match[1];
+            const eventArgument = match[2] || '';
+            
+            console.log("🚀 Sending __doPostBack to background for First page (from onclick):", eventTarget, eventArgument);
+            chrome.runtime.sendMessage({ action: "executeDoPostBack", target: eventTarget, arg: eventArgument });
+            return true;
+          }
+        }
+        
+        // Case 3: javascript:; (no-op) or other javascript: URL
+        // Temporarily remove href to prevent CSP violation, click normally
+        // so that any attached event handlers (jQuery, onclick, etc.) still fire
+        console.log("🔄 Clicking First button with javascript: href safely (removing href temporarily):", originalHref);
+        firstBtn.removeAttribute('href');
+        
+        try {
+          firstBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+          firstBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+          firstBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+        } finally {
+          // Restore original href
+          firstBtn.setAttribute('href', originalHref);
+        }
+        
+        return true;
       }
       
-      // Fallback standard click if not a javascript:__doPostBack href
+      // Non-javascript href: standard click
       if (typeof firstBtn.click === 'function') {
         firstBtn.click();
         return true;
@@ -797,11 +909,23 @@ async function clickLinkCaptureUrlThenOpenTab(linkEl, openerTabId) {
   }
 
   const urlPromise = waitForUrl();
+  const oldHref = linkEl.getAttribute('href');
+  const isJsHref = oldHref && oldHref.toLowerCase().startsWith('javascript:');
+  if (isJsHref) {
+    linkEl.removeAttribute('href');
+  }
+
   try {
     linkEl.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
     linkEl.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
     linkEl.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-  } catch {}
+  } catch (e) {
+    console.error('[BonusScatter] Error dispatching click:', e);
+  } finally {
+    if (isJsHref) {
+      linkEl.setAttribute('href', oldHref);
+    }
+  }
 
   const url = await urlPromise;
 

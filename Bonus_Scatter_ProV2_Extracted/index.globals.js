@@ -31,10 +31,34 @@ const el = {
   centerNotif: document.getElementById('centerNotif'),
   astronaut: document.getElementById('astronaut'),
   searchStatusBtnHeader: document.getElementById('searchStatusBtnHeader'),
+  // Save settings elements
+  saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+  savedConfigWrap: document.getElementById('savedConfigWrap'),
+  savedConfigCode: document.getElementById('savedConfigCode'),
+  copyConfigBtn: document.getElementById('copyConfigBtn'),
+  // Stats elements
+  statTotal: document.getElementById('statTotal'),
+  statApproved: document.getElementById('statApproved'),
+  statRejected: document.getElementById('statRejected'),
+  statPending: document.getElementById('statPending'),
+  statSuksesCek: document.getElementById('statSuksesCek'),
+  // Duplicate warning
+  duplicateWarning: document.getElementById('duplicateWarning'),
+  yesterdayDate: document.getElementById('yesterdayDate'),
+  isTS: document.getElementById('isTS'),
 };
 
 function todayISO() {
   const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function yesterdayISO() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
@@ -64,13 +88,17 @@ updateClock();
 
 el.startDate.value = todayISO();
 el.endDate.value = todayISO();
+if (el.yesterdayDate) el.yesterdayDate.value = yesterdayISO();
 el.adminUrl.value = 'https://agent.png777.com';
 
 function setBridgeBadge(mode, text) {
   el.bridgeText.textContent = text;
-  el.bridgeDot.classList.remove('ok', 'bad');
+  el.bridgeDot.classList.remove('ok', 'bad', 'extension');
   if (mode === 'ok') el.bridgeDot.classList.add('ok');
   if (mode === 'bad') el.bridgeDot.classList.add('bad');
+  if (text && text.toLowerCase().includes('extension')) {
+    el.bridgeDot.classList.add('extension');
+  }
 }
 
 function setStatus(text) {

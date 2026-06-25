@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bonus Scatter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Ekstensi otomatis untuk memeriksa transaksi dan mendeteksi scatter",
   "permissions": ["tabs", "windows", "scripting", "activeTab", "storage", "declarativeNetRequestWithHostAccess", "alarms", "offscreen"],
   "host_permissions": [
@@ -28,9 +28,16 @@
   "background": {
     "service_worker": "background.js"
   },
+  "icons": {
+    "16": "lapak99_logo.png",
+    "32": "lapak99_logo.png",
+    "48": "lapak99_logo.png",
+    "128": "lapak99_logo.png"
+  },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Bonus Scatter"
+    "default_title": "Bonus Scatter",
+    "default_icon": "lapak99_logo.png"
   },
   "content_scripts": [
     {
@@ -74,9 +81,7 @@
       "resources": [
         "Dasha taran.jpg",
         "samurai_fog.png",
-        "countryside_village.png",
         "signature.png",
-        "signature.png.png",
         "index.css",
         "index.globals.js",
         "index.parse.js",
@@ -84,7 +89,14 @@
         "index.integration.js",
         "index.events.js",
         "index.bg.js",
-        "inject-postback.js"
+        "inject-postback.js",
+        "samurai_bg.mp4",
+        "samurai_gate.jpg",
+        "lapak99_logo.png",
+        "fire_bg.mp4",
+        "fire_gate.jpg",
+        "gold_bg.mp4",
+        "gold_gate.jpg"
       ],
       "matches": [
         "<all_urls>"

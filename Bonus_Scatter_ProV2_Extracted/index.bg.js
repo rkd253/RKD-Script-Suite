@@ -3,34 +3,70 @@
 
 const BG_PRESETS_INDEX = {
   default: 'url("https://images.unsplash.com/photo-1528164344705-47542687000d?q=80&w=2092&auto=format&fit=crop")',
-  fire:    'url("https://i.pinimg.com/736x/4d/5e/9e/4d5e9e242c5fcda602fa1709cd170a55.jpg")',
+  fire:    'url("./fire_gate.jpg")',
   ocean:   'radial-gradient(920px 420px at 16% -10%, rgba(0,153,204,0.3), transparent 55%), radial-gradient(760px 340px at 82% -25%, rgba(0,204,255,0.22), transparent 60%), #00101a',
   forest:  'url("./samurai_fog.png")',
   galaxy:  'radial-gradient(920px 420px at 16% -10%, rgba(68,0,204,0.35), transparent 55%), radial-gradient(760px 340px at 82% -25%, rgba(204,0,255,0.26), transparent 60%), #05000f',
-  gold:    'url("https://i.pinimg.com/736x/fc/ff/45/fcff4541945e00faf6351a54ce7518eb.jpg")',
+  gold:    'url("./gold_gate.jpg")',
   dasha:   'url("./Dasha taran.jpg")',
 };
 
 function applyBgIndex(name) {
   const bgLayer   = document.getElementById('bgLayer');
   const bgOverlay = document.getElementById('bgOverlay');
+  const bgVideo   = document.getElementById('bgVideo');
   if (!bgLayer) return;
 
-  const gradient = BG_PRESETS_INDEX[name] || BG_PRESETS_INDEX.default;
-  if (gradient.includes('url(')) {
-    // If it's an image preset
+  // Stop video by default
+  if (bgVideo) {
+    bgVideo.style.display = 'none';
+    bgVideo.src = '';
+  }
+
+  if (name === 'ocean') {
+    if (bgVideo) {
+      bgVideo.src = './samurai_bg.mp4';
+      bgVideo.style.display = 'block';
+      try { bgVideo.play(); } catch(e) {}
+    }
     bgLayer.style.background = '#000';
-    bgLayer.style.backgroundImage = gradient;
-    bgLayer.style.backgroundSize = 'cover';
-    bgLayer.style.backgroundPosition = 'center';
-    bgLayer.style.backgroundRepeat = 'no-repeat';
-    document.documentElement.style.setProperty('--dasha-img', gradient);
-    if (bgOverlay) bgOverlay.style.background = 'rgba(0,0,0,0.4)';
-  } else {
-    // If it's a gradient preset
-    bgLayer.style.background = gradient;
     bgLayer.style.backgroundImage = '';
-    if (bgOverlay) bgOverlay.style.background = 'rgba(0,0,0,0)';
+    if (bgOverlay) bgOverlay.style.background = 'rgba(0,0,0,0.3)';
+  } else if (name === 'fire') {
+    if (bgVideo) {
+      bgVideo.src = './fire_bg.mp4';
+      bgVideo.style.display = 'block';
+      try { bgVideo.play(); } catch(e) {}
+    }
+    bgLayer.style.background = '#000';
+    bgLayer.style.backgroundImage = '';
+    if (bgOverlay) bgOverlay.style.background = 'rgba(0,0,0,0.25)';
+  } else if (name === 'gold') {
+    if (bgVideo) {
+      bgVideo.src = './gold_bg.mp4';
+      bgVideo.style.display = 'block';
+      try { bgVideo.play(); } catch(e) {}
+    }
+    bgLayer.style.background = '#000';
+    bgLayer.style.backgroundImage = '';
+    if (bgOverlay) bgOverlay.style.background = 'rgba(0,0,0,0.25)';
+  } else {
+    const gradient = BG_PRESETS_INDEX[name] || BG_PRESETS_INDEX.default;
+    if (gradient.includes('url(')) {
+      // If it's an image preset
+      bgLayer.style.background = '#000';
+      bgLayer.style.backgroundImage = gradient;
+      bgLayer.style.backgroundSize = 'cover';
+      bgLayer.style.backgroundPosition = 'center';
+      bgLayer.style.backgroundRepeat = 'no-repeat';
+      document.documentElement.style.setProperty('--dasha-img', gradient);
+      if (bgOverlay) bgOverlay.style.background = 'rgba(0,0,0,0.4)';
+    } else {
+      // If it's a gradient preset
+      bgLayer.style.background = gradient;
+      bgLayer.style.backgroundImage = '';
+      if (bgOverlay) bgOverlay.style.background = 'rgba(0,0,0,0)';
+    }
   }
 
   document.querySelectorAll('.bgBtn').forEach(btn => {
@@ -41,19 +77,93 @@ function applyBgIndex(name) {
     startLeafAnimation();
     stopFogAnimation();
     stopWindAnimation();
+    stopSparksAnimation();
+    stopGoldParticlesAnimation();
   } else if (name === 'forest') {
     stopLeafAnimation();
     startFogAnimation();
     stopWindAnimation();
+    stopSparksAnimation();
+    stopGoldParticlesAnimation();
   } else if (name === 'gold') {
     stopLeafAnimation();
     stopFogAnimation();
-    startWindAnimation();
+    stopWindAnimation();
+    stopSparksAnimation();
+    startGoldParticlesAnimation();
+  } else if (name === 'fire') {
+    stopLeafAnimation();
+    stopFogAnimation();
+    stopWindAnimation();
+    startSparksAnimation();
+    stopGoldParticlesAnimation();
   } else {
     stopLeafAnimation();
     stopFogAnimation();
     stopWindAnimation();
+    stopSparksAnimation();
+    stopGoldParticlesAnimation();
   }
+}
+
+let goldParticlesInterval = null;
+function startGoldParticlesAnimation() {
+  if (goldParticlesInterval) return;
+  const maxGold = 35;
+  goldParticlesInterval = setInterval(() => {
+    if (document.querySelectorAll('.gold-particle').length > maxGold) return;
+    const p = document.createElement('div');
+    p.className = 'gold-particle';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.bottom = '-10px';
+    const size = Math.random() * 6 + 3; // 3px to 9px
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    const duration = Math.random() * 5 + 4; // 4s to 9s
+    p.style.animationDuration = duration + 's';
+    const drift = Math.random() * 60 - 30; // -30px to 30px
+    p.style.setProperty('--drift', drift + 'px');
+    document.body.appendChild(p);
+    setTimeout(() => {
+      if (p.parentNode) p.remove();
+    }, duration * 1000);
+  }, 200);
+}
+
+function stopGoldParticlesAnimation() {
+  if (goldParticlesInterval) clearInterval(goldParticlesInterval);
+  goldParticlesInterval = null;
+  document.querySelectorAll('.gold-particle').forEach(p => p.remove());
+}
+
+let sparksInterval = null;
+function startSparksAnimation() {
+  if (sparksInterval) return;
+  const maxSparks = 35;
+  sparksInterval = setInterval(() => {
+    if (document.querySelectorAll('.spark-particle').length > maxSparks) return;
+    const spark = document.createElement('div');
+    spark.className = 'spark-particle';
+    spark.style.left = Math.random() * 100 + 'vw';
+    spark.style.bottom = '-10px';
+    const size = Math.random() * 4 + 2; // 2px to 6px
+    spark.style.width = size + 'px';
+    spark.style.height = size + 'px';
+    const duration = Math.random() * 4 + 3; // 3s to 7s
+    spark.style.animationDuration = duration + 's';
+    const drift = Math.random() * 40 - 20; // -20px to 20px
+    spark.style.setProperty('--drift', drift + 'px');
+    document.body.appendChild(spark);
+    setTimeout(() => {
+      if (spark.parentNode) spark.remove();
+    }, duration * 1000);
+  }, 200);
+}
+
+function stopSparksAnimation() {
+  if (sparksInterval) clearInterval(sparksInterval);
+  sparksInterval = null;
+  document.querySelectorAll('.spark-particle').forEach(s => s.remove());
 }
 
 let leafInterval = null;

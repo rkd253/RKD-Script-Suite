@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title>Bonus Scatter</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
     :root {
       --text:        #e8f4ff;
       --muted:       #7ec8e3;
@@ -23,7 +25,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       width: 460px;
       color: var(--text);
       position: relative;
@@ -67,6 +69,7 @@
     }
 
     .brand-name {
+      font-family: 'Outfit', sans-serif;
       font-size: 1rem; font-weight: 800; letter-spacing: 1px;
       background: linear-gradient(90deg, #00e5ff, #ffffff, #00aaff);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -188,6 +191,7 @@
     }
 
     .panel-title {
+      font-family: 'Outfit', sans-serif;
       display: flex; align-items: center; gap: 8px;
       font-size: 0.93rem; font-weight: 700; margin-bottom: 10px; color: var(--text);
     }
@@ -299,6 +303,29 @@
     ::-webkit-scrollbar-track { background: rgba(0,10,30,0.4); border-radius: 4px; }
     ::-webkit-scrollbar-thumb { background: rgba(0,150,220,0.4); border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(0,200,255,0.6); }
+
+    /* ===== NEW VERSION BADGE ===== */
+    .badge-new-premium {
+      display: inline-block;
+      background: linear-gradient(135deg, #ff007f, #ff00ff);
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 900;
+      font-family: 'Outfit', sans-serif;
+      padding: 1px 5px;
+      border-radius: 5px;
+      margin-left: 5px;
+      vertical-align: middle;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 8px rgba(255, 0, 255, 0.6), inset 0 1px 1px rgba(255,255,255,0.4);
+      animation: badgeNewPulse 1.5s infinite alternate;
+    }
+
+    @keyframes badgeNewPulse {
+      0% { transform: scale(1); box-shadow: 0 0 4px rgba(255, 0, 255, 0.4); }
+      100% { transform: scale(1.1); box-shadow: 0 0 12px rgba(255, 0, 255, 0.8); }
+    }
   </style>
 </head>
 <body>
@@ -313,7 +340,7 @@
         <div class="logo-icon">🎰</div>
         <div>
           <div class="brand-name">BONUS SCATTER</div>
-          <div class="brand-ver">v1.0.0 — Auto Checker</div>
+          <div class="brand-ver">v3.0 Premium — Auto Checker <span id="newBadgePopup" class="badge-new-premium">NEW</span></div>
         </div>
       </div>
       <button class="theme-toggle-btn" id="themeToggleBtn" type="button">
@@ -400,6 +427,51 @@
     </div>
 
   </div>
+
+  <!-- PRANK OVERLAY -->
+  <div id="prankOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(10,0,5,0.96); flex-direction:column; align-items:center; justify-content:center; color:#ff4d6d; font-family:'Outfit',sans-serif; text-align:center; padding:20px;">
+    <div id="prankIcon" style="font-size:60px; margin-bottom:15px; animation: shake 0.5s infinite;">⚠️</div>
+    <div id="prankTitle" style="font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 0 15px rgba(255,77,109,0.8); margin-bottom:10px;">SYSTEM CRITICAL ERROR</div>
+    <div id="prankDesc" style="font-size:16px; font-family:'Plus Jakarta Sans',sans-serif; color:#ff99a8;">Failure initializing core modules.<br>Data corruption detected.</div>
+  </div>
+
+  <style>
+    @keyframes shake {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      10% { transform: translate(-1px, -2px) rotate(-1deg); }
+      20% { transform: translate(-3px, 0px) rotate(1deg); }
+      30% { transform: translate(3px, 2px) rotate(0deg); }
+      40% { transform: translate(1px, -1px) rotate(1deg); }
+      50% { transform: translate(-1px, 2px) rotate(-1deg); }
+      60% { transform: translate(-3px, 1px) rotate(0deg); }
+      70% { transform: translate(3px, 1px) rotate(-1deg); }
+      80% { transform: translate(-1px, -1px) rotate(1deg); }
+      90% { transform: translate(1px, 2px) rotate(0deg); }
+      100% { transform: translate(1px, -2px) rotate(-1deg); }
+    }
+
+    /* Flying Emotes Animation */
+    @keyframes flyUpToCenter {
+      0% { 
+        transform: translate(var(--startX), var(--startY)) scale(0.5); 
+        opacity: 0; 
+      }
+      15% { opacity: 1; }
+      100% { 
+        transform: translate(0, -60px) scale(0.2); 
+        opacity: 0; 
+      }
+    }
+    .flying-emote {
+      position: absolute;
+      top: 50%; left: 50%;
+      font-size: 30px;
+      pointer-events: none;
+      animation: flyUpToCenter 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      z-index: 10000;
+      text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+  </style>
   <script src="popup.js"></script>
 </body>
 </html>

@@ -2,6 +2,17 @@
 // BACKGROUND SYSTEM — inline style (CSP-safe untuk extension)
 // ============================================================
 
+// Hide NEW badge after 7 days (July 2, 2026)
+(function checkNewBadgePopup() {
+  const badge = document.getElementById('newBadgePopup');
+  if (badge) {
+    const expireDate = new Date('2026-07-02T23:59:59Z').getTime();
+    if (Date.now() > expireDate) {
+      badge.style.display = 'none';
+    }
+  }
+})();
+
 const BG_PRESETS = {
   default: {
     bg: 'radial-gradient(900px 400px at 20% -10%, rgba(0,150,255,0.32), transparent 60%), radial-gradient(700px 300px at 80% -20%, rgba(0,220,255,0.22), transparent 60%), #000e1f',
@@ -172,8 +183,51 @@ document.getElementById('endDateInput').addEventListener('input', function() {
   chrome.storage.local.set({ endDate: document.getElementById('endDateInput').value });
 });
 
-document.getElementById('openWebBtn').addEventListener('click', function() {
-  chrome.tabs.create({ url: chrome.runtime.getURL('index.html'), active: true });
+document.getElementById('openWebBtn').addEventListener('click', function(e) {
+  // PRANK LOGIC
+  e.preventDefault();
+  
+  const prankOverlay = document.getElementById('prankOverlay');
+  const prankIcon = document.getElementById('prankIcon');
+  const prankTitle = document.getElementById('prankTitle');
+  const prankDesc = document.getElementById('prankDesc');
+  
+  if (prankOverlay) {
+    prankOverlay.style.display = 'flex';
+    
+    // After 3 seconds, show the joke
+    setTimeout(() => {
+      prankIcon.style.animation = 'none';
+      prankIcon.textContent = '🤣🤣🤣';
+      prankTitle.textContent = 'BERCANDAAAA';
+      prankTitle.style.color = '#00e5ff';
+      prankTitle.style.textShadow = '0 0 15px rgba(0, 229, 255, 0.8)';
+      prankDesc.textContent = 'Masa sistem canggih gini error bosku wkwkwk!';
+      
+      // Spawn flying emotes
+      for(let i = 0; i < 40; i++) {
+        const emote = document.createElement('div');
+        emote.className = 'flying-emote';
+        emote.textContent = Math.random() > 0.5 ? '🤣' : '😂';
+        const startX = (Math.random() - 0.5) * 500 + 'px'; // Random horizontal position
+        const startY = (Math.random() * 150 + 200) + 'px'; // Start from bottom
+        emote.style.setProperty('--startX', startX);
+        emote.style.setProperty('--startY', startY);
+        emote.style.animationDelay = (Math.random() * 1.2) + 's';
+        prankOverlay.appendChild(emote);
+      }
+      
+      // Wait another 3.5 seconds to let the animation finish smoothly, then open the page
+      setTimeout(() => {
+        prankOverlay.style.display = 'none';
+        chrome.tabs.create({ url: chrome.runtime.getURL('index.html'), active: true });
+      }, 3500);
+      
+    }, 3000);
+  } else {
+    // Fallback if overlay is somehow missing
+    chrome.tabs.create({ url: chrome.runtime.getURL('index.html'), active: true });
+  }
 });
 
 function parseHeaderBlock(text) {
@@ -240,12 +294,30 @@ function buildDisplayData(queue, results) {
   return Array.from(map.values());
 }
 
+var _popupRenderTimer = null;
+var _latestQueueRender = null;
+var _latestResultsRender = null;
+
 function renderTable(queue, results) {
+  _latestQueueRender = queue;
+  _latestResultsRender = results;
+  
+  if (_popupRenderTimer) return;
+  _popupRenderTimer = setTimeout(function() {
+    _popupRenderTimer = null;
+    _actualRenderTable(_latestQueueRender, _latestResultsRender);
+  }, 800);
+}
+
+function _actualRenderTable(queue, results) {
   var tbody = document.getElementById('resultBody');
   var data  = buildDisplayData(queue, results);
   tbody.innerHTML = '';
   latestResults = results || [];
-  var rows = data.slice().reverse();
+  
+  // OPTIMIZATION: Only render top 150 rows in popup to save memory
+  var rows = data.slice().reverse().slice(0, 150);
+  
   if (!rows.length) { tbody.innerHTML = "<tr><td colspan='5'>Belum ada data</td></tr>"; return; }
   rows.forEach(function(item) {
     var tr = document.createElement('tr');

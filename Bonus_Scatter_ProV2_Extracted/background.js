@@ -608,9 +608,11 @@ function performBonussmbFill(finalResult) {
             return;
         }
 
+        const rawUser = String(finalResult.userIdRaw || finalResult.userId || '').trim();
+        const finalUserRaw = (finalResult.isTS && !rawUser.toLowerCase().endsWith(' ts')) ? `${rawUser} TS` : rawUser;
         const payload = {
             userId: finalResult.userId,
-            userIdRaw: finalResult.userIdRaw,
+            userIdRaw: finalUserRaw,
             transactionId: finalResult.transactionId,
             debetValue: finalResult.debetValue,
             scatterTitle: finalResult.scatterTitle,
@@ -627,14 +629,14 @@ function performBonussmbFill(finalResult) {
             } catch {}
         };
 
-        const openNewTab = () => {
+        const openTicketsTab = () => {
             return new Promise((resolveOpen) => {
                 getBestNormalWindowId((targetWindowId) => {
                     const createOpts = { url: BONUSSMB_TICKETS_URL, active: false };
                     if (targetWindowId) createOpts.windowId = targetWindowId;
                     chrome.tabs.create(createOpts, (tab) => {
                         if (!tab || !tab.id) {
-                            resolveOpen({ ok: false, error: 'Gagal membuka tab bonussmb' });
+                            resolveOpen({ ok: false, error: 'Gagal membuka tab tiket' });
                             return;
                         }
                         const tabId = tab.id;
@@ -649,7 +651,7 @@ function performBonussmbFill(finalResult) {
 
         const maxAttempts = 3;
         const attemptFill = (attempt) => {
-            openNewTab().then((opened) => {
+            openTicketsTab().then((opened) => {
                 if (!opened.ok) {
                     enqueueBonussmbStatus(finalResult.userId, finalResult.transactionId, 'Gagal input', opened.error || 'open_tab_failed');
                     done();
@@ -670,14 +672,14 @@ function performBonussmbFill(finalResult) {
 
                 ensureBonussmbReceiver(tabId).then((ready) => {
                     if (!ready.ok) {
-                        finish('Gagal input', ready.error || 'receiver_not_ready', true);
+                        finish('Gagal input', ready.error || 'receiver_not_ready_tickets', true);
                         return;
                     }
 
                     chrome.tabs.sendMessage(tabId, { type: 'BONUSSMB_FILL_TICKET', payload }, (resp) => {
-                        const lastErr = chrome.runtime.lastError;
-                        if (lastErr) {
-                            finish('Gagal input', lastErr.message || 'send_failed', true);
+                        const fillErr = chrome.runtime.lastError;
+                        if (fillErr) {
+                            finish('Gagal input', fillErr.message || 'send_failed', true);
                             return;
                         }
 
@@ -687,10 +689,16 @@ function performBonussmbFill(finalResult) {
                         }
 
                         const errText = resp && resp.error ? String(resp.error) : 'unknown';
+                        const isLimit = errText.includes('maksimal klaim') || errText.includes('limit') || errText.includes('mencapai');
                         const isTaken = errText.includes('The ticket code has already been taken.') || errText.toLowerCase().includes('already been taken');
                         const isTransient = errText.includes('Dialog Form Tiket') || errText.includes('Form Tiket') || errText.includes('Field belum muncul');
-                        const retryable = !isTaken && isTransient;
-                        finish(isTaken ? 'Ticket sudah ada' : 'Gagal input', errText, retryable);
+                        const retryable = !isTaken && !isLimit && isTransient;
+                        
+                        let finalStatus = 'Gagal input';
+                        if (isTaken) finalStatus = 'Ticket sudah ada';
+                        else if (isLimit) finalStatus = 'Batas claim';
+
+                        finish(finalStatus, errText, retryable);
                     });
                 });
             });
@@ -972,7 +980,8 @@ function postToAppsScript(result) {
                             const r = it && typeof it === 'object' ? it : null;
                             if (!r) return;
                             if (String(r.statusCek || '') !== 'Sukses cek') return;
-                            enqueueBonussmbFill(r);
+                            const mergedRow = next.find(row => String(row.userId) === String(r.userId) && String(row.transactionId) === String(r.transactionId));
+                            enqueueBonussmbFill(mergedRow || r);
                         });
                     } catch {}
 
@@ -1103,13 +1112,14 @@ function startNextProcess() {
     // ==========================================================
     // ==========================================================
     
-    chrome.storage.local.get(["txQueue", "agentHeaders", "executorName", "adminUrl", "startDate", "endDate", "todayDate", "processMode"], (res) => {
+    chrome.storage.local.get(["txQueue", "agentHeaders", "executorName", "adminUrl", "startDate", "endDate", "yesterdayDate", "todayDate", "processMode"], (res) => {
         let txQueue = res.txQueue || [];
         const agentHeaders = res.agentHeaders || null;
         const adminUrl = res.adminUrl || DEFAULT_ADMIN_URL;
         const todayDate = res.todayDate || getTodayDateString();
         const startDate = res.startDate || todayDate;
         const endDate = res.endDate || todayDate;
+        const yesterdayDate = res.yesterdayDate || startDate;
         const executorName = res.executorName || (agentHeaders ? agentHeaders["X-Agent-User"] : "") || "executor";
         const processMode = res.processMode || "auto";
         try {
@@ -1179,14 +1189,18 @@ function startNextProcess() {
                 const canApi = hasUsableAccessToken(agentHeaders);
                 const runApi = (processMode === 'auto') ? canApi : (wantsApi && canApi);
 
+                const isItemTS = currentItem.isTS === true || String(currentItem.userIdRaw || '').toLowerCase().endsWith(' ts');
+                const searchStartDate = isItemTS ? yesterdayDate : startDate;
+                const searchEndDate = isItemTS ? yesterdayDate : endDate;
+
                 if (runApi) {
                     processItemViaApi({
                         currentItem,
                         agentHeaders,
                         executorName,
                         adminUrl,
-                        startDate,
-                        endDate,
+                        startDate: searchStartDate,
+                        endDate: searchEndDate,
                         mode: 'api_full',
                     }).catch((e) => {
                         saveResult(
@@ -1197,6 +1211,7 @@ function startNextProcess() {
                                 scatterTitle: `Error: ${String(e && e.message ? e.message : e)}`,
                                 expectedBetting: typeof currentItem.betting !== 'undefined' ? String(currentItem.betting) : '',
                                 detailBetting: '',
+                                isTS: isItemTS,
                             },
                             null,
                             executorName
@@ -1210,8 +1225,8 @@ function startNextProcess() {
                         token,
                         executorName,
                         adminUrl,
-                        startDate,
-                        endDate,
+                        searchStartDate,
+                        searchEndDate,
                         todayDate
                     );
                 }
@@ -2207,6 +2222,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     if (!merged.userIdRaw && typeof q.userIdRaw !== 'undefined') merged.userIdRaw = String(q.userIdRaw);
                     if (!merged.expectedBetting && typeof q.betting !== 'undefined' && q.betting !== '') merged.expectedBetting = String(q.betting);
                     if (!merged.statusCek) merged.statusCek = 'Pending';
+                    if (q.isTS !== undefined) merged.isTS = q.isTS;
                     nextResults[idx] = merged;
                     continue;
                 }
@@ -2223,12 +2239,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     detailBetting: '',
                     bonussmbStatus: '',
                     bonussmbDetail: '',
+                    isTS: q.isTS || false,
                 });
                 indexByKey.set(key, nextResults.length - 1);
             }
 
             const toSave = { txQueue: finalQueue, jutawanResults: nextResults };
-            ['executorName','adminUrl','startDate','endDate','todayDate','agentHeaders','processMode'].forEach((k) => {
+            ['executorName','adminUrl','startDate','endDate','yesterdayDate','todayDate','agentHeaders','processMode'].forEach((k) => {
                 if (typeof config[k] !== 'undefined') toSave[k] = config[k];
             });
 
@@ -2471,6 +2488,39 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({ status: "processStarted" }); 
         return true; 
     }
+    
+    // ====== Handler Baru: Eksekusi __doPostBack via chrome.scripting (Bypass CSP) ======
+    if (msg.action === "executeDoPostBack") {
+        const { target, arg } = msg;
+        const targetTabId = sender.tab.id;
+        if (chrome.scripting && chrome.scripting.executeScript) {
+            chrome.scripting.executeScript({
+                target: { tabId: targetTabId },
+                world: 'MAIN',
+                func: (t, a) => {
+                    if (typeof window.__doPostBack === 'function') {
+                        console.log('[CekBonus-Scripting] Calling window.__doPostBack:', t, a);
+                        window.__doPostBack(t, a);
+                    } else {
+                        console.warn('[CekBonus-Scripting] window.__doPostBack not found, falling back to form submit');
+                        const form = document.getElementById('aspnetForm') || document.querySelector('form');
+                        if (form) {
+                            let tInp = document.getElementById('__EVENTTARGET') || form.querySelector('input[name="__EVENTTARGET"]');
+                            if (!tInp) { tInp = document.createElement('input'); tInp.type = 'hidden'; tInp.name = '__EVENTTARGET'; tInp.id = '__EVENTTARGET'; form.appendChild(tInp); }
+                            let aInp = document.getElementById('__EVENTARGUMENT') || form.querySelector('input[name="__EVENTARGUMENT"]');
+                            if (!aInp) { aInp = document.createElement('input'); aInp.type = 'hidden'; aInp.name = '__EVENTARGUMENT'; aInp.id = '__EVENTARGUMENT'; form.appendChild(aInp); }
+                            tInp.value = t; aInp.value = a;
+                            form.submit();
+                        }
+                    }
+                },
+                args: [target, arg]
+            }).catch(err => console.error("executeScript error:", err));
+        }
+        sendResponse({ status: "executed" });
+        return true;
+    }
+
     // ====== 5. Handler Baru: Tutup Tab dari content.js ======
     if (msg.action === "closeTab") {
         if (msg.tabId) {
