@@ -8,15 +8,7 @@
 <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
-
 <div class="cyber-bg"></div>
-<!-- Glowing Background Orbs -->
-<div class="glow-orb-1"></div>
-<div class="glow-orb-2"></div>
-<div class="glow-orb-3"></div>
-
-<div class="grid-overlay"></div>
-<div class="scanline"></div>
 
 <!-- Mobile Menu Toggle -->
 <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
@@ -28,63 +20,48 @@
   </button>
   <div class="sidebar-header">
     <div class="sidebar-logo">
-      <svg viewBox="0 0 160 160">
-        <defs>
-          <radialGradient id="discBg" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#1a0533"/>
-            <stop offset="100%" stop-color="#0a0115"/>
-          </radialGradient>
-          <linearGradient id="rkdG" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#f472b6"/>
-            <stop offset="50%" stop-color="#a855f7"/>
-            <stop offset="100%" stop-color="#38bdf8"/>
-          </linearGradient>
-        </defs>
-        <circle cx="80" cy="80" r="74" fill="url(#discBg)" stroke="rgba(168,85,247,0.6)" stroke-width="2"/>
-        <text x="80" y="85" text-anchor="middle" dominant-baseline="middle"
-              font-family="'Orbitron', sans-serif" font-weight="900" font-size="44"
-              fill="url(#rkdG)">RKD</text>
-      </svg>
+      <img src="rkd_logo.png" alt="RKD Logo" class="sidebar-logo-img">
     </div>
     <div class="sidebar-brand">RKD SUITE</div>
     <div class="sidebar-version">DASHBOARD PRO v2.0</div>
+    <div class="sidebar-status-box">
+      <span class="status-indicator-dot"></span>
+      <span class="status-indicator-text">DECRYPT_CORE: ACTIVE</span>
+    </div>
   </div>
 
   <nav class="sidebar-nav">
     <div class="nav-label">Main Menu</div>
     <a href="#" class="nav-item active" onclick="switchTab('scripts', this)" id="nav-scripts">
-      <span class="icon">📦</span> Script Installer
+      <span class="nav-badge-code">SRC</span> Script Installer
       <span class="nav-badge">3</span>
     </a>
     <a href="#" class="nav-item" onclick="switchTab('extensions', this)" id="nav-extensions">
-      <span class="icon">🧩</span> Extensions
+      <span class="nav-badge-code">EXT</span> Extensions
       <span class="nav-badge ext">3</span>
     </a>
 
     <div class="nav-label">Desktop Apps</div>
     <a href="#" class="nav-item" onclick="switchTab('keyboard', this)" id="nav-keyboard">
-      <span class="icon">⌨️</span> Perfect Keyboard
+      <span class="nav-badge-code">KBD</span> Perfect Keyboard
     </a>
 
     <div class="nav-label">Web Tools</div>
     <a href="#" class="nav-item" onclick="switchTab('tools', this)" id="nav-tools">
-      <span class="icon">🧮</span> Calculators
+      <span class="nav-badge-code">CAL</span> Calculators
     </a>
 
     <div class="nav-label">System</div>
     <a href="#" class="nav-item" onclick="switchTab('guide', this)" id="nav-guide">
-      <span class="icon">📖</span> Panduan Install
+      <span class="nav-badge-code">DOC</span> Panduan Install
     </a>
   </nav>
 
-
-
   <!-- SIGNATURE in Sidebar -->
   <div class="sidebar-signature">
-    <div class="sig-label">— Tertanda Pembuat —</div>
-    <div class="sig-wrap">
-      <div class="sig-light"></div>
-      <div class="sig-glow"></div>
+    <div class="sig-label">— TERTANDA PEMBUAT —</div>
+    <div class="sig-scanner-frame">
+      <div class="sig-scanner-line"></div>
       <img src="signature.png" alt="RKD Signature" class="sig-img">
     </div>
     <div class="sig-name">Made in By RKD</div>
@@ -118,6 +95,40 @@
     </div>
   </div>
 
+  <!-- HUD Stats Row -->
+  <div class="hud-stats-row">
+    <div class="hud-stat-card">
+      <div class="hud-ring-wrap">
+        <svg class="hud-circle-svg" viewBox="0 0 36 36">
+          <path class="hud-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          <path class="hud-circle-fg stroke-hud" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        </svg>
+        <div class="hud-ring-text">3/3</div>
+      </div>
+      <div class="hud-stat-label">📜 ACTIVE SCRIPTS</div>
+    </div>
+    <div class="hud-stat-card">
+      <div class="hud-ring-wrap">
+        <svg class="hud-circle-svg" viewBox="0 0 36 36">
+          <path class="hud-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          <path class="hud-circle-fg stroke-hud" stroke-dasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        </svg>
+        <div class="hud-ring-text">100%</div>
+      </div>
+      <div class="hud-stat-label">🧩 EXTENSIONS READY</div>
+    </div>
+    <div class="hud-stat-card">
+      <div class="hud-ring-wrap">
+        <svg class="hud-circle-svg" viewBox="0 0 36 36">
+          <path class="hud-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          <path class="hud-circle-fg stroke-hud animate-rotate" stroke-dasharray="60, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+        </svg>
+        <div class="hud-ring-text">12ms</div>
+      </div>
+      <div class="hud-stat-label">📶 SYSTEM PING</div>
+    </div>
+  </div>
+
   <!-- ===== SECTION: SCRIPTS ===== -->
   <div class="section active" id="sec-scripts">
     <div class="section-title">Tampermonkey Scripts</div>
@@ -126,7 +137,7 @@
       <!-- Card 1 -->
       <div class="card">
         <div class="card-head">
-          <div class="card-icon">✒️</div>
+          <div class="card-badge-circle">P1</div>
           <div>
             <div class="card-label">PLUGIN_01</div>
             <div class="card-name">Word Highlighter & Dashboard</div>
@@ -145,7 +156,7 @@
       <!-- Card 2 -->
       <div class="card">
         <div class="card-head">
-          <div class="card-icon">🛡️</div>
+          <div class="card-badge-circle">P2</div>
           <div>
             <div class="card-label">PLUGIN_02</div>
             <div class="card-name">Neural Shield: Anti-Spam</div>
@@ -164,7 +175,7 @@
       <!-- Card 3 -->
       <div class="card">
         <div class="card-head">
-          <div class="card-icon">🌅</div>
+          <div class="card-badge-circle">P3</div>
           <div>
             <div class="card-label">PLUGIN_03</div>
             <div class="card-name">Wallpaper & Queue Indication</div>
@@ -183,6 +194,43 @@
 
     <div class="btn-all-wrap">
       <button class="btn-all" onclick="installAll()">⚡ OVERDRIVE: INSTALL ALL</button>
+    </div>
+
+    <!-- HUD Hologram Chart Panel -->
+    <div class="hud-chart-panel">
+      <div class="hud-chart-title">📡 LIVE DATA STREAM SCANNER</div>
+      <div class="hud-chart-container">
+        <!-- Y-axis indicators -->
+        <div class="hud-chart-y">
+          <span>100%</span>
+          <span>75%</span>
+          <span>50%</span>
+          <span>25%</span>
+          <span>0%</span>
+        </div>
+        <!-- Chart Grid & Bars -->
+        <div class="hud-chart-bars-wrap">
+          <div class="hud-chart-grid-lines"></div>
+          <div class="hud-chart-bar-item">
+            <div class="hud-chart-bar" style="--val: 85%;">
+              <span class="hud-chart-bar-val">P1</span>
+            </div>
+            <span class="hud-chart-bar-label">WordHigh</span>
+          </div>
+          <div class="hud-chart-bar-item">
+            <div class="hud-chart-bar" style="--val: 55%;">
+              <span class="hud-chart-bar-val">P2</span>
+            </div>
+            <span class="hud-chart-bar-label">NeuralSh</span>
+          </div>
+          <div class="hud-chart-bar-item">
+            <div class="hud-chart-bar" style="--val: 70%;">
+              <span class="hud-chart-bar-val">P3</span>
+            </div>
+            <span class="hud-chart-bar-label">QueueInd</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="notice">
@@ -204,11 +252,11 @@
 
     <div class="cards-grid">
 
-      <div class="card" style="border-color: rgba(14,165,233,0.3);">
+      <div class="card">
         <div class="card-head">
-          <div class="card-icon" style="background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3);">🔍</div>
+          <div class="card-badge-circle">E1</div>
           <div>
-            <div class="card-label" style="color: #0ea5e9;">EXTENSION_01</div>
+            <div class="card-label">EXTENSION_01</div>
             <div class="card-name">ImageLens OCR Extension</div>
           </div>
         </div>
@@ -222,11 +270,11 @@
         </a>
       </div>
 
-      <div class="card" style="border-color: rgba(245,158,11,0.3);">
+      <div class="card">
         <div class="card-head">
-          <div class="card-icon" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);">🎰</div>
+          <div class="card-badge-circle">E2</div>
           <div>
-            <div class="card-label" style="color: #f59e0b;">EXTENSION_02</div>
+            <div class="card-label">EXTENSION_02</div>
             <div class="card-name" style="display:flex; align-items:center;">
               Bonus Scatter Pro V3 Premium 
               <span id="updateBadgeV3" style="background: linear-gradient(135deg, #ec4899, #be185d); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: bold; box-shadow: 0 0 10px rgba(236, 72, 153, 0.6); letter-spacing: 0.5px;">NEW UPDATE</span>
@@ -235,26 +283,26 @@
         </div>
         <div class="card-desc">Extension premium untuk automation bonus scatter. Fitur lengkap: auto-check status, ticket filler, dan dashboard terintegrasi.</div>
         <div class="card-tags">
-          <span class="tag" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);color:#fcd34d;">TYPE: CHROME EXT</span>
-          <span class="tag" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);color:#fcd34d;">VERSION: 3.0 Premium</span>
+          <span class="tag">TYPE: CHROME EXT</span>
+          <span class="tag">VERSION: 3.0 Premium</span>
         </div>
         <a href="Bonus_Scatter_ProV2.zip" download class="btn btn-gold">
           ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
         </a>
       </div>
 
-      <div class="card" style="border-color: rgba(168,85,247,0.3);">
+      <div class="card">
         <div class="card-head">
-          <div class="card-icon" style="background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.3);">🔑</div>
+          <div class="card-badge-circle">E3</div>
           <div>
-            <div class="card-label" style="color: #c084fc;">EXTENSION_03</div>
+            <div class="card-label">EXTENSION_03</div>
             <div class="card-name">Password Generator & Template Copier</div>
           </div>
         </div>
         <div class="card-desc">Generate passwords and copy them pre-formatted with custom text templates.</div>
         <div class="card-tags">
-          <span class="tag" style="background:rgba(168,85,247,0.08);border-color:rgba(168,85,247,0.2);color:#d8b4fe;">TYPE: CHROME EXT</span>
-          <span class="tag" style="background:rgba(168,85,247,0.08);border-color:rgba(168,85,247,0.2);color:#d8b4fe;">VERSION: 1.0.0</span>
+          <span class="tag">TYPE: CHROME EXT</span>
+          <span class="tag">VERSION: 1.0.0</span>
         </div>
         <a href="password_generator.zip" download class="btn btn-purple">
           ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
@@ -271,39 +319,39 @@
 
 
       <!-- Card 2: PK Versi 9.1 -->
-      <div class="card" style="border-color: rgba(99,102,241,0.2);">
+      <div class="card">
         <div class="card-head">
-          <div class="card-icon" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3);">⌨️</div>
+          <div class="card-badge-circle">K1</div>
           <div>
-            <div class="card-label" style="color: #818cf8;">APP_01</div>
+            <div class="card-label">APP_01</div>
             <div class="card-name">Perfect Keyboard 9.1</div>
           </div>
         </div>
         <div class="card-desc">Aplikasi Perfect Keyboard versi 9.1 standar (Executable file).</div>
         <div class="card-tags">
-          <span class="tag" style="background:rgba(99,102,241,0.08);color:#818cf8;">TYPE: EXE</span>
+          <span class="tag">TYPE: EXE</span>
           <span class="tag">INSTALLER</span>
         </div>
-        <a href="pk versi 9.1.exe" download class="btn" style="background: linear-gradient(135deg, #6366f1, #4338ca); box-shadow: 0 4px 20px rgba(99,102,241,0.3);">
+        <a href="pk versi 9.1.exe" download class="btn btn-blue">
           ⬇️ Download <span class="btn-sub">FILE .EXE</span>
         </a>
       </div>
 
       <!-- Card 3: PK Free Versi 9.2.0 -->
-      <div class="card" style="border-color: rgba(16,185,129,0.2);">
+      <div class="card">
         <div class="card-head">
-          <div class="card-icon" style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);">🚀</div>
+          <div class="card-badge-circle">K2</div>
           <div>
-            <div class="card-label" style="color: #34d399;">APP_02</div>
+            <div class="card-label">APP_02</div>
             <div class="card-name">Perfect Keyboard Free 9.2.0</div>
           </div>
         </div>
         <div class="card-desc">Aplikasi Perfect Keyboard versi terbaru 9.2.0 (Free version).</div>
         <div class="card-tags">
-          <span class="tag" style="background:rgba(16,185,129,0.08);color:#34d399;">TYPE: EXE</span>
+          <span class="tag">TYPE: EXE</span>
           <span class="tag">FREE VER</span>
         </div>
-        <a href="pk_free versi 9.2.0.exe" download class="btn" style="background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 4px 20px rgba(16,185,129,0.3);">
+        <a href="pk_free versi 9.2.0.exe" download class="btn btn-green">
           ⬇️ Download <span class="btn-sub">FILE .EXE</span>
         </a>
       </div>
@@ -478,19 +526,6 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// Generate Cyber Particles
-const particleLayer = document.createElement('div');
-particleLayer.className = 'cyber-particles';
-document.body.appendChild(particleLayer);
-for(let i=0; i<35; i++) {
-  let p = document.createElement('div');
-  p.className = 'c-particle';
-  p.style.left = Math.random() * 100 + 'vw';
-  p.style.animationDuration = (Math.random() * 4 + 3) + 's'; // 3s to 7s
-  p.style.animationDelay = Math.random() * 5 + 's';
-  particleLayer.appendChild(p);
 }
 
 // Expire V3 update notification and badge after 3 days (June 28, 2026)
