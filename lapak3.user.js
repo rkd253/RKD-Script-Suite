@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.5.6
+// @version      4.5.7
 // @description  Wallpaper manga + indikator warna antrian chat (No-Refresh Toggle)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
@@ -32,7 +32,7 @@
       /* ===== CHAT UNRESPONSED ALERT (DI DALAM SIDEBAR) ===== */
       #lc-unresponded-alert {
         position: absolute;
-        bottom: 110px; /* Dinaikkan ke tengah-tengah ruang kosong sidebar */
+        bottom: 20px; /* Ditempatkan di paling bawah kolom list chat */
         left: 12px;
         right: 12px;
         background: rgba(239, 68, 68, 0.08);
@@ -131,13 +131,15 @@
   ];
 
   function getSidebarContainer() {
-    // Cari element sidebar kiri LiveChat
-    const sidebar = document.querySelector('[data-testid="sidebar"], [class*="Sidebar"], nav, [class*="Navigation"], [class*="left-panel"], .lc-sidebar');
-    if (sidebar) return sidebar;
+    // Prioritaskan kolom list chat yang lebar (kolom kedua dari kiri)
+    const chatsList = document.querySelector('[class*="ChatsList"], [data-testid="chats-list"], [class*="chats-list"]');
+    if (chatsList) {
+      return chatsList.parentElement || chatsList;
+    }
     
-    // Fallback: cari parent dari chats list
-    const chatsList = document.querySelector('[class*="ChatsList"], [data-testid="chats-list"]');
-    if (chatsList) return chatsList.parentElement || chatsList;
+    // Fallback: cari element sidebar kiri
+    const sidebar = document.querySelector('[data-testid="sidebar"], [class*="Sidebar"], [class*="left-panel"], .lc-sidebar');
+    if (sidebar) return sidebar;
     
     return document.body;
   }
