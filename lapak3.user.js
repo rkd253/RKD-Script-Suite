@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.5.7
+// @version      4.5.8
 // @description  Wallpaper manga + indikator warna antrian chat (No-Refresh Toggle)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
@@ -32,12 +32,12 @@
       /* ===== CHAT UNRESPONSED ALERT (DI DALAM SIDEBAR) ===== */
       #lc-unresponded-alert {
         position: absolute;
-        bottom: 20px; /* Ditempatkan di paling bawah kolom list chat */
+        bottom: 120px; /* Dinaikkan pas di dalam kotak putih */
         left: 12px;
         right: 12px;
-        background: rgba(239, 68, 68, 0.08);
-        border: 2px dashed rgba(239, 68, 68, 0.5);
-        box-shadow: 0 0 12px rgba(239, 68, 68, 0.15), inset 0 0 8px rgba(239, 68, 68, 0.05);
+        background: rgba(239, 68, 68, 0.12);
+        border: 1.5px solid #ef4444;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.2);
         border-radius: 10px;
         padding: 10px 12px;
         color: #ff5555;
@@ -131,13 +131,19 @@
   ];
 
   function getSidebarContainer() {
-    // Prioritaskan kolom list chat yang lebar (kolom kedua dari kiri)
+    // 1. Dapatkan kolom list chat lewat navigasi kiri (nav.nextElementSibling)
+    const nav = document.querySelector('nav, [class*="Navigation"]');
+    if (nav && nav.nextElementSibling) {
+      return nav.nextElementSibling;
+    }
+
+    // 2. Fallback: Cari parent dari chats list
     const chatsList = document.querySelector('[class*="ChatsList"], [data-testid="chats-list"], [class*="chats-list"]');
     if (chatsList) {
       return chatsList.parentElement || chatsList;
     }
     
-    // Fallback: cari element sidebar kiri
+    // 3. Fallback: cari element sidebar kiri
     const sidebar = document.querySelector('[data-testid="sidebar"], [class*="Sidebar"], [class*="left-panel"], .lc-sidebar');
     if (sidebar) return sidebar;
     
