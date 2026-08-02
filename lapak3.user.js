@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.5.8
+// @version      4.6.0
 // @description  Wallpaper manga + indikator warna antrian chat (No-Refresh Toggle)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
@@ -35,12 +35,12 @@
         bottom: 120px; /* Dinaikkan pas di dalam kotak putih */
         left: 12px;
         right: 12px;
-        background: rgba(239, 68, 68, 0.12);
-        border: 1.5px solid #ef4444;
-        box-shadow: 0 0 15px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.2);
+        background: linear-gradient(135deg, #d32f2f, #b71c1c);
+        border: 1.5px solid #ff3333;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(211, 47, 47, 0.4);
         border-radius: 10px;
         padding: 10px 12px;
-        color: #ff5555;
+        color: #ffffff;
         font-family: 'Outfit', 'Segoe UI', sans-serif;
         font-size: 11px;
         font-weight: 900;
@@ -59,8 +59,8 @@
         display: flex;
       }
       @keyframes alertGlowPulse {
-        0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.15); }
-        100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+        0%, 100% { opacity: 1; box-shadow: 0 4px 15px rgba(0,0,0,0.4), 0 0 15px rgba(239, 68, 68, 0.7); }
+        50% { opacity: 0.75; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 0 5px rgba(239, 68, 68, 0.2); }
       }
     `;
     document.head.appendChild(s);
@@ -151,6 +151,12 @@
   }
 
   function updateUnrespondedAlert(count) {
+    // FORCE SHOW UNTUK TES POSISI (Ubah ke count biasa jika tes selesai)
+    let displayCount = count;
+    if (displayCount === 0) {
+      displayCount = 1;
+    }
+
     let alertBox = document.getElementById('lc-unresponded-alert');
     if (!alertBox) {
       alertBox = document.createElement('div');
@@ -167,7 +173,7 @@
       }
     }
     
-    if (count > 0) {
+    if (displayCount > 0) {
       // Pengaman jika container sidebar di-render ulang secara dinamis oleh LiveChat
       const container = getSidebarContainer();
       if (container && alertBox.parentElement !== container) {
@@ -178,19 +184,35 @@
         container.appendChild(alertBox);
       }
 
-      if (count >= 5) {
+      if (displayCount >= 5) {
         if (!window.currentCalmingQuote) {
           window.currentCalmingQuote = calmingQuotes[Math.floor(Math.random() * calmingQuotes.length)];
         }
         alertBox.innerHTML = `
-          <div>⚠️ ADA ${count} CHAT BELUM DIRESPON!</div>
-          <div style="font-size: 10.5px; color: #a7f3d0; margin-top: 6px; font-weight: 700; text-transform: none; letter-spacing: 0.3px; border-top: 1px dashed rgba(255, 85, 85, 0.4); padding-top: 6px;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 900; line-height: 1.2;">
+            <svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align: middle; flex-shrink: 0; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));">
+              <path d="M12 2L2 22h20L12 2z" fill="#ff9800" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></path>
+              <path d="M12 9v6" stroke="#000000" stroke-width="3" stroke-linecap="round"></path>
+              <circle cx="12" cy="18" r="2" fill="#000000"></circle>
+            </svg>
+            <span>ADA ${displayCount} CHAT <span style="color: #ffea00; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">BELUM DIRESPON!</span></span>
+          </div>
+          <div style="font-size: 10.5px; color: #a7f3d0; margin-top: 6px; font-weight: 700; text-transform: none; letter-spacing: 0.3px; border-top: 1px solid rgba(255, 255, 255, 0.3); padding-top: 6px; width: 100%;">
             ${window.currentCalmingQuote}
           </div>
         `;
       } else {
         window.currentCalmingQuote = null;
-        alertBox.innerHTML = `⚠️ Ada ${count} Chat Belum Direspon!`;
+        alertBox.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 900; line-height: 1.2;">
+            <svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align: middle; flex-shrink: 0; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));">
+              <path d="M12 2L2 22h20L12 2z" fill="#ff9800" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></path>
+              <path d="M12 9v6" stroke="#000000" stroke-width="3" stroke-linecap="round"></path>
+              <circle cx="12" cy="18" r="2" fill="#000000"></circle>
+            </svg>
+            <span>ADA ${displayCount} CHAT <span style="color: #ffea00; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">BELUM DIRESPON!</span></span>
+          </div>
+        `;
       }
       alertBox.classList.add('show');
     } else {
