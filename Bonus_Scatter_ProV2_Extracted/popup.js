@@ -136,7 +136,7 @@ document.getElementById('startBtn').addEventListener('click', function() {
 
   Promise.resolve().then(function() { return getLocal(['txQueue','executorName','adminUrl','startDate','endDate','todayDate','agentHeaders']); })
   .then(function(store) {
-    var adminUrl         = document.getElementById('adminUrl').value.trim()         || store.adminUrl     || 'https://agent.png777.com';
+    var adminUrl         = document.getElementById('adminUrl').value.trim()         || store.adminUrl     || 'https://lapak99.idrbo2.com/';
     var executorName     = document.getElementById('executorName').value.trim()     || store.executorName || '';
     var startDate        = document.getElementById('startDateInput').value          || store.startDate    || '';
     var endDate          = document.getElementById('endDateInput').value            || store.endDate      || '';
@@ -195,35 +195,23 @@ document.getElementById('openWebBtn').addEventListener('click', function(e) {
   if (prankOverlay) {
     prankOverlay.style.display = 'flex';
     
-    // After 3 seconds, show the joke
+    // After 2.5 seconds, ganti ke Davina Jedag Jedug
     setTimeout(() => {
-      prankIcon.style.animation = 'none';
-      prankIcon.textContent = '🤣🤣🤣';
-      prankTitle.textContent = 'BERCANDAAAA';
-      prankTitle.style.color = '#00e5ff';
-      prankTitle.style.textShadow = '0 0 15px rgba(0, 229, 255, 0.8)';
-      prankDesc.textContent = 'Masa sistem canggih gini error bosku wkwkwk!';
+      const prankErrorPart = document.getElementById('prankErrorPart');
+      const prankDavinaPart = document.getElementById('prankDavinaPart');
       
-      // Spawn flying emotes
-      for(let i = 0; i < 40; i++) {
-        const emote = document.createElement('div');
-        emote.className = 'flying-emote';
-        emote.textContent = Math.random() > 0.5 ? '🤣' : '😂';
-        const startX = (Math.random() - 0.5) * 500 + 'px'; // Random horizontal position
-        const startY = (Math.random() * 150 + 200) + 'px'; // Start from bottom
-        emote.style.setProperty('--startX', startX);
-        emote.style.setProperty('--startY', startY);
-        emote.style.animationDelay = (Math.random() * 1.2) + 's';
-        prankOverlay.appendChild(emote);
+      if (prankErrorPart && prankDavinaPart) {
+        prankErrorPart.style.display = 'none';
+        prankDavinaPart.style.display = 'block';
       }
       
-      // Wait another 3.5 seconds to let the animation finish smoothly, then open the page
+      // Wait 4 seconds for the jedag-jedug effect, then open the real page
       setTimeout(() => {
         prankOverlay.style.display = 'none';
         chrome.tabs.create({ url: chrome.runtime.getURL('index.html'), active: true });
-      }, 3500);
+      }, 4000);
       
-    }, 3000);
+    }, 2500);
   } else {
     // Fallback if overlay is somehow missing
     chrome.tabs.create({ url: chrome.runtime.getURL('index.html'), active: true });
@@ -341,7 +329,7 @@ function _actualRenderTable(queue, results) {
 function maybeAutoStartFromState(state) {
   var txQueue     = state.txQueue || [];
   var executorName = state.executorName || '';
-  var adminUrl    = state.adminUrl || 'https://agent.png777.com';
+  var adminUrl    = state.adminUrl || 'https://lapak99.idrbo2.com/';
   var startDate   = state.startDate || '';
   var endDate     = state.endDate || '';
   var agentHeaders = state.agentHeaders || null;

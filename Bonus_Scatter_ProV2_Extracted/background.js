@@ -63,66 +63,114 @@ const BONUSSMB_TICKETS_URL = 'https://bonussmb.com/tickets';
 const BONUSSMB_HISTORY_URL = 'https://bonussmb.com/history';
 
 async function verifyBonussmbStatus(userId, transactionId) {
-    return new Promise(async (resolve) => {
-        chrome.tabs.query({ url: "*://bonussmb.com/*" }, async (tabs) => {
-            let tab = tabs && tabs[0];
-            let isTemporaryTab = false;
-            
-            if (!tab) {
-                // Jika tidak ada tab bonussmb terbuka, buat tab baru di background secara temporer
-                isTemporaryTab = true;
-                const opened = await new Promise((resOpen) => {
-                    getBestNormalWindowId((targetWindowId) => {
-                        const createOpts = { url: BONUSSMB_TICKETS_URL, active: false };
-                        if (targetWindowId) createOpts.windowId = targetWindowId;
-                        chrome.tabs.create(createOpts, (newTab) => {
-                            if (!newTab || !newTab.id) {
-                                resOpen(null);
-                            } else {
-                                ensureTabLoaded(newTab.id, 20000).then(() => resOpen(newTab));
-                            }
+    return new Promise((resolve) => {
+        chrome.windows.getLastFocused((currentWindow) => {
+            const curWinId = currentWindow ? currentWindow.id : null;
+            chrome.tabs.query({ url: "*://bonussmb.com/*" }, async (tabs) => {
+                let tab = null;
+                if (tabs && tabs.length > 0) {
+                    // Urutkan tab agar tab aktif di jendela yang sedang fokus berada di posisi teratas
+                    tabs.sort((a, b) => {
+                        const aCurrentWin = curWinId && a.windowId === curWinId;
+                        const bCurrentWin = curWinId && b.windowId === curWinId;
+                        if (aCurrentWin && a.active) return -1;
+                        if (bCurrentWin && b.active) return 1;
+                        if (a.active) return -1;
+                        if (b.active) return 1;
+                        if (aCurrentWin) return -1;
+                        if (bCurrentWin) return 1;
+                        return 0;
+                    });
+                    tab = tabs[0];
+                }
+                
+                let isTemporaryTab = false;
+                if (!tab) {
+                    // Jika tidak ada tab bonussmb terbuka, buat tab baru di background secara temporer
+                    isTemporaryTab = true;
+                    const opened = await new Promise((resOpen) => {
+                        getBestNormalWindowId((targetWindowId) => {
+                            const createOpts = { url: BONUSSMB_TICKETS_URL, active: false };
+                            if (targetWindowId) createOpts.windowId = targetWindowId;
+                            chrome.tabs.create(createOpts, (newTab) => {
+                                if (!newTab || !newTab.id) {
+                                    resOpen(null);
+                                } else {
+                                    ensureTabLoaded(newTab.id, 20000).then(() => resOpen(newTab));
+                                }
+                            });
                         });
                     });
-                });
-                
-                if (!opened) {
-                    resolve({ ok: false, error: 'Failed to open temporary tab' });
-                    return;
+                    
+                    if (!opened) {
+                        resolve({ ok: false, error: 'Failed to open temporary tab' });
+                        return;
+                    }
+                    tab = opened;
                 }
-                tab = opened;
-            }
-            
-            const tabId = tab.id;
-            const currentUrl = tab.url || tab.pendingUrl || '';
-            
-            // Tentukan halaman mana yang dicek pertama berdasarkan URL tab saat ini (untuk meminimalkan redirect)
-            const firstUrl = currentUrl.includes('history') ? BONUSSMB_HISTORY_URL : BONUSSMB_TICKETS_URL;
-            const secondUrl = firstUrl === BONUSSMB_HISTORY_URL ? BONUSSMB_TICKETS_URL : BONUSSMB_HISTORY_URL;
-            
-            console.log(`[BonusScatter] Verifying status for ${userId} using tab ${tabId}. Checking first: ${firstUrl}`);
-            
-            // Langkah A: Cek di halaman pertama
-            const firstResult = await verifyOnPage(tabId, userId, transactionId, firstUrl);
-            if (firstResult && firstResult.ok && firstResult.status !== 'NOT_FOUND') {
+                
+                const tabId = tab.id;
+                let currentUrl = tab.url || tab.pendingUrl || '';
+
+                // Jika tab tidak berada di halaman tickets atau history, navigasikan ke tickets terlebih dahulu
+                if (!currentUrl.includes('tickets') && !currentUrl.includes('history')) {
+                    console.log(`[BonusScatter] Tab URL ${currentUrl} is not on tickets/history. Navigating to tickets page...`);
+                    await new Promise((resNav) => {
+                        chrome.tabs.update(tabId, { url: BONUSSMB_TICKETS_URL }, () => {
+                            ensureTabLoaded(tabId, 20000).then(() => resNav(true));
+                        });
+                    });
+                    currentUrl = BONUSSMB_TICKETS_URL;
+                }
+                
+                // Tentukan halaman mana yang dicek pertama berdasarkan URL tab saat ini (untuk meminimalkan redirect)
+                const firstUrl = currentUrl.includes('history') ? BONUSSMB_HISTORY_URL : BONUSSMB_TICKETS_URL;
+                const secondUrl = firstUrl === BONUSSMB_HISTORY_URL ? BONUSSMB_TICKETS_URL : BONUSSMB_HISTORY_URL;
+                
+                console.log(`[BonusScatter] Verifying status for ${userId} using tab ${tabId}. Checking first: ${firstUrl}`);
+                
+                // Cek di halaman pertama
+                let result = await verifyOnPage(tabId, userId, transactionId, firstUrl);
+
+                // Jika pengecekan pertama gagal (navigation_failed atau error lainnya), lakukan hard redirect ke firstUrl
+                if (!result || !result.ok) {
+                    console.log(`[BonusScatter] First page check failed or navigation failed. Forcing tab update to ${firstUrl}...`);
+                    await new Promise((resNav) => {
+                        chrome.tabs.update(tabId, { url: firstUrl }, () => {
+                            ensureTabLoaded(tabId, 20000).then(() => resNav(true));
+                        });
+                    });
+                    result = await verifyOnPage(tabId, userId, transactionId, firstUrl);
+                }
+
+                // TAHAP 2: Jika tidak ditemukan di halaman pertama (NOT_FOUND atau error), coba cek di halaman kedua
+                if (!result || !result.ok || result.status === 'NOT_FOUND') {
+                    console.log(`[BonusScatter] Ticket not found on ${firstUrl}. Switching to ${secondUrl} and retrying status check...`);
+                    let secondResult = await verifyOnPage(tabId, userId, transactionId, secondUrl);
+
+                    // Jika soft navigation ke halaman kedua gagal, lakukan hard redirect
+                    if (!secondResult || !secondResult.ok) {
+                        console.log(`[BonusScatter] Soft navigation to second page failed. Forcing tab update to ${secondUrl}...`);
+                        await new Promise((resNav) => {
+                            chrome.tabs.update(tabId, { url: secondUrl }, () => {
+                                ensureTabLoaded(tabId, 20000).then(() => resNav(true));
+                            });
+                        });
+                        secondResult = await verifyOnPage(tabId, userId, transactionId, secondUrl);
+                    }
+
+                    if (secondResult && secondResult.ok) {
+                        result = secondResult;
+                    }
+                }
+
                 if (isTemporaryTab) {
                     chrome.tabs.remove(tabId, () => {
-                        void chrome.runtime.lastError; // Clear potential closed tab error
+                        void chrome.runtime.lastError;
                     });
                 }
-                resolve(firstResult);
-                return;
-            }
-            
-            console.log(`[BonusScatter] Status not found on first page or failed. Checking second: ${secondUrl}`);
-            
-            // Langkah B: Cek di halaman kedua
-            const secondResult = await verifyOnPage(tabId, userId, transactionId, secondUrl);
-            if (isTemporaryTab) {
-                chrome.tabs.remove(tabId, () => {
-                    void chrome.runtime.lastError; // Clear potential closed tab error
-                });
-            }
-            resolve(secondResult);
+                resolve(result);
+            });
         });
     });
 }
@@ -136,34 +184,14 @@ async function verifyOnPage(tabId, userId, transactionId, targetUrl) {
                 return;
             }
             
-            const currentUrl = tab.url || tab.pendingUrl || '';
-            const needsRedirect = !currentUrl.includes(targetUrl);
-            
-            if (needsRedirect) {
-                console.log(`[BonusScatter] Redirecting tab ${tabId} to ${targetUrl}`);
-                chrome.tabs.update(tabId, { url: targetUrl }, () => {
-                    const updateErr = chrome.runtime.lastError;
-                    if (updateErr) {
-                        resolve({ ok: false, error: updateErr.message });
-                        return;
-                    }
-                    ensureTabLoaded(tabId, 15000).then(async () => {
-                        const ready = await ensureBonussmbReceiver(tabId);
-                        if (!ready.ok) {
-                            resolve({ ok: false, error: 'receiver_not_ready_after_redirect' });
-                            return;
-                        }
-                        sendCheckMessage(tabId, userId, transactionId, targetUrl, resolve);
-                    });
-                });
-            } else {
-                const ready = await ensureBonussmbReceiver(tabId);
-                if (!ready.ok) {
-                    resolve({ ok: false, error: 'receiver_not_ready' });
-                    return;
-                }
-                sendCheckMessage(tabId, userId, transactionId, targetUrl, resolve);
+            // TIDAK melakukan redirect apapun untuk mencegah logout.
+            // Langsung kirim pesan ke content script di halaman yang sedang aktif.
+            const ready = await ensureBonussmbReceiver(tabId);
+            if (!ready.ok) {
+                resolve({ ok: false, error: 'receiver_not_ready' });
+                return;
             }
+            sendCheckMessage(tabId, userId, transactionId, targetUrl, resolve);
         });
     });
 }
@@ -246,14 +274,10 @@ try {
         }
 
         if (alarm.name === BONUSSMB_AUTO_ALARM) {
-            chrome.storage.local.get(['autoStartEnabled', 'autoStatusCheck'], (res) => {
+            chrome.storage.local.get(['autoStartEnabled'], (res) => {
                 const autoStart = typeof res.autoStartEnabled === 'boolean' ? res.autoStartEnabled : true;
-                const statusCheck = typeof res.autoStatusCheck === 'boolean' ? res.autoStatusCheck : true;
                 if (autoStart) {
                     processPendingBonussmbInputs();
-                    if (statusCheck) {
-                        processPendingBonussmbVerifications();
-                    }
                 }
             });
         }
@@ -325,7 +349,6 @@ async function processPendingBonussmbVerifications() {
                 } else if (result && result.status === 'NOT_FOUND') {
                     await updateVerifiedStatusAsync(r.userId, r.transactionId, 'NOT_FOUND', '');
                 } else {
-                    // TIMEOUT atau error: tetap update sebagai PENDING agar tidak stuck selamanya
                     const currentV = String(r.verifiedStatus || '').trim();
                     if (currentV === '' || currentV === '-' || currentV === 'N/A') {
                         await updateVerifiedStatusAsync(r.userId, r.transactionId, 'PENDING', '');
@@ -336,7 +359,8 @@ async function processPendingBonussmbVerifications() {
                 console.error(`[BonusScatter] Verify error for ${r.transactionId}:`, verifyErr);
             }
             
-            await new Promise(res => setTimeout(res, 800));
+            // Jeda 30 detik antar tiket untuk menghindari deteksi bot / rate limiting
+            await new Promise(res => setTimeout(res, 30000));
         }
     } catch (e) {
         console.error('[BonusScatter] Roket S2 Error:', e);
@@ -782,7 +806,11 @@ function processBonussmbStatusQueue() {
                 continue;
             }
             const r = next[idx] && typeof next[idx] === 'object' ? next[idx] : {};
-            next[idx] = { ...r, bonussmbStatus: it.status, bonussmbDetail: it.detail };
+            const updatedRow = { ...r, bonussmbStatus: it.status, bonussmbDetail: it.detail };
+            if (it.status === 'Batas claim') {
+                updatedRow.verifiedStatus = 'LIMIT';
+            }
+            next[idx] = updatedRow;
         }
 
         chrome.storage.local.set({ jutawanResults: next }, () => {
@@ -1258,7 +1286,7 @@ const scriptToGetRoundCount = () => {
     };
 };
 
-const DEFAULT_ADMIN_URL = "https://agent.png777.com";
+const DEFAULT_ADMIN_URL = "https://lapak99.idrbo2.com";
 
 function getTodayDateString() {
     const d = new Date();
@@ -1635,7 +1663,7 @@ function isHistoryUrl(url) {
     const u = String(url || '');
     return u.includes('public.u2uyu876x.com/history/') ||
         u.includes('public-api.u2uyu876x.com/web-api/operator-proxy/v1/History/GetBetHistory') ||
-        u.includes('agent.png777.com/keterangan-detail.html');
+        u.includes('lapak99.idrbo2.com/keterangan-detail.html') || u.includes('agent.png777.com/keterangan-detail.html');
 }
 
 function getBestNormalWindowId(callback) {
@@ -1735,6 +1763,7 @@ function updateAuthHeaderRules() {
 
         const domains = [
             adminHost,
+            'lapak99.idrbo2.com',
             'agent.png777.com',
             'public.u2uyu876x.com',
             'public-api.u2uyu876x.com',

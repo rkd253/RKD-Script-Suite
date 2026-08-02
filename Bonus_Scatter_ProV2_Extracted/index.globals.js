@@ -15,6 +15,7 @@ const el = {
   sendBtn: document.getElementById('sendBtn'),
   copyBtn: document.getElementById('copyBtn'),
   clearBtn: document.getElementById('clearBtn'),
+  assistantBtn: document.getElementById('assistantBtn'),
   searchStatusBtn: document.getElementById('searchStatusBtn'),
   adminUrl: document.getElementById('adminUrl'),
   autoStatusCheck: document.getElementById('autoStatusCheck'),
@@ -46,6 +47,8 @@ const el = {
   duplicateWarning: document.getElementById('duplicateWarning'),
   yesterdayDate: document.getElementById('yesterdayDate'),
   isTS: document.getElementById('isTS'),
+  tableSearch: document.getElementById('tableSearch'),
+  soundToggleBtn: document.getElementById('soundToggleBtn'),
 };
 
 function todayISO() {
@@ -89,7 +92,7 @@ updateClock();
 el.startDate.value = todayISO();
 el.endDate.value = todayISO();
 if (el.yesterdayDate) el.yesterdayDate.value = yesterdayISO();
-el.adminUrl.value = 'https://agent.png777.com';
+el.adminUrl.value = 'https://lapak99.idrbo2.com/';
 
 function setBridgeBadge(mode, text) {
   el.bridgeText.textContent = text;

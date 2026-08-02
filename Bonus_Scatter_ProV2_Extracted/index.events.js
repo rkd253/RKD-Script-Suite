@@ -20,7 +20,7 @@ async function showCenterNotif(text, duration = 3000) {
   notif.innerHTML = `
     <img class="notif-img-el" src="${localSrc}" 
          onerror="this.src='${onlineSrc}'; this.onerror=null;"
-         style="width:180px; height:180px; border-radius:25px; border:3px solid #ff99cc; 
+         style="width:200px; height:300px; border-radius:25px; border:3px solid #ff99cc; 
                 box-shadow:0 0 30px rgba(255,153,204,0.6); margin-bottom:15px; 
                 object-fit:cover; animation:notif-pulse 2s infinite ease-in-out;">
     <div class="notif-text">${text.replace(/\n/g, '<br>')}</div>
@@ -30,6 +30,74 @@ async function showCenterNotif(text, duration = 3000) {
   setTimeout(() => {
     notif.classList.remove('show');
   }, duration);
+}
+
+function showCustomConfirm(title, message) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+
+    const modal = document.createElement('div');
+    modal.className = 'confirm-modal';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'confirm-title';
+    titleEl.textContent = title;
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'confirm-msg';
+    msgEl.innerHTML = message.replace(/\n/g, '<br>');
+
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'confirm-buttons';
+
+    const okBtn = document.createElement('button');
+    okBtn.className = 'confirm-btn ok';
+    okBtn.textContent = 'PROSES';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'confirm-btn cancel';
+    cancelBtn.textContent = 'BATAL';
+
+    const handleKeydown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cleanup(false);
+      } else if (e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        cleanup(true);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        cleanup(true);
+      }
+    };
+
+    const cleanup = (val) => {
+      window.removeEventListener('keydown', handleKeydown);
+      overlay.classList.remove('show');
+      setTimeout(() => {
+        overlay.remove();
+        resolve(val);
+      }, 300);
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+
+    okBtn.addEventListener('click', () => cleanup(true));
+    cancelBtn.addEventListener('click', () => cleanup(false));
+
+    btnContainer.appendChild(cancelBtn);
+    btnContainer.appendChild(okBtn);
+    modal.appendChild(titleEl);
+    modal.appendChild(msgEl);
+    modal.appendChild(btnContainer);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+      overlay.classList.add('show');
+    }, 10);
+  });
 }
 
 async function playLightningAnimation(customMsg = '') {
@@ -183,7 +251,7 @@ async function playLightningAnimation(customMsg = '') {
   });
 }
 
-// Keep backward compat — alias for sendBtn handler
+// Keep backward compat â€” alias for sendBtn handler
 const playRocketAnimation = playLightningAnimation;
 
 
@@ -197,6 +265,66 @@ el.sendBtn.addEventListener('click', async () => {
   if (bulkItems.length === 0 && (!userId || !transactionId)) {
     setStatus('⚠️ Harap isi User ID dan Kode Tiket.');
     return;
+  }
+
+  // Warning if betting is below 1600
+  if (bulkItems.length > 0) {
+    let lowBettingFound = false;
+    for (const item of bulkItems) {
+      if (item.betting) {
+        const bVal = parseFloat(String(item.betting).replace(/[^0-9.]/g, ''));
+        if (!isNaN(bVal) && bVal < 1600) {
+          lowBettingFound = true;
+          break;
+        }
+      }
+    }
+    if (lowBettingFound) {
+      const proceed = await showCustomConfirm(
+        '⚠️ PERINGATAN BETTING!',
+        'Ada tiket dengan nilai betting di bawah 1.600 di dalam antrian multi input!\nApakah Anda yakin ingin melanjutkan?'
+      );
+      if (!proceed) return;
+    }
+  } else if (betting) {
+    const bVal = parseFloat(betting.replace(/[^0-9.]/g, ''));
+    if (!isNaN(bVal) && bVal < 1600) {
+      const proceed = await showCustomConfirm(
+        '⚠️ PERINGATAN BETTING!',
+        `Nilai betting yang Anda masukkan (${betting}) di bawah 1.600!\nApakah Anda yakin ingin melanjutkan?`
+      );
+      if (!proceed) return;
+    }
+  }
+
+  // Anti-Duplicate Check
+  if (typeof state !== 'undefined' && state.results && state.results.length > 0) {
+    if (bulkItems.length > 0) {
+      let duplicateTxIds = [];
+      for (const item of bulkItems) {
+        const found = state.results.find(r => r.transactionId === item.transactionId);
+        if (found) {
+          duplicateTxIds.push(item.transactionId);
+        }
+      }
+      if (duplicateTxIds.length > 0) {
+        const listStr = duplicateTxIds.slice(0, 3).join(', ') + (duplicateTxIds.length > 3 ? '...' : '');
+        const proceed = await showCustomConfirm(
+          '⚠️ TIKET GANDA TERDETEKSI!',
+          `Ada ${duplicateTxIds.length} tiket di multi input yang sudah pernah di-input sebelumnya:\n[${listStr}]\n\nApakah Anda yakin ingin tetap memproses ulang tiket-tiket ganda ini?`
+        );
+        if (!proceed) return;
+      }
+    } else if (transactionId) {
+      const found = state.results.find(r => r.transactionId === transactionId);
+      if (found) {
+        const proceed = await showCustomConfirm(
+          '⚠️ TIKET GANDA TERDETEKSI!',
+          `Tx ID ini (${transactionId}) sudah pernah di-input sebelumnya untuk User ID: ${found.userId}.\n\nApakah Anda yakin ingin tetap memproses ulang tiket ini?`
+        );
+        if (!proceed) return;
+      }
+    }
   }
 
   // Play animation first
@@ -244,22 +372,18 @@ if (el.searchStatusBtnHeader) {
   });
 }
 
-// Clean & Fast Kunai Slash Trail
+// Premium Black Smoke Cursor Trail
 document.addEventListener('mousemove', (e) => {
-  if (Math.random() < 0.35) { // Throttle generation rate for maximum performance
+  if (Math.random() < 0.4) { // Throttle generation rate for maximum performance
     const p = document.createElement('div');
-    p.className = 'kunai-trail-particle';
-    p.style.left = e.clientX + 'px';
-    p.style.top = e.clientY + 'px';
-    
-    // Sleek metallic white and electric cyan slash trail colors
-    const colors = ['#ffffff', '#e6f7ff', '#00d4ff', '#80e5ff'];
-    const col = colors[Math.floor(Math.random() * colors.length)];
-    p.style.backgroundColor = col;
-    p.style.boxShadow = `0 0 6px ${col}, 0 0 10px rgba(0, 212, 255, 0.6)`;
+    p.className = 'smoke-particle';
+    const jitterX = (Math.random() - 0.5) * 6;
+    const jitterY = (Math.random() - 0.5) * 6;
+    p.style.left = (e.clientX + 36 + jitterX) + 'px';
+    p.style.top = (e.clientY + 42 + jitterY) + 'px';
     
     document.body.appendChild(p);
-    setTimeout(() => p.remove(), 600);
+    setTimeout(() => p.remove(), 800);
   }
 });
 
@@ -561,4 +685,225 @@ el.resultBody.addEventListener('click', (ev) => {
     }
   });
 });
+
+// ===== LOGIC ASISTEN CEK STATUS =====
+let assistantTimer = null;
+let assistantRetries = new Map();
+let assistantCheckedKeys = new Set();
+state.assistantRunning = false;
+
+function stopAssistant() {
+  state.assistantRunning = false;
+  if (assistantTimer) {
+    clearTimeout(assistantTimer);
+    assistantTimer = null;
+  }
+  if (el.assistantBtn) {
+    el.assistantBtn.textContent = '🤖 Asisten Cek';
+    el.assistantBtn.classList.remove('running');
+  }
+  setStatus('🤖 Asisten Cek dihentikan.');
+}
+
+async function startAssistant() {
+  assistantRetries.clear();
+  assistantCheckedKeys.clear();
+  state.assistantRunning = true;
+  if (el.assistantBtn) {
+    el.assistantBtn.textContent = '🛑 Hentikan Asisten';
+    el.assistantBtn.classList.add('running');
+  }
+  setStatus('🤖 Asisten Cek dimulai...');
+  runAssistantLoop();
+}
+
+function isFinalStatus(status, userId, transactionId) {
+  const s = String(status || '').trim().toUpperCase();
+  if (s === 'APPROVED' || s === 'REJECTED' || s === 'LIMIT') return true;
+  if (s === 'NOT_FOUND' || s === 'NOT FOUND') {
+    const key = `${userId}|${transactionId}`;
+    const retries = assistantRetries.get(key) || 0;
+    if (retries >= 2) {
+      return true; // Final jika sudah diulangi 2 kali
+    }
+    return false; // Belum final, akan dicoba cek ulang
+  }
+  return false;
+}
+
+function runAssistantLoop() {
+  if (!state.assistantRunning) return;
+
+  // 1. Cari tiket yang perlu dicek statusnya (statusnya bukan final)
+  const badges = Array.from(el.resultBody.querySelectorAll('.clickable-badge[data-action="verifyStatusSingle"]'));
+  const candidates = badges.filter(badge => {
+    const text = String(badge.textContent || '').trim().toUpperCase();
+    const uId = badge.dataset.userId;
+    const txId = badge.dataset.transactionId;
+    const key = `${uId}|${txId}`;
+
+    // Lewati jika sudah pernah dicek dalam putaran asisten ini
+    if (assistantCheckedKeys.has(key)) return false;
+
+    return !isFinalStatus(text, uId, txId) && text !== 'CHECKING...';
+  });
+
+  // Proses dari bawah ke atas (oldest/paling bawah dulu)
+  candidates.reverse();
+
+  if (candidates.length === 0) {
+    showCenterNotif('🎉 Asisten: Semua status selesai dicek!');
+    stopAssistant();
+    return;
+  }
+
+  // Ambil kandidat pertama di layar
+  const targetBadge = candidates[0];
+  const userId = targetBadge.dataset.userId;
+  const transactionId = targetBadge.dataset.transactionId;
+  const currentText = String(targetBadge.textContent || '').trim().toUpperCase();
+
+  const key = `${userId}|${transactionId}`;
+  if (currentText === 'NOT_FOUND' || currentText === 'NOT FOUND') {
+    const retries = assistantRetries.get(key) || 0;
+    assistantRetries.set(key, retries + 1);
+    setStatus(`🤖 Asisten: Mengulangi cek status ${userId} (Percobaan ${retries + 1}/2)...`);
+  } else {
+    setStatus(`🤖 Asisten: Mengklik cek status untuk ${userId}...`);
+  }
+
+  // Rekam status awal untuk memantau perubahan
+  const currentResults = Array.isArray(state.results) ? state.results : [];
+  const initialItem = currentResults.find(r => String(r.userId) === userId && String(r.transactionId) === transactionId);
+  const initialStatus = initialItem ? String(initialItem.verifiedStatus || '').trim().toUpperCase() : '';
+
+  try {
+    targetBadge.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  } catch (e) {}
+  
+  // Klik tombol
+  targetBadge.click();
+
+  // Tunggu sampai status berubah di state.results
+  const checkStart = Date.now();
+  
+  function checkStatusUpdated() {
+    if (!state.assistantRunning) return;
+
+    // Cari data terbaru di state.results
+    const currentResults = Array.isArray(state.results) ? state.results : [];
+    const item = currentResults.find(r => String(r.userId) === userId && String(r.transactionId) === transactionId);
+    
+    const status = item ? String(item.verifiedStatus || '').trim().toUpperCase() : '';
+    const elapsed = Date.now() - checkStart;
+
+    const statusChanged = (status !== initialStatus);
+
+    if (statusChanged || elapsed > 15000) {
+      // Selesai (berhasil/gagal/timeout)
+      if (elapsed > 15000) {
+        setStatus(`🤖 Asisten: Timeout pengecekan ${userId}. Beralih ke baris berikutnya...`);
+      } else {
+        setStatus(`🤖 Asisten: Status ${userId} terupdate (${status}).`);
+      }
+
+      // Masukkan ke checked keys agar tidak dicek lagi (kecuali NOT FOUND yang masih perlu diulangi)
+      const isNotFound = (status === 'NOT_FOUND' || status === 'NOT FOUND');
+      const isRetryingNotFound = isNotFound && !isFinalStatus(status, userId, transactionId);
+
+      if (!isRetryingNotFound || elapsed > 15000) {
+        assistantCheckedKeys.add(key);
+      }
+
+      // Jeda acak yang manusiawi (2-4 detik) sebelum baris berikutnya
+      const nextDelay = 2000 + Math.random() * 2000;
+      setStatus(`🤖 Asisten: Jeda ${Math.round(nextDelay/100)/10}s sebelum tiket berikutnya...`);
+      
+      assistantTimer = setTimeout(() => {
+        runAssistantLoop();
+      }, nextDelay);
+    } else {
+      // Masih mengecek, periksa lagi dalam 500ms
+      assistantTimer = setTimeout(checkStatusUpdated, 500);
+    }
+  }
+
+  // Mulai memantau perubahan
+  assistantTimer = setTimeout(checkStatusUpdated, 1000);
+}
+
+if (el.assistantBtn) {
+  el.assistantBtn.addEventListener('click', () => {
+    if (state.assistantRunning) {
+      stopAssistant();
+    } else {
+      startAssistant();
+    }
+  });
+}
+
+// ===== FLOATING UPDATE MODAL EVENT LISTENERS =====
+(function initUpdateModal() {
+  const modal = document.getElementById('updateModal');
+  const infoBtn = document.getElementById('infoUpdateBtn');
+  const closeBtn = document.getElementById('closeModalBtn');
+  const infoDot = document.getElementById('infoUpdateDot');
+  
+  if (modal && infoBtn && closeBtn && infoDot) {
+    const hideUntil = localStorage.getItem('hide_update_banner_until');
+    const now = Date.now();
+    
+    // Show glowing dot if quiet period has expired
+    if (!hideUntil || now > Number(hideUntil)) {
+      infoDot.style.display = 'block';
+      // Auto-popup once on page load if quiet period expired
+      modal.style.display = 'flex';
+    }
+    
+    // Click info button to open modal
+    infoBtn.addEventListener('click', () => {
+      modal.style.display = 'flex';
+      infoDot.style.display = 'none';
+    });
+    
+    // Close modal
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+      const threeDays = 3 * 24 * 60 * 60 * 1000;
+      localStorage.setItem('hide_update_banner_until', Date.now() + threeDays);
+      infoDot.style.display = 'none';
+    });
+    
+    // Close if click outside content
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        const threeDays = 3 * 24 * 60 * 60 * 1000;
+        localStorage.setItem('hide_update_banner_until', Date.now() + threeDays);
+        infoDot.style.display = 'none';
+      }
+    });
+  }
+
+  // Toggle Stats Charts Dashboard
+  const toggleBtn = document.getElementById('toggleChartsBtn');
+  const chartsDashboard = document.getElementById('statsChartsDashboard');
+  if (toggleBtn && chartsDashboard) {
+    toggleBtn.addEventListener('click', () => {
+      if (chartsDashboard.style.display === 'none') {
+        chartsDashboard.style.display = 'grid';
+        toggleBtn.textContent = '📊 Sembunyikan Grafik';
+        toggleBtn.classList.add('active');
+        // Trigger redrawing to animate on open
+        if (typeof state !== 'undefined' && state.results && typeof updateStats === 'function') {
+          updateStats(state.results);
+        }
+      } else {
+        chartsDashboard.style.display = 'none';
+        toggleBtn.textContent = '📊 Lihat Grafik';
+        toggleBtn.classList.remove('active');
+      }
+    });
+  }
+})();
 

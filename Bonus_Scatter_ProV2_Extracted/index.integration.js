@@ -88,6 +88,7 @@ function hydrateFromStorage() {
     const rows = Array.isArray(res.jutawanResults) ? res.jutawanResults : [];
     renderResults(rows);
     if (rows.length > 0) setStatus(`📥 Hasil ter-load: ${rows.length} baris.`);
+    if (el.assistantBtn) el.assistantBtn.style.display = 'inline-flex';
   });
 }
 
@@ -140,8 +141,10 @@ window.addEventListener('message', (event) => {
 
     if (state.bridgeUrl.includes('bonussmb.com')) {
       if (el.searchStatusBtn) el.searchStatusBtn.style.display = 'inline-block';
+      if (el.assistantBtn) el.assistantBtn.style.display = 'inline-flex';
     } else {
       if (el.searchStatusBtn) el.searchStatusBtn.style.display = 'none';
+      if (el.assistantBtn) el.assistantBtn.style.display = 'none';
     }
     setStatus('🔌 Bridge aktif. Siap kirim tiket.');
     return;
@@ -151,6 +154,7 @@ window.addEventListener('message', (event) => {
     state.bridgeReady = true;
     setBridgeBadge('ok', 'Bridge: aktif');
     setStatus('🔌 Bridge aktif. Siap kirim tiket.');
+    if (el.assistantBtn) el.assistantBtn.style.display = 'inline-flex';
     return;
   }
 

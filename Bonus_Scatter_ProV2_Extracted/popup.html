@@ -209,54 +209,98 @@
     }
 
     label {
-      display: block; margin-top: 10px;
-      font-size: 0.8rem; color: var(--muted); font-weight: 600;
-      letter-spacing: 0.2px;
+      display: block; margin-top: 12px;
+      font-size: 0.76rem; color: var(--muted); font-weight: 700;
+      letter-spacing: 0.5px; text-transform: uppercase;
     }
 
     input, textarea {
-      width: 100%; padding: 8px 11px; margin-top: 5px;
+      width: 100%; padding: 10px 12px; margin-top: 6px;
       background: var(--input-bg); color: var(--text);
       border: 1px solid var(--border); border-radius: 8px; outline: none;
-      font-size: 0.83rem; font-family: inherit;
-      transition: border-color 160ms, box-shadow 160ms;
+      font-size: 0.84rem; font-family: inherit;
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
     input:focus, textarea:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(0,212,255,0.15), 0 0 10px rgba(0,212,255,0.1);
+      box-shadow: 0 0 15px rgba(0,212,255,0.45), inset 0 0 5px rgba(0,212,255,0.15);
+      background: rgba(0,15,40,0.85);
     }
-    ::placeholder { color: rgba(100,160,200,0.5); }
+    
+    /* Custom style for Chrome Date picker */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.8) sepia(1) saturate(5) hue-rotate(175deg);
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
+    }
+    
+    ::placeholder { color: rgba(100,160,200,0.4); }
     textarea { height: 90px; resize: vertical; }
 
-    /* Tombol utama — glow biru */
+    /* Tombol utama — glow biru cyberpunk */
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-      width: 100%; padding: 10px 12px; margin-top: 11px;
-      background: linear-gradient(180deg, #00aaff, #0077cc);
-      color: #fff; font-weight: 700; border: none; border-radius: 10px;
-      cursor: pointer; font-size: 0.86rem; font-family: inherit;
-      box-shadow: 0 6px 20px rgba(0,150,255,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
-      transition: transform 120ms, box-shadow 200ms, filter 120ms;
+      width: 100%; padding: 11px 12px; margin-top: 11px;
+      background: linear-gradient(135deg, #00d4ff, #0077cc);
+      color: #fff; font-weight: 800; border: none; border-radius: 10px;
+      cursor: pointer; font-size: 0.88rem; font-family: inherit;
+      box-shadow: 0 0 12px rgba(0,212,255,0.35), 0 6px 20px rgba(0,150,255,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+      transition: all 0.25s ease;
       text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      letter-spacing: 0.5px;
     }
     .btn:hover {
       transform: translateY(-1px);
-      filter: brightness(1.1);
-      box-shadow: 0 10px 28px rgba(0,180,255,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+      filter: brightness(1.15);
+      box-shadow: 0 0 20px rgba(0,212,255,0.6), 0 10px 28px rgba(0,180,255,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
     }
     .btn:active { transform: translateY(0); }
 
-    /* Tombol sekunder — cyan lebih terang */
+    /* Tombol sekunder — crystal cyan */
     .btn-secondary {
-      background: linear-gradient(180deg, rgba(0,200,255,0.18), rgba(0,150,220,0.18));
+      background: linear-gradient(135deg, rgba(0,200,255,0.12), rgba(0,150,220,0.05));
       color: #00e5ff;
-      border: 1px solid rgba(0,200,255,0.4);
-      box-shadow: 0 4px 14px rgba(0,180,255,0.15);
+      border: 1px solid rgba(0,200,255,0.35);
+      box-shadow: 0 4px 14px rgba(0,180,255,0.12);
+      letter-spacing: 0.5px;
+      transition: all 0.25s ease;
     }
     .btn-secondary:hover {
-      background: linear-gradient(180deg, rgba(0,200,255,0.28), rgba(0,150,220,0.28));
-      box-shadow: 0 6px 20px rgba(0,212,255,0.3);
+      background: linear-gradient(135deg, rgba(0,200,255,0.22), rgba(0,150,220,0.12));
+      border-color: rgba(0,229,255,0.6);
+      box-shadow: 0 0 15px rgba(0,212,255,0.35), 0 6px 20px rgba(0,212,255,0.15);
     }
+
+    /* Staggered Load Animations */
+    @keyframes slide-up-fade {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .panel > label, .panel > input, .panel > textarea, .panel > button, .panel > table, .panel > #buttonContainer {
+      animation: slide-up-fade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      opacity: 0;
+    }
+    
+    /* Staggered animation delays */
+    .panel > label:nth-of-type(1) { animation-delay: 0.04s; }
+    .panel > input:nth-of-type(1) { animation-delay: 0.07s; }
+    .panel > label:nth-of-type(2) { animation-delay: 0.10s; }
+    .panel > input:nth-of-type(2) { animation-delay: 0.13s; }
+    .panel > label:nth-of-type(3) { animation-delay: 0.16s; }
+    .panel > input:nth-of-type(3) { animation-delay: 0.19s; }
+    .panel > label:nth-of-type(4) { animation-delay: 0.22s; }
+    .panel > input:nth-of-type(4) { animation-delay: 0.25s; }
+    .panel > label:nth-of-type(5) { animation-delay: 0.28s; }
+    .panel > textarea { animation-delay: 0.31s; }
+    .panel > button:nth-of-type(1) { animation-delay: 0.34s; }
+    .panel > button:nth-of-type(2) { animation-delay: 0.37s; }
+    .panel > table { animation-delay: 0.40s; }
+    .panel > #buttonContainer { animation-delay: 0.43s; }
 
     #status {
       margin-top: 9px; font-size: 0.8em; color: var(--muted); min-height: 16px;
@@ -390,7 +434,7 @@
       <div class="panel-title">Bonus Scatter Checker</div>
 
       <label for="adminUrl">URL Dasar Admin</label>
-      <input type="url" id="adminUrl" placeholder="Contoh: https://agent.png777.com">
+      <input type="url" id="adminUrl" placeholder="Contoh: https://lapak99.idrbo2.com/">
 
       <label for="startDateInput">Tanggal Mulai</label>
       <input type="date" id="startDateInput">
@@ -429,13 +473,38 @@
   </div>
 
   <!-- PRANK OVERLAY -->
-  <div id="prankOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(10,0,5,0.96); flex-direction:column; align-items:center; justify-content:center; color:#ff4d6d; font-family:'Outfit',sans-serif; text-align:center; padding:20px;">
-    <div id="prankIcon" style="font-size:60px; margin-bottom:15px; animation: shake 0.5s infinite;">⚠️</div>
-    <div id="prankTitle" style="font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 0 15px rgba(255,77,109,0.8); margin-bottom:10px;">SYSTEM CRITICAL ERROR</div>
-    <div id="prankDesc" style="font-size:16px; font-family:'Plus Jakarta Sans',sans-serif; color:#ff99a8;">Failure initializing core modules.<br>Data corruption detected.</div>
+  <div id="prankOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(10,0,5,0.96); flex-direction:column; align-items:center; justify-content:center; color:#ff4d6d; font-family:'Outfit',sans-serif; text-align:center; padding:20px; overflow:hidden;">
+    
+    <!-- Bagian Error Awal -->
+    <div id="prankErrorPart">
+      <div id="prankIcon" style="font-size:60px; margin-bottom:15px; animation: shake 0.5s infinite;">⚠️</div>
+      <div id="prankTitle" style="font-size:28px; font-weight:900; letter-spacing:2px; text-shadow:0 0 15px rgba(255,77,109,0.8); margin-bottom:10px;">SYSTEM CRITICAL ERROR</div>
+      <div id="prankDesc" style="font-size:16px; font-family:'Plus Jakarta Sans',sans-serif; color:#ff99a8;">Failure initializing core modules.<br>Data corruption detected.</div>
+    </div>
+
+    <!-- Bagian Davina Jedag Jedug (Awalnya Sembunyi) -->
+    <div id="prankDavinaPart" style="display:none; position:absolute; inset:0; width:100%; height:100%;">
+      <!-- Gambar Davina lokal biar ga kena block Chrome -->
+      <img id="bgImgPrank" src="davina.jpg" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; filter:brightness(0.6) contrast(1.2); z-index:1; animation: jedagJedugBg 0.35s infinite alternate ease-in-out;">
+      <div style="position:absolute; inset:0; background:radial-gradient(circle, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%); z-index:5;"></div>
+      
+      <div style="position:relative; z-index:10; text-align:center; height:100%; display:flex; align-items:center; justify-content:center; animation: jedagJedugText 0.35s infinite alternate ease-in-out;">
+        <h1 style="color:#fff; font-size:36px; line-height:1.2; text-transform:uppercase; margin:0; text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055, 0 0 40px #ff0055;">
+          Selamat Bekerja<br><span style="color:#00f0ff; text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff, 0 0 40px #00f0ff; font-size:48px;">Sayaaang</span>
+        </h1>
+      </div>
+    </div>
   </div>
 
   <style>
+    @keyframes jedagJedugBg {
+      0% { transform: scale(1); filter: brightness(0.5) contrast(1.2) saturate(1); }
+      100% { transform: scale(1.15) rotate(1deg); filter: brightness(0.8) contrast(1.4) saturate(1.5); }
+    }
+    @keyframes jedagJedugText {
+      0% { transform: scale(1) translateY(0); }
+      100% { transform: scale(1.15) translateY(-10px); }
+    }
     @keyframes shake {
       0% { transform: translate(1px, 1px) rotate(0deg); }
       10% { transform: translate(-1px, -2px) rotate(-1deg); }
