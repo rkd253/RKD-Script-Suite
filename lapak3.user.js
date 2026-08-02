@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.5.2
+// @version      4.5.3
 // @description  Wallpaper manga + indikator warna antrian chat (No-Refresh Toggle)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
@@ -156,6 +156,33 @@
     }
   }
 
+  function isActiveChatLastMessageFromVisitor() {
+    try {
+      const chatArea = document.querySelector('[data-testid="messages-list"]');
+      if (!chatArea) return false;
+      const messages = chatArea.children;
+      if (messages.length === 0) return false;
+      const lastMsg = messages[messages.length - 1];
+      
+      // Cek apakah pesan terakhir dikirim oleh visitor/client
+      const isVisitor = lastMsg.querySelector('[data-testid*="visitor"], [data-testid*="client"]') ||
+                        lastMsg.querySelector('[class*="visitor"], [class*="client"]') ||
+                        (lastMsg.getAttribute && lastMsg.getAttribute('data-testid')?.includes('visitor')) ||
+                        lastMsg.querySelector('[data-testid="message-author-visitor"]') ||
+                        lastMsg.querySelector('[data-testid="message-source-visitor"]');
+      if (isVisitor) return true;
+
+      // Fallback: Jika tidak terdeteksi class khusus, cek penempatan kiriman di sebelah kiri (visitor)
+      const style = window.getComputedStyle(lastMsg);
+      const isLeft = style.justifyContent === 'flex-start' || style.alignItems === 'flex-start' || style.textAlign === 'left';
+      const hasAgent = lastMsg.querySelector('[class*="agent"], [class*="Agent"], [data-testid*="agent"]');
+      if (isLeft && !hasAgent) {
+        return true;
+      }
+    } catch(e) {}
+    return false;
+  }
+
   function checkChatQueue() {
     try {
       const allItems = document.querySelectorAll('a, [role="button"], [role="row"], li');
@@ -182,8 +209,24 @@
 
         const hasUnread = item.querySelector('[class*="badge"], [class*="unread"], [class*="notification"], [class*="count"]');
         
-        // Deteksi jika belum direspon >= 1 menit
-        if (hasUnread && mins >= 1) {
+        // 1. Cek chat latar belakang yang unread
+        let isUnresponded = (hasUnread && mins >= 1);
+
+        // 2. Cek chat aktif yang sedang terbuka
+        const isActive = item.classList.contains('active') || 
+                         item.classList.contains('selected') || 
+                         item.getAttribute('aria-selected') === 'true' ||
+                         item.querySelector('[class*="active"], [class*="selected"]') ||
+                         item.closest('[class*="active"]') ||
+                         item.closest('[class*="selected"]');
+
+        if (isActive && mins >= 1) {
+          if (isActiveChatLastMessageFromVisitor()) {
+            isUnresponded = true;
+          }
+        }
+
+        if (isUnresponded) {
           unrespondedCount++;
         }
 
