@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.5.5
+// @version      4.5.6
 // @description  Wallpaper manga + indikator warna antrian chat (No-Refresh Toggle)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
@@ -32,7 +32,7 @@
       /* ===== CHAT UNRESPONSED ALERT (DI DALAM SIDEBAR) ===== */
       #lc-unresponded-alert {
         position: absolute;
-        bottom: 60px; /* Di atas tombol menu gear di paling bawah */
+        bottom: 110px; /* Dinaikkan ke tengah-tengah ruang kosong sidebar */
         left: 12px;
         right: 12px;
         background: rgba(239, 68, 68, 0.08);
@@ -195,15 +195,15 @@
     try {
       const chatArea = document.querySelector('[data-testid="messages-list"]');
       if (!chatArea) return false;
-      const allMsgs = chatArea.querySelectorAll('[data-testid*="message"], [class*="message"], [class*="Message"]');
-      if (allMsgs.length === 0) return false;
+      const messages = chatArea.children;
+      if (messages.length === 0) return false;
       
-      // Pindai mundur untuk mencari pesan obrolan nyata (skip pesan sistem seperti rating, joined, dll)
+      // Pindai mundur mencari baris pesan obrolan nyata (top-level children)
       let lastMsg = null;
-      for (let i = allMsgs.length - 1; i >= 0; i--) {
-        const msg = allMsgs[i];
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i];
         const text = msg.innerText || "";
-        const isSystem = text.includes('rated good') || text.includes('chat transcript') || text.includes('joined the chat') || text.includes('left the chat') || text.includes('rated bad');
+        const isSystem = text.includes('rated good') || text.includes('chat transcript') || text.includes('joined the chat') || text.includes('left the chat') || text.includes('rated bad') || text.includes('started the chat');
         if (!isSystem) {
           lastMsg = msg;
           break;
@@ -211,18 +211,10 @@
       }
       
       if (lastMsg) {
-        const isVisitor = lastMsg.querySelector('[data-testid*="visitor"], [data-testid*="client"]') ||
-                          lastMsg.querySelector('[class*="visitor"], [class*="client"]') ||
-                          (lastMsg.getAttribute && lastMsg.getAttribute('data-testid')?.includes('visitor')) ||
-                          lastMsg.querySelector('[data-testid="message-author-visitor"]') ||
-                          lastMsg.querySelector('[data-testid="message-source-visitor"]');
-        if (isVisitor) return true;
-
-        // Fallback: cek alignment di sebelah kiri (pesan visitor)
-        const hasAgent = lastMsg.querySelector('[class*="agent"], [class*="Agent"], [data-testid*="agent"]');
-        const style = window.getComputedStyle(lastMsg);
-        const isLeft = style.justifyContent === 'flex-start' || style.alignItems === 'flex-start' || style.textAlign === 'left';
-        if (isLeft && !hasAgent) {
+        // Cek apakah pesan nyata terakhir dikirim oleh Agent/CS
+        const hasAgent = lastMsg.querySelector('[data-testid*="agent"], [class*="agent"], [class*="Agent"], [class*="me"], [class*="Me"]');
+        if (!hasAgent) {
+          // Jika tidak dikirim oleh agent, berarti dikirim oleh visitor (customer)
           return true;
         }
       }
