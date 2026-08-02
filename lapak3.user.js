@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.5.0
+// @version      4.5.2
 // @description  Wallpaper manga + indikator warna antrian chat (No-Refresh Toggle)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
@@ -119,6 +119,14 @@
     });
   }
 
+  const calmingQuotes = [
+    "Tarik napas dulu, balas satu per satu ya bosku! ☕",
+    "Tenang bosku, santai saja yang penting ramah & jos! 🌟",
+    "Jangan terburu-buru, santai saja. Member pasti sabar menunggu! 😊",
+    "Fokus satu per satu ya, pelan tapi pasti! Semangat bosku! 💪",
+    "Kerja santai tapi pasti, utamakan ramah tamah. Kamu pasti bisa! 👑"
+  ];
+
   function updateUnrespondedAlert(count) {
     let alertBox = document.getElementById('lc-unresponded-alert');
     if (!alertBox) {
@@ -127,9 +135,23 @@
       document.body.appendChild(alertBox);
     }
     if (count > 0) {
-      alertBox.innerHTML = `⚠️ Ada ${count} Chat Belum Direspon!`;
+      if (count >= 5) {
+        if (!window.currentCalmingQuote) {
+          window.currentCalmingQuote = calmingQuotes[Math.floor(Math.random() * calmingQuotes.length)];
+        }
+        alertBox.innerHTML = `
+          <div>⚠️ ADA ${count} CHAT BELUM DIRESPON!</div>
+          <div style="font-size: 11.5px; color: #a7f3d0; margin-top: 8px; font-weight: 700; text-transform: none; letter-spacing: 0.5px; border-top: 1.5px dashed rgba(255, 85, 85, 0.4); padding-top: 8px;">
+            ${window.currentCalmingQuote}
+          </div>
+        `;
+      } else {
+        window.currentCalmingQuote = null;
+        alertBox.innerHTML = `⚠️ Ada ${count} Chat Belum Direspon!`;
+      }
       alertBox.classList.add('show');
     } else {
+      window.currentCalmingQuote = null;
       alertBox.classList.remove('show');
     }
   }
@@ -160,8 +182,8 @@
 
         const hasUnread = item.querySelector('[class*="badge"], [class*="unread"], [class*="notification"], [class*="count"]');
         
-        // Deteksi jika belum direspon >= 2 menit
-        if (hasUnread && mins >= 2) {
+        // Deteksi jika belum direspon >= 1 menit
+        if (hasUnread && mins >= 1) {
           unrespondedCount++;
         }
 
