@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.4.3
+// @version      4.5.0
 // @description  Wallpaper manga + indikator warna antrian chat (No-Refresh Toggle)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
@@ -28,6 +28,37 @@
       .lc-antrian-hijau  { box-shadow: inset 4px 0 0 #22c55e !important; position: relative !important; }
       .lc-antrian-kedip  { animation: mngBlink 1.8s infinite !important; position: relative !important; }
       @keyframes mngBlink { 0%, 100% { box-shadow: inset 5px 0 0 #ff0000; } 50% { box-shadow: inset 50px 0 35px -10px rgba(255,40,40,0.25); } }
+
+      /* ===== CHAT UNRESPONSED ALERT (KIRI BAWAH) ===== */
+      #lc-unresponded-alert {
+        position: fixed;
+        bottom: 24px;
+        left: 24px;
+        background: rgba(15, 7, 0, 0.95);
+        border: 2px solid #ef4444;
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.6), inset 0 0 10px rgba(239, 68, 68, 0.3);
+        border-radius: 12px;
+        padding: 12px 18px;
+        color: #ff5555;
+        font-family: 'Outfit', 'Segoe UI', sans-serif;
+        font-size: 13.5px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        z-index: 999999;
+        display: none;
+        align-items: center;
+        gap: 8px;
+        pointer-events: none;
+        animation: alertGlowPulse 1.2s infinite alternate;
+      }
+      #lc-unresponded-alert.show {
+        display: flex;
+      }
+      @keyframes alertGlowPulse {
+        0% { transform: scale(1); box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+        100% { transform: scale(1.05); box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
+      }
     `;
     document.head.appendChild(s);
   }
@@ -88,24 +119,65 @@
     });
   }
 
+  function updateUnrespondedAlert(count) {
+    let alertBox = document.getElementById('lc-unresponded-alert');
+    if (!alertBox) {
+      alertBox = document.createElement('div');
+      alertBox.id = 'lc-unresponded-alert';
+      document.body.appendChild(alertBox);
+    }
+    if (count > 0) {
+      alertBox.innerHTML = `⚠️ Ada ${count} Chat Belum Direspon!`;
+      alertBox.classList.add('show');
+    } else {
+      alertBox.classList.remove('show');
+    }
+  }
+
   function checkChatQueue() {
     try {
       const allItems = document.querySelectorAll('a, [role="button"], [role="row"], li');
+      let unrespondedCount = 0;
+
       allItems.forEach(item => {
         if (item.closest('[data-testid="messages-list"]')) return;
         const it = item.innerText || "";
         const hasTime = /\d+[smh]/.test(it);
         const isArchived = it.toLowerCase().includes('archived') || it.toLowerCase().includes('left the chat') || it.toLowerCase().includes('inactivity');
         if (!hasTime && !isArchived) return;
+        
         item.classList.remove('lc-antrian-orange','lc-antrian-hijau','lc-antrian-kedip');
         if (isArchived) return;
+        
         const timeMatch = it.match(/(\d+)([smh])/);
         let mins = 0;
-        if (timeMatch) { const val = parseInt(timeMatch[1]); const unit = timeMatch[2]; if (unit === 'm') mins = val; else if (unit === 'h') mins = val * 60; }
-        if (mins >= 3) { item.classList.add('lc-antrian-kedip'); return; }
+        if (timeMatch) { 
+          const val = parseInt(timeMatch[1]); 
+          const unit = timeMatch[2]; 
+          if (unit === 'm') mins = val; 
+          else if (unit === 'h') mins = val * 60; 
+        }
+
         const hasUnread = item.querySelector('[class*="badge"], [class*="unread"], [class*="notification"], [class*="count"]');
-        if (hasUnread) { item.classList.add('lc-antrian-orange'); } else { item.classList.add('lc-antrian-hijau'); }
+        
+        // Deteksi jika belum direspon >= 2 menit
+        if (hasUnread && mins >= 2) {
+          unrespondedCount++;
+        }
+
+        if (mins >= 3) { 
+          item.classList.add('lc-antrian-kedip'); 
+          return; 
+        }
+
+        if (hasUnread) { 
+          item.classList.add('lc-antrian-orange'); 
+        } else { 
+          item.classList.add('lc-antrian-hijau'); 
+        }
       });
+
+      updateUnrespondedAlert(unrespondedCount);
     } catch(e) { }
   }
 
