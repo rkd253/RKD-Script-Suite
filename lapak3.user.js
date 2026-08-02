@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.5.3
+// @version      4.5.5
 // @description  Wallpaper manga + indikator warna antrian chat (No-Refresh Toggle)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
@@ -29,26 +29,29 @@
       .lc-antrian-kedip  { animation: mngBlink 1.8s infinite !important; position: relative !important; }
       @keyframes mngBlink { 0%, 100% { box-shadow: inset 5px 0 0 #ff0000; } 50% { box-shadow: inset 50px 0 35px -10px rgba(255,40,40,0.25); } }
 
-      /* ===== CHAT UNRESPONSED ALERT (KIRI BAWAH) ===== */
+      /* ===== CHAT UNRESPONSED ALERT (DI DALAM SIDEBAR) ===== */
       #lc-unresponded-alert {
-        position: fixed;
-        bottom: 24px;
-        left: 24px;
-        background: rgba(15, 7, 0, 0.95);
-        border: 2px solid #ef4444;
-        box-shadow: 0 0 20px rgba(239, 68, 68, 0.6), inset 0 0 10px rgba(239, 68, 68, 0.3);
-        border-radius: 12px;
-        padding: 12px 18px;
+        position: absolute;
+        bottom: 60px; /* Di atas tombol menu gear di paling bawah */
+        left: 12px;
+        right: 12px;
+        background: rgba(239, 68, 68, 0.08);
+        border: 2px dashed rgba(239, 68, 68, 0.5);
+        box-shadow: 0 0 12px rgba(239, 68, 68, 0.15), inset 0 0 8px rgba(239, 68, 68, 0.05);
+        border-radius: 10px;
+        padding: 10px 12px;
         color: #ff5555;
         font-family: 'Outfit', 'Segoe UI', sans-serif;
-        font-size: 13.5px;
+        font-size: 11px;
         font-weight: 900;
         text-transform: uppercase;
-        letter-spacing: 0.8px;
-        z-index: 999999;
+        letter-spacing: 0.6px;
+        z-index: 9999;
         display: none;
+        flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        text-align: center;
         pointer-events: none;
         animation: alertGlowPulse 1.2s infinite alternate;
       }
@@ -56,8 +59,8 @@
         display: flex;
       }
       @keyframes alertGlowPulse {
-        0% { transform: scale(1); box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
-        100% { transform: scale(1.05); box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
+        0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.15); }
+        100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
       }
     `;
     document.head.appendChild(s);
@@ -127,21 +130,53 @@
     "Kerja santai tapi pasti, utamakan ramah tamah. Kamu pasti bisa! 👑"
   ];
 
+  function getSidebarContainer() {
+    // Cari element sidebar kiri LiveChat
+    const sidebar = document.querySelector('[data-testid="sidebar"], [class*="Sidebar"], nav, [class*="Navigation"], [class*="left-panel"], .lc-sidebar');
+    if (sidebar) return sidebar;
+    
+    // Fallback: cari parent dari chats list
+    const chatsList = document.querySelector('[class*="ChatsList"], [data-testid="chats-list"]');
+    if (chatsList) return chatsList.parentElement || chatsList;
+    
+    return document.body;
+  }
+
   function updateUnrespondedAlert(count) {
     let alertBox = document.getElementById('lc-unresponded-alert');
     if (!alertBox) {
       alertBox = document.createElement('div');
       alertBox.id = 'lc-unresponded-alert';
-      document.body.appendChild(alertBox);
+      const container = getSidebarContainer();
+      if (container) {
+        const style = window.getComputedStyle(container);
+        if (style.position === 'static') {
+          container.style.position = 'relative';
+        }
+        container.appendChild(alertBox);
+      } else {
+        document.body.appendChild(alertBox);
+      }
     }
+    
     if (count > 0) {
+      // Pengaman jika container sidebar di-render ulang secara dinamis oleh LiveChat
+      const container = getSidebarContainer();
+      if (container && alertBox.parentElement !== container) {
+        const style = window.getComputedStyle(container);
+        if (style.position === 'static') {
+          container.style.position = 'relative';
+        }
+        container.appendChild(alertBox);
+      }
+
       if (count >= 5) {
         if (!window.currentCalmingQuote) {
           window.currentCalmingQuote = calmingQuotes[Math.floor(Math.random() * calmingQuotes.length)];
         }
         alertBox.innerHTML = `
           <div>⚠️ ADA ${count} CHAT BELUM DIRESPON!</div>
-          <div style="font-size: 11.5px; color: #a7f3d0; margin-top: 8px; font-weight: 700; text-transform: none; letter-spacing: 0.5px; border-top: 1.5px dashed rgba(255, 85, 85, 0.4); padding-top: 8px;">
+          <div style="font-size: 10.5px; color: #a7f3d0; margin-top: 6px; font-weight: 700; text-transform: none; letter-spacing: 0.3px; border-top: 1px dashed rgba(255, 85, 85, 0.4); padding-top: 6px;">
             ${window.currentCalmingQuote}
           </div>
         `;
@@ -160,24 +195,36 @@
     try {
       const chatArea = document.querySelector('[data-testid="messages-list"]');
       if (!chatArea) return false;
-      const messages = chatArea.children;
-      if (messages.length === 0) return false;
-      const lastMsg = messages[messages.length - 1];
+      const allMsgs = chatArea.querySelectorAll('[data-testid*="message"], [class*="message"], [class*="Message"]');
+      if (allMsgs.length === 0) return false;
       
-      // Cek apakah pesan terakhir dikirim oleh visitor/client
-      const isVisitor = lastMsg.querySelector('[data-testid*="visitor"], [data-testid*="client"]') ||
-                        lastMsg.querySelector('[class*="visitor"], [class*="client"]') ||
-                        (lastMsg.getAttribute && lastMsg.getAttribute('data-testid')?.includes('visitor')) ||
-                        lastMsg.querySelector('[data-testid="message-author-visitor"]') ||
-                        lastMsg.querySelector('[data-testid="message-source-visitor"]');
-      if (isVisitor) return true;
+      // Pindai mundur untuk mencari pesan obrolan nyata (skip pesan sistem seperti rating, joined, dll)
+      let lastMsg = null;
+      for (let i = allMsgs.length - 1; i >= 0; i--) {
+        const msg = allMsgs[i];
+        const text = msg.innerText || "";
+        const isSystem = text.includes('rated good') || text.includes('chat transcript') || text.includes('joined the chat') || text.includes('left the chat') || text.includes('rated bad');
+        if (!isSystem) {
+          lastMsg = msg;
+          break;
+        }
+      }
+      
+      if (lastMsg) {
+        const isVisitor = lastMsg.querySelector('[data-testid*="visitor"], [data-testid*="client"]') ||
+                          lastMsg.querySelector('[class*="visitor"], [class*="client"]') ||
+                          (lastMsg.getAttribute && lastMsg.getAttribute('data-testid')?.includes('visitor')) ||
+                          lastMsg.querySelector('[data-testid="message-author-visitor"]') ||
+                          lastMsg.querySelector('[data-testid="message-source-visitor"]');
+        if (isVisitor) return true;
 
-      // Fallback: Jika tidak terdeteksi class khusus, cek penempatan kiriman di sebelah kiri (visitor)
-      const style = window.getComputedStyle(lastMsg);
-      const isLeft = style.justifyContent === 'flex-start' || style.alignItems === 'flex-start' || style.textAlign === 'left';
-      const hasAgent = lastMsg.querySelector('[class*="agent"], [class*="Agent"], [data-testid*="agent"]');
-      if (isLeft && !hasAgent) {
-        return true;
+        // Fallback: cek alignment di sebelah kiri (pesan visitor)
+        const hasAgent = lastMsg.querySelector('[class*="agent"], [class*="Agent"], [data-testid*="agent"]');
+        const style = window.getComputedStyle(lastMsg);
+        const isLeft = style.justifyContent === 'flex-start' || style.alignItems === 'flex-start' || style.textAlign === 'left';
+        if (isLeft && !hasAgent) {
+          return true;
+        }
       }
     } catch(e) {}
     return false;
@@ -212,13 +259,15 @@
         // 1. Cek chat latar belakang yang unread
         let isUnresponded = (hasUnread && mins >= 1);
 
-        // 2. Cek chat aktif yang sedang terbuka
-        const isActive = item.classList.contains('active') || 
-                         item.classList.contains('selected') || 
-                         item.getAttribute('aria-selected') === 'true' ||
-                         item.querySelector('[class*="active"], [class*="selected"]') ||
-                         item.closest('[class*="active"]') ||
-                         item.closest('[class*="selected"]');
+        // 2. Cek chat aktif yang sedang terbuka (Deteksi Akurat lewat URL)
+        const anchor = item.closest('a');
+        let isActive = false;
+        if (anchor) {
+          const href = anchor.getAttribute('href');
+          if (href && (window.location.pathname.includes(href) || window.location.href.includes(href))) {
+            isActive = true;
+          }
+        }
 
         if (isActive && mins >= 1) {
           if (isActiveChatLastMessageFromVisitor()) {
