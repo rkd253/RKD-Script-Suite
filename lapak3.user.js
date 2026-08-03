@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.7.3
+// @version      4.8.0
 // @description  Wallpaper manga + indikator warna antrian chat (No-Refresh Toggle)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
@@ -35,16 +35,16 @@
         bottom: 120px; /* Dinaikkan pas di dalam kotak putih */
         left: 50%;
         transform: translateX(-50%);
-        width: 200px; /* Lebar pas sesuai kotak putih */
+        width: 300px; /* Lebar lebih besar menyamai kotak putih */
         box-sizing: border-box;
         background: linear-gradient(135deg, #d32f2f, #b71c1c);
-        border: 1.5px solid #ff3333;
+        border: 2px solid #ff3333; /* Border lebih tebal */
         box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(211, 47, 47, 0.4);
         border-radius: 10px;
-        padding: 10px 12px;
+        padding: 14px 12px; /* Padding lebih tebal agar kotak lebih tinggi */
         color: #ffffff;
         font-family: 'Outfit', 'Segoe UI', sans-serif;
-        font-size: 11px;
+        font-size: 12.5px; /* Font lebih besar */
         font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 0.6px;
@@ -52,7 +52,7 @@
         display: none;
         flex-direction: column;
         align-items: center;
-        gap: 6px;
+        gap: 8px; /* Jarak elemen lebih renggang */
         text-align: center;
         pointer-events: none;
         animation: alertGlowPulse 1.2s infinite alternate;
@@ -140,7 +140,7 @@
         let sib = navBar.nextElementSibling;
         while (sib) {
           const rect = sib.getBoundingClientRect();
-          if (rect.width >= 150 && rect.width <= 480 && rect.height > 400) {
+          if (rect.width >= 150 && rect.width <= 650 && rect.height > 400) {
             return sib; // Ditemukan kolom sidebar list chat!
           }
           sib = sib.nextElementSibling;
@@ -158,7 +158,7 @@
             if (myIndex > 0) {
               const leftSibling = siblings[myIndex - 1];
               const rect = leftSibling.getBoundingClientRect();
-              if (rect.width >= 150 && rect.width <= 480 && rect.height > 400) {
+              if (rect.width >= 150 && rect.width <= 650 && rect.height > 400) {
                 return leftSibling; // Ditemukan kolom sidebar list chat!
               }
             }
@@ -201,7 +201,7 @@
         let bestContainer = null;
         while (parent && parent !== document.body) {
           const rect = parent.getBoundingClientRect();
-          if (rect.width >= 150 && rect.width <= 480 && rect.height > 400) {
+          if (rect.width >= 150 && rect.width <= 650 && rect.height > 400) {
             bestContainer = parent;
           }
           parent = parent.parentElement;
@@ -217,7 +217,7 @@
           let bestContainer = null;
           while (parent && parent !== document.body) {
             const rect = parent.getBoundingClientRect();
-            if (rect.width >= 150 && rect.width <= 480 && rect.height > 400) {
+            if (rect.width >= 150 && rect.width <= 650 && rect.height > 400) {
               bestContainer = parent;
             }
             parent = parent.parentElement;
@@ -231,11 +231,7 @@
   }
 
   function updateUnrespondedAlert(count) {
-    // FORCE SHOW UNTUK TES POSISI (Ubah ke count biasa jika tes selesai)
     let displayCount = count;
-    if (displayCount === 0) {
-      displayCount = 1;
-    }
 
     let alertBox = document.getElementById('lc-unresponded-alert');
     if (!alertBox) {
@@ -269,23 +265,23 @@
           window.currentCalmingQuote = calmingQuotes[Math.floor(Math.random() * calmingQuotes.length)];
         }
         alertBox.innerHTML = `
-          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 900; line-height: 1.2;">
-            <svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align: middle; flex-shrink: 0; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 900; line-height: 1.2;">
+            <svg viewBox="0 0 24 24" width="20" height="20" style="vertical-align: middle; flex-shrink: 0; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));">
               <path d="M12 2L2 22h20L12 2z" fill="#ff9800" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></path>
               <path d="M12 9v6" stroke="#000000" stroke-width="3" stroke-linecap="round"></path>
               <circle cx="12" cy="18" r="2" fill="#000000"></circle>
             </svg>
             <span>ADA ${displayCount} CHAT <span style="color: #ffea00; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">BELUM DIRESPON!</span></span>
           </div>
-          <div style="font-size: 10.5px; color: #a7f3d0; margin-top: 6px; font-weight: 700; text-transform: none; letter-spacing: 0.3px; border-top: 1px solid rgba(255, 255, 255, 0.3); padding-top: 6px; width: 100%;">
+          <div style="font-size: 11.5px; color: #a7f3d0; margin-top: 6px; font-weight: 700; text-transform: none; letter-spacing: 0.3px; border-top: 1px solid rgba(255, 255, 255, 0.3); padding-top: 6px; width: 100%;">
             ${window.currentCalmingQuote}
           </div>
         `;
       } else {
         window.currentCalmingQuote = null;
         alertBox.innerHTML = `
-          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 900; line-height: 1.2;">
-            <svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align: middle; flex-shrink: 0; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 900; line-height: 1.2;">
+            <svg viewBox="0 0 24 24" width="20" height="20" style="vertical-align: middle; flex-shrink: 0; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));">
               <path d="M12 2L2 22h20L12 2z" fill="#ff9800" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></path>
               <path d="M12 9v6" stroke="#000000" stroke-width="3" stroke-linecap="round"></path>
               <circle cx="12" cy="18" r="2" fill="#000000"></circle>
