@@ -68,8 +68,63 @@ function yesterdayISO() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+let lastCheckedDate = todayISO();
+let lastCheckedYesterday = yesterdayISO();
+
+function autoRolloverDates(prevToday, prevYesterday) {
+  const today = todayISO();
+  const yesterday = yesterdayISO();
+  
+  let changed = false;
+  const updates = {};
+  
+  if (el.startDate) {
+    if (el.startDate.value === prevToday || el.startDate.value === '') {
+      el.startDate.value = today;
+      updates.startDate = today;
+      changed = true;
+    }
+  }
+  if (el.endDate) {
+    if (el.endDate.value === prevToday || el.endDate.value === '') {
+      el.endDate.value = today;
+      updates.endDate = today;
+      changed = true;
+    }
+  }
+  if (el.yesterdayDate) {
+    if (el.yesterdayDate.value === prevYesterday || el.yesterdayDate.value === '') {
+      el.yesterdayDate.value = yesterday;
+      updates.yesterdayDate = yesterday;
+      changed = true;
+    }
+  }
+  
+  if (changed && typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.set(updates, () => {
+      console.log("⏰ Hari berganti. Tanggal Mulai/Akhir auto update & tersimpan:", updates);
+      if (typeof setStatus === 'function') {
+        setStatus("⏰ Tanggal diperbarui otomatis karena pergantian hari.");
+      }
+    });
+  }
+}
+
 function updateClock() {
   const now = new Date();
+  
+  // Cek pergantian hari (00:00)
+  const currentDate = todayISO();
+  if (currentDate !== lastCheckedDate) {
+    const prevToday = lastCheckedDate;
+    const prevYesterday = lastCheckedYesterday;
+    
+    lastCheckedDate = currentDate;
+    lastCheckedYesterday = yesterdayISO();
+    
+    autoRolloverDates(prevToday, prevYesterday);
+  }
+
   const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
   
