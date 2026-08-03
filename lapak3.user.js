@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LAPAK3 - Wallpaper & Queue Indicator
 // @namespace    http://tampermonkey.net/
-// @version      4.6.0
+// @version      4.7.3
 // @description  Wallpaper manga + indikator warna antrian chat (No-Refresh Toggle)
 // @author       Antigravity
 // @match        https://my.livechatinc.com/*
@@ -33,8 +33,10 @@
       #lc-unresponded-alert {
         position: absolute;
         bottom: 120px; /* Dinaikkan pas di dalam kotak putih */
-        left: 12px;
-        right: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px; /* Lebar pas sesuai kotak putih */
+        box-sizing: border-box;
         background: linear-gradient(135deg, #d32f2f, #b71c1c);
         border: 1.5px solid #ff3333;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(211, 47, 47, 0.4);
@@ -131,21 +133,99 @@
   ];
 
   function getSidebarContainer() {
-    // 1. Dapatkan kolom list chat lewat navigasi kiri (nav.nextElementSibling)
-    const nav = document.querySelector('nav, [class*="Navigation"]');
-    if (nav && nav.nextElementSibling) {
-      return nav.nextElementSibling;
-    }
+    try {
+      // 1. Method A: Cari kolom tepat di sebelah kanan Navigation Bar (Sangat Stabil)
+      const navBar = document.querySelector('nav, [class*="navigation"], [class*="Navigation"], [data-testid="navigation"]');
+      if (navBar) {
+        let sib = navBar.nextElementSibling;
+        while (sib) {
+          const rect = sib.getBoundingClientRect();
+          if (rect.width >= 150 && rect.width <= 480 && rect.height > 400) {
+            return sib; // Ditemukan kolom sidebar list chat!
+          }
+          sib = sib.nextElementSibling;
+        }
+      }
 
-    // 2. Fallback: Cari parent dari chats list
-    const chatsList = document.querySelector('[class*="ChatsList"], [data-testid="chats-list"], [class*="chats-list"]');
-    if (chatsList) {
-      return chatsList.parentElement || chatsList;
-    }
-    
-    // 3. Fallback: cari element sidebar kiri
-    const sidebar = document.querySelector('[data-testid="sidebar"], [class*="Sidebar"], [class*="left-panel"], .lc-sidebar');
-    if (sidebar) return sidebar;
+      // 2. Method B: Cari kolom tepat di sebelah kiri Chat Window (Jika Chat Terbuka)
+      const messagesList = document.querySelector('[data-testid="messages-list"], [class*="MessagesList"]');
+      if (messagesList) {
+        let parent = messagesList.parentElement;
+        while (parent && parent !== document.body) {
+          const siblings = Array.from(parent.parentElement?.children || []);
+          if (siblings.length >= 2) {
+            const myIndex = siblings.indexOf(parent);
+            if (myIndex > 0) {
+              const leftSibling = siblings[myIndex - 1];
+              const rect = leftSibling.getBoundingClientRect();
+              if (rect.width >= 150 && rect.width <= 480 && rect.height > 400) {
+                return leftSibling; // Ditemukan kolom sidebar list chat!
+              }
+            }
+          }
+          parent = parent.parentElement;
+        }
+      }
+
+      // 3. Fallback Method C: Cari berdasarkan teks penanda "My chats"
+      const allElements = document.body.querySelectorAll('*');
+      let myChatsHeader = null;
+      for (const el of allElements) {
+        const tag = el.tagName;
+        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'TEMPLATE' || tag === 'SVG' || tag === 'PATH' || tag === 'IFRAME') {
+          continue;
+        }
+        
+        const txt = (el.textContent || "").toLowerCase();
+        if (txt.includes('my chats')) {
+          const r = el.getBoundingClientRect();
+          if (r.width === 0 || r.height === 0) continue;
+          
+          let childHasIt = false;
+          for (const child of el.children) {
+            const childTag = child.tagName;
+            if (childTag !== 'SCRIPT' && childTag !== 'STYLE' && (child.textContent || "").toLowerCase().includes('my chats')) {
+              childHasIt = true;
+              break;
+            }
+          }
+          if (!childHasIt) {
+            myChatsHeader = el;
+            break;
+          }
+        }
+      }
+      
+      if (myChatsHeader) {
+        let parent = myChatsHeader.parentElement;
+        let bestContainer = null;
+        while (parent && parent !== document.body) {
+          const rect = parent.getBoundingClientRect();
+          if (rect.width >= 150 && rect.width <= 480 && rect.height > 400) {
+            bestContainer = parent;
+          }
+          parent = parent.parentElement;
+        }
+        if (bestContainer) return bestContainer;
+      }
+      
+      // Fallback Method D: Cari berdasarkan baris chat sidebar
+      const chatItems = document.querySelectorAll('a, [role="button"], [role="row"], li');
+      for (const item of chatItems) {
+        if (!item.closest('[data-testid="messages-list"]') && /\d+[smh]/.test(item.innerText || "")) {
+          let parent = item.parentElement;
+          let bestContainer = null;
+          while (parent && parent !== document.body) {
+            const rect = parent.getBoundingClientRect();
+            if (rect.width >= 150 && rect.width <= 480 && rect.height > 400) {
+              bestContainer = parent;
+            }
+            parent = parent.parentElement;
+          }
+          if (bestContainer) return bestContainer;
+        }
+      }
+    } catch(e) {}
     
     return document.body;
   }
