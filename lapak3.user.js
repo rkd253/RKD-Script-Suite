@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (function () {
-    'use strict';
+    'use strict';   
 
     // ====== Konfigurasi ======
     const BLINK_DELAY_MS = 180000; // 3 menit (Merah Berkedip + ⚠️)
@@ -33,7 +33,7 @@
     const archTags = [
         'archived', 'customer left', 'inactivity', 'meninggalkan',
         'followup', 'sent to', 'joined', 'assigned', 'invited', 'closed',
-        'transferred', 'ditransfer'
+        'transferred', 'ditransfer', 'left', 'ended', 'expired', 'habis'
     ];
 
     const detectIsTyping = (item) => {
@@ -98,10 +98,15 @@
     // Utilities (URL & Chat ID)
     // =========================
     const getActiveChatId = () => {
-        // 1. Cek via attribute aria-selected atau class active (Sangat Akurat)
-        const selectedLi = document.querySelector('li[data-testid^="chat-item-"][aria-selected="true"], li[class*="selected"], li[class*="active"]');
-        if (selectedLi) {
-            const tid = selectedLi.getAttribute('data-testid') || '';
+        // 1. Cek via attribute aria-selected atau class active pada elemen manapun di list
+        const selectedEl = document.querySelector('[aria-selected="true"], [data-selected="true"], li[class*="selected"], li[class*="active"]');
+        if (selectedEl) {
+            const item = selectedEl.closest('li[data-testid^="chat-item-"]') || selectedEl.closest('.chat-item');
+            if (item) {
+                const id = getChatIdFromItem(item);
+                if (id) return id;
+            }
+            const tid = selectedEl.getAttribute('data-testid') || selectedEl.closest('[data-testid]')?.getAttribute('data-testid') || '';
             const m = tid.match(/chat-item-([^/]+)/i);
             if (m) return m[1];
         }
@@ -677,19 +682,39 @@
     // Layout (Sidebar width + CSS var)
     // =========================
     const applySidebarWidth = () => {
-        const leftSidebar = document.querySelector('.css-1cmlcj3');
-        const rightSidebar = document.querySelector('.css-1orfco2');
+        const leftSidebar = document.querySelector('.css-1cmlcj3, [data-testid="chats-list"]');
+        const rightSidebar = document.querySelector('.css-1orfco2, [data-testid="customer-details"], [data-testid="details-panel"]');
         if (leftSidebar) {
-            leftSidebar.style.width = '350px';
-            leftSidebar.style.minWidth = '350px';
-            leftSidebar.style.maxWidth = '350px';
-            leftSidebar.style.paddingRight = '10px';
-            document.documentElement.style.setProperty('--mp-left-sidebar-w', '350px'); // dipakai bila perlu
+            const isLeftMinimized = leftSidebar.getAttribute('aria-hidden') === 'true' || 
+                                   leftSidebar.getAttribute('data-state') === 'collapsed' || 
+                                   leftSidebar.classList.contains('collapsed') || 
+                                   leftSidebar.classList.contains('minimized');
+            if (!isLeftMinimized) {
+                leftSidebar.style.width = '350px';
+                leftSidebar.style.minWidth = '350px';
+                leftSidebar.style.maxWidth = '350px';
+                leftSidebar.style.paddingRight = '10px';
+                document.documentElement.style.setProperty('--mp-left-sidebar-w', '350px');
+            } else {
+                leftSidebar.style.width = '';
+                leftSidebar.style.minWidth = '';
+                leftSidebar.style.maxWidth = '';
+            }
         }
         if (rightSidebar) {
-            rightSidebar.style.width = '320px';
-            rightSidebar.style.minWidth = '320px';
-            rightSidebar.style.maxWidth = '320px';
+            const isRightMinimized = rightSidebar.getAttribute('aria-hidden') === 'true' || 
+                                    rightSidebar.getAttribute('data-state') === 'collapsed' || 
+                                    rightSidebar.classList.contains('collapsed') || 
+                                    rightSidebar.classList.contains('minimized');
+            if (!isRightMinimized) {
+                rightSidebar.style.width = '320px';
+                rightSidebar.style.minWidth = '320px';
+                rightSidebar.style.maxWidth = '320px';
+            } else {
+                rightSidebar.style.width = '';
+                rightSidebar.style.minWidth = '';
+                rightSidebar.style.maxWidth = '';
+            }
         }
     };
 
@@ -843,14 +868,65 @@
     const injectMinimalStyles = () => {
         const style = document.createElement('style');
         style.textContent = `
-/* —— Garis kiri seragam —— */
+/* —— COMIC SANS MS FONT FOR TARGET CHAT PARAGRAPH TEXT —— */
+.lc-Typography-module__paragraph-sm___5KRhm,
+.privacy-masker,
+.css-1p4wsor,
+[class*="lc-Typography-module__paragraph-sm"],
+[class*="privacy-masker"],
+[class*="css-1p4wsor"] {
+    font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif !important;
+}
+
+/* —— BENING GLOSSY BIRU MUDA TEMBUS PANDANG FOR css-3dz5hy —— */
+.css-3dz5hy,
+[class*="css-3dz5hy"] {
+    background: linear-gradient(135deg, rgba(135, 206, 250, 0.15) 0%, rgba(0, 150, 240, 0.2) 100%) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(135, 206, 250, 0.3) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.css-3dz5hy:hover,
+[class*="css-3dz5hy"]:hover {
+    background: linear-gradient(135deg, rgba(135, 206, 250, 0.22) 0%, rgba(0, 165, 255, 0.28) 100%) !important;
+    border-color: rgba(135, 206, 250, 0.5) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+    transform: translateY(-1px) scale(1.008) !important;
+}
+
+/* —— BENING GLOSSY KUNING TEMBUS PANDANG FOR css-1da7yod —— */
+.css-1da7yod,
+[class*="css-1da7yod"] {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.16) 0%, rgba(255, 175, 0, 0.22) 100%) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 215, 0, 0.35) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.css-1da7yod:hover,
+[class*="css-1da7yod"]:hover {
+    background: linear-gradient(135deg, rgba(255, 225, 50, 0.24) 0%, rgba(255, 190, 0, 0.3) 100%) !important;
+    border-color: rgba(255, 225, 100, 0.55) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    transform: translateY(-1px) scale(1.008) !important;
+}
+
+/* —— Garis kiri seragam dengan ujung melengkung —— */
 .chat-item.mp-lined::before {
 content:"";
 position:absolute;
 left:0; top:0; bottom:0;
 width: var(--leftbar-w, 5px); /* Diperlapis menjadi 5px agar lebih tegas */
 background: var(--leftbar-color, currentColor);
-border-radius: 0;
+border-top-left-radius: 12px !important;
+border-bottom-left-radius: 12px !important;
 transform-origin:left center;
 z-index: 10;
 pointer-events: none;
@@ -1017,6 +1093,94 @@ animation: rainbowPulse 3s linear infinite;
 @keyframes badgePulse {
     0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(255, 255, 0, 0.8)) drop-shadow(0 2px 5px rgba(0,0,0,0.6)); }
     50% { transform: scale(1.4); filter: drop-shadow(0 0 15px rgba(255, 255, 0, 1)) drop-shadow(0 4px 8px rgba(0,0,0,0.8)); }
+}
+
+/* ALWAYS ENSURE ACTION BAR AND ITS BUTTONS ARE 100% VISIBLE & CLICKABLE */
+[class*="lc-ActionBar-module"],
+[class*="lc-ActionBar-module"] *,
+[data-testid="action-bar"],
+[data-testid="action-bar"] * {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* ACTION BAR NARROW VERTICAL CONTAINER (PREVENT CLIPPING OF TOP PROFILE BUTTON) */
+[class*="lc-ActionBar-module__action-bar"] {
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+    flex: 0 0 48px !important;
+    background: rgba(16, 12, 28, 0.85) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    z-index: 10 !important;
+}
+
+/* ACTION BAR ITEMS LIST (COMPACT TOP STACKING AT TOP-RIGHT) */
+[class*="lc-ActionBar-module__action-bar__items"] {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding: 4px 2px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+}
+
+/* ACTION BAR BUTTON WRAPPER & SPECIFIC ICON BUTTONS */
+[class*="lc-ActionBar-module__action-bar__items__button-wrapper"],
+.lc-ActionBar-module__action-bar__items__button-wrapper___sgdUc,
+.lc-ActionBar-module__action-bar__items__button-wrapper--vertical___8Aq0c {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease-in-out !important;
+    background: transparent !important;
+    box-sizing: border-box !important;
+}
+
+[class*="lc-ActionBar-module__action-bar__items__button-wrapper"]:hover,
+.lc-ActionBar-module__action-bar__items__button-wrapper___sgdUc:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    transform: scale(1.08) !important;
+}
+
+/* INNER BUTTON & ICON CENTERING FOR TARGET CLASS */
+.lc-Button-module__btn__icon___-CG5y,
+.lc-Button-module__btn__icon--left___Xke3Q,
+.lc-Icon-module__icon___J5RH5,
+.lc-Icon-module__icon--primary___lclud,
+[class*="lc-ActionBar-module__action-bar__items__button-wrapper"] button,
+[class*="lc-ActionBar-module__action-bar__items__button-wrapper"] a,
+[class*="lc-ActionBar-module__action-bar__items__button-wrapper"] [role="button"],
+[class*="lc-ActionBar-module__action-bar__items__button-wrapper"] svg,
+[class*="lc-ActionBar-module__action-bar__items__button-wrapper"] img {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.lc-Icon-module__icon___J5RH5,
+.lc-Button-module__btn__icon___-CG5y {
+    width: 20px !important;
+    height: 20px !important;
 }
 `;
 
