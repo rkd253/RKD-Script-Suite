@@ -775,7 +775,7 @@
         <div style="display:flex; align-items:center; gap:10px;">
             <img src="${RKD_LOGO_BASE64}" style="width:28px; height:28px; object-fit:contain; filter:drop-shadow(0 2px 5px rgba(0,0,0,0.6));">
             <div>
-                <div style="font-size:14px; font-weight:800; color:#ffd700; letter-spacing:0.5px;">LAPAK HIGHLIGHTER PRO</div>
+                <div style="font-size:14px; font-weight:800; color:#ffd700; letter-spacing:0.5px;">RKD HIGHLIGHTER PRO</div>
                 <div style="font-size:9px; color:#8888a0; font-weight:600;">Control & Dashboard Panel v6.8.0</div>
             </div>
         </div>
