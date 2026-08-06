@@ -13,6 +13,7 @@
 
 (function () {
     'use strict';
+    const RKD_LOGO_BASE64 = "https://socket-lapak99.hokibgs.com/uploads/lapak99/media/2026/07/media-1784345069059-380570203.png";
 
     // Storage Keys
     const STORAGE_KEY = 'chatHighlighterWords';
@@ -80,7 +81,7 @@
             shadow: 'rgba(0, 210, 255, 0.4)',
             accentColor: '#00d2ff',
             words: ['dp', 'deposit', 'pola', 'depo', 'tf', 'dpo', 'dep0', 'defisit', 'depositnya', 'deposit dong', 'top up', 'topup', 'depositkan', 'Topap'],
-            icon: '💎'
+            icon: '🔵'
         },
         Red: {
             textColor: '#ffffff',
@@ -88,7 +89,7 @@
             shadow: 'rgba(255, 8, 68, 0.4)',
             accentColor: '#ff0844',
             words: ['anjing', 'ajing', 'babi', 'bangsat', 'bangst', 'puki', 'cuki', 'konto', 'sampah', 'tai', 'biadap', 'Pukimak', 'bangsad', 'kontol', 'memek', 'ngentot', 'jancok', 'taik', 'bajingan', 'Pantek', 'Picek', 'asuu', 'pepek', 'Anjong', 'Bujang', 'Monyet', 'binatang', 'lonte', 'Kampret', 'bangke', 'banke', 'setan', 'setab', 'kampang', 'berak', 'pejoh', 'Tempek', 'bgst', 'Najis', 'ajg', 'anjeng', 'anjingg'],
-            icon: '🚫'
+            icon: '🔴'
         },
         Green: {
             textColor: '#ffffff',
@@ -96,7 +97,7 @@
             shadow: 'rgba(0, 242, 96, 0.4)',
             accentColor: '#00f260',
             words: ['wd', 'Wd', 'WD', 'withdraw', 'withdrawal', 'tarik', 'penarikan', 'pnarikan', 'witdraw', 'Widrow', 'widraw', 'Widrau'],
-            icon: '💰'
+            icon: '🟢'
         },
         Yellow: {
             textColor: '#000000',
@@ -104,7 +105,7 @@
             shadow: 'rgba(249, 212, 35, 0.4)',
             accentColor: '#f9d423',
             words: ['bonus', 'claim', 'klaim', 'bonusnya', 'klaim bonus', 'bonus dong', 'clame', 'freespin', 'free spin', 'buyspin', 'buy spin', 'sketer', 'scater', 'scatter'],
-            icon: '🎯'
+            icon: '🟡'
         },
         Purple: {
             textColor: '#ffffff',
@@ -112,7 +113,7 @@
             shadow: 'rgba(142, 45, 226, 0.4)',
             accentColor: '#8e2de2',
             words: ['batalin', 'batalkan', 'sandi', 'password', 'pasword', 'paspor', 'pasport', 'lupa sandi', 'lupa password', 'ganti password', 'reset password', 'paswod', 'Lupa id', 'lupa akun', 'lupa pw', 'lupa pin', 'paspot', 'reset deposit', 'Lupa pasword', 'Lupa password', 'reset pasword'],
-            icon: '🔐'
+            icon: '🟣'
         }
     };
 
@@ -275,15 +276,13 @@
             }
 
 
-            /* HIGH-SPECIFICITY 450px SIDEBAR OVERRIDES */
-            html body .css-1cmlcj3,
-            html body .css-1orfco2,
-            html body [class*="css-1cmlcj3"],
-            html body [class*="css-1orfco2"],
-            html body [data-testid="chats-list"],
-            html body [data-testid="chats-list-container"],
-            html body [data-testid="details-panel"],
-            html body [data-testid="customer-details"] {
+            /* HIGH-SPECIFICITY 450px SIDEBAR OVERRIDES (EXCLUDING MINIMIZED/COLLAPSED PANELS) */
+            html body .css-1cmlcj3:not([aria-hidden="true"]):not([data-state="collapsed"]):not([data-collapsed="true"]):not([class*="collapsed"]):not([class*="minimized"]),
+            html body .css-1orfco2:not([aria-hidden="true"]):not([data-state="collapsed"]):not([data-collapsed="true"]):not([class*="collapsed"]):not([class*="minimized"]),
+            html body [data-testid="chats-list"]:not([aria-hidden="true"]):not([data-state="collapsed"]):not([data-collapsed="true"]):not([class*="collapsed"]):not([class*="minimized"]),
+            html body [data-testid="chats-list-container"]:not([aria-hidden="true"]):not([data-state="collapsed"]):not([data-collapsed="true"]):not([class*="collapsed"]):not([class*="minimized"]),
+            html body [data-testid="details-panel"]:not([aria-hidden="true"]):not([data-state="collapsed"]):not([data-collapsed="true"]):not([class*="collapsed"]):not([class*="minimized"]),
+            html body [data-testid="customer-details"]:not([aria-hidden="true"]):not([data-state="collapsed"]):not([data-collapsed="true"]):not([class*="collapsed"]):not([class*="minimized"]) {
                 width: 450px !important;
                 min-width: 450px !important;
                 max-width: 450px !important;
@@ -293,11 +292,153 @@
                 flex-basis: 450px !important;
             }
 
-            /* FORCE ALL INNER CHILD CONTAINERS INSIDE SIDEBARS TO FILL THE 450px WIDTH */
-            .css-1cmlcj3 > *,
-            .css-1orfco2 > * {
+            /* FORCE ALL INNER CHILD CONTAINERS INSIDE ACTIVE SIDEBARS TO FILL THE 450px WIDTH */
+            .css-1cmlcj3:not([aria-hidden="true"]):not([data-state="collapsed"]) > *,
+            .css-1orfco2:not([aria-hidden="true"]):not([data-state="collapsed"]) > * {
                 max-width: 100% !important;
                 box-sizing: border-box !important;
+            }
+
+            /* ALWAYS ENSURE ACTION BAR AND ITS BUTTONS ARE 100% VISIBLE & CLICKABLE */
+            [class*="lc-ActionBar-module"],
+            [class*="lc-ActionBar-module"] *,
+            [data-testid="action-bar"],
+            [data-testid="action-bar"] * {
+                opacity: 1 !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
+            }
+
+            /* ACTION BAR NARROW VERTICAL CONTAINER (PREVENT CLIPPING OF TOP PROFILE BUTTON) */
+            [class*="lc-ActionBar-module__action-bar"] {
+                width: 48px !important;
+                min-width: 48px !important;
+                max-width: 48px !important;
+                flex: 0 0 48px !important;
+                background: rgba(16, 12, 28, 0.85) !important;
+                border-left: 1px solid rgba(255, 255, 255, 0.06) !important;
+                box-sizing: border-box !important;
+                overflow: visible !important;
+                z-index: 10 !important;
+            }
+
+            /* ACTION BAR ITEMS LIST (COMPACT TOP STACKING AT TOP-RIGHT) */
+            [class*="lc-ActionBar-module__action-bar__items"] {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                gap: 6px !important;
+                padding: 4px 2px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                overflow: visible !important;
+            }
+
+            /* ACTION BAR BUTTON WRAPPER & SPECIFIC ICON BUTTONS */
+            [class*="lc-ActionBar-module__action-bar__items__button-wrapper"],
+            .lc-ActionBar-module__action-bar__items__button-wrapper___sgdUc,
+            .lc-ActionBar-module__action-bar__items__button-wrapper--vertical___8Aq0c {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 36px !important;
+                height: 36px !important;
+                min-width: 36px !important;
+                min-height: 36px !important;
+                max-width: 36px !important;
+                max-height: 36px !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
+                border-radius: 8px !important;
+                transition: all 0.2s ease-in-out !important;
+                background: transparent !important;
+                box-sizing: border-box !important;
+            }
+
+            [class*="lc-ActionBar-module__action-bar__items__button-wrapper"]:hover,
+            .lc-ActionBar-module__action-bar__items__button-wrapper___sgdUc:hover {
+                background: rgba(255, 255, 255, 0.12) !important;
+                transform: scale(1.08) !important;
+            }
+
+            /* INNER BUTTON & ICON CENTERING FOR TARGET CLASS */
+            .lc-Button-module__btn__icon___-CG5y,
+            .lc-Button-module__btn__icon--left___Xke3Q,
+            .lc-Icon-module__icon___J5RH5,
+            .lc-Icon-module__icon--primary___lclud,
+            [class*="lc-ActionBar-module__action-bar__items__button-wrapper"] button,
+            [class*="lc-ActionBar-module__action-bar__items__button-wrapper"] a,
+            [class*="lc-ActionBar-module__action-bar__items__button-wrapper"] [role="button"],
+            [class*="lc-ActionBar-module__action-bar__items__button-wrapper"] svg,
+            [class*="lc-ActionBar-module__action-bar__items__button-wrapper"] img {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                margin: auto !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+
+            .lc-Icon-module__icon___J5RH5,
+            .lc-Button-module__btn__icon___-CG5y {
+                width: 20px !important;
+                height: 20px !important;
+            }
+
+            /* COMIC SANS MS FONT FOR TARGET CHAT PARAGRAPH TEXT */
+            .lc-Typography-module__paragraph-sm___5KRhm,
+            .privacy-masker,
+            .css-1p4wsor,
+            [class*="lc-Typography-module__paragraph-sm"],
+            [class*="privacy-masker"],
+            [class*="css-1p4wsor"] {
+                font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif !important;
+            }
+
+            /* BENING GLOSSY BIRU MUDA TEMBUS PANDANG FOR css-3dz5hy */
+            .css-3dz5hy,
+            [class*="css-3dz5hy"] {
+                background: linear-gradient(135deg, rgba(135, 206, 250, 0.15) 0%, rgba(0, 150, 240, 0.2) 100%) !important;
+                backdrop-filter: blur(8px) !important;
+                -webkit-backdrop-filter: blur(8px) !important;
+                border: 1px solid rgba(135, 206, 250, 0.3) !important;
+                border-radius: 12px !important;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+                transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            }
+
+            .css-3dz5hy:hover,
+            [class*="css-3dz5hy"]:hover {
+                background: linear-gradient(135deg, rgba(135, 206, 250, 0.22) 0%, rgba(0, 165, 255, 0.28) 100%) !important;
+                border-color: rgba(135, 206, 250, 0.5) !important;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+                transform: translateY(-1px) scale(1.008) !important;
+            }
+
+            /* BENING GLOSSY KUNING TEMBUS PANDANG FOR .css-1da7yod,.css-1h9c9yl,.css-jv3dry, .css-10eivaj, .css-bdqpdr, .css-1flhal4, .css-sj0k97, .css-17le0oi,.css-axqjk1, .css-1da7yod,.css-1h9c9yl*/
+            .css-1da7yod,.css-1h9c9yl,.css-jv3dry, .css-10eivaj, .css-bdqpdr, .css-1flhal4, .css-sj0k97, .css-17le0oi,.css-axqjk1, .css-1da7yod, .css-1h9c9yl
+            [class*="css-1da7yod"],
+            .css-1h9c9yl,
+            [class*="css-1h9c9yl"] {
+                background: linear-gradient(135deg, rgba(255, 215, 0, 0.16) 0%, rgba(255, 175, 0, 0.22) 100%) !important;
+                backdrop-filter: blur(8px) !important;
+                -webkit-backdrop-filter: blur(8px) !important;
+                border: 1px solid rgba(255, 215, 0, 0.35) !important;
+                border-radius: 12px !important;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+                transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            }
+
+            .css-1da7yod:hover,
+            [class*="css-1da7yod"]:hover,
+            .css-1h9c9yl:hover,
+            [class*="css-1h9c9yl"]:hover {
+                background: linear-gradient(135deg, rgba(255, 225, 50, 0.24) 0%, rgba(255, 190, 0, 0.3) 100%) !important;
+                border-color: rgba(255, 225, 100, 0.55) !important;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+                transform: translateY(-1px) scale(1.008) !important;
             }
 
             /* STRICTLY TARGET ONLY css-1l83s7m AND css-9oh56r AND THEIR DIRECT CHILDREN */
@@ -375,7 +516,7 @@
             }
 
 
-            /* FIT css-d2wrxb INSIDE 450px SIDEBAR — 100% CRYSTAL CLEAR TRANSPARENT */
+            /* FIT css-d2wrxb INSIDE 450px SIDEBAR â€” 100% CRYSTAL CLEAR TRANSPARENT */
             .css-d2wrxb,
             [class*="css-d2wrxb"] {
                 width: 100% !important;
@@ -460,6 +601,14 @@
                 border-right: 3px solid #7b2ffc !important;
                 box-shadow: 4px 0 25px rgba(123, 47, 252, 0.2) !important;
                 position: relative !important;
+            }
+
+            /* KOTAK DENGAN SISI MELENGKUNG FOR css-99u7cn chat-item mp-lined */
+            .css-99u7cn,
+            .chat-item,
+            .mp-lined,
+            [class*="css-99u7cn"] {
+                border-radius: 12px !important;
             }
 
             /* Dashboard UI Components */
@@ -580,21 +729,21 @@
     orb.style.cssText = `
         position: fixed; top: 0; left: 0;
         width: 58px; height: 58px;
-        background: ${state.dashConfig.bubbleBg};
-        border: 1px solid rgba(255,215,0,0.3);
-        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, rgba(255, 215, 0, 0.35), rgba(15, 15, 25, 0.95)) !important;
+        border: 2px solid #ffd700 !important;
+        border-radius: 50% !important;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         cursor: pointer; z-index: 999999;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4), 0 8px 25px rgba(0,0,0,0.85) !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         transform: translate3d(${state.orbPos.x}px, ${state.orbPos.y}px, 0);
         user-select: none;
         touch-action: none;
+        overflow: hidden !important;
     `;
 
     orb.innerHTML = `
-        <img src="${state.dashConfig.profileImg}" style="width:26px; height:26px; border-radius:50%; pointer-events:none;">
-        <div style="color:#fff; font-size:8px; font-weight:800; letter-spacing:1px; margin-top:2px; pointer-events:none; text-transform:uppercase;">${state.dashConfig.mcLabel}</div>
+        <img src="${RKD_LOGO_BASE64}" style="width: 50px; height: 50px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8)); pointer-events: none;">
     `;
 
     // Create Dashboard Container
@@ -624,7 +773,7 @@
     dashHeader.style.cssText = 'padding: 14px 18px; background: rgba(0,0,0,0.35); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between;';
     dashHeader.innerHTML = `
         <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-size:20px;">✨</span>
+            <img src="${RKD_LOGO_BASE64}" style="width:28px; height:28px; object-fit:contain; filter:drop-shadow(0 2px 5px rgba(0,0,0,0.6));">
             <div>
                 <div style="font-size:14px; font-weight:800; color:#ffd700; letter-spacing:0.5px;">LAPAK HIGHLIGHTER PRO</div>
                 <div style="font-size:9px; color:#8888a0; font-weight:600;">Control & Dashboard Panel v6.8.0</div>
@@ -651,9 +800,9 @@
         const navBar = document.createElement('div');
         navBar.className = 'lapak1-nav-bar';
         navBar.innerHTML = `
-            <button class="lapak1-tab-btn ${state.activeTab === 'words' ? 'active' : ''}" data-tab="words">📝 Kelompok Kata</button>
-            <button class="lapak1-tab-btn ${state.activeTab === 'background' ? 'active' : ''}" data-tab="background">🖼️ Background</button>
-            <button class="lapak1-tab-btn ${state.activeTab === 'settings' ? 'active' : ''}" data-tab="settings">⚙️ Pengaturan</button>
+            <button class="lapak1-tab-btn ${state.activeTab === 'words' ? 'active' : ''}" data-tab="words">\uD83D\uDCDD Kelompok Kata</button>
+            <button class="lapak1-tab-btn ${state.activeTab === 'background' ? 'active' : ''}" data-tab="background">\uD83D\uDDBC Background</button>
+            <button class="lapak1-tab-btn ${state.activeTab === 'settings' ? 'active' : ''}" data-tab="settings">\u2699\uFE0F Pengaturan</button>
         `;
 
         navBar.querySelectorAll('.lapak1-tab-btn').forEach(btn => {
@@ -689,7 +838,7 @@
                     <div style="font-size:11px; color:#aaa; font-weight:600;">TOTAL KATA HIGHLIGHT</div>
                     <div style="font-size:20px; font-weight:900; color:#00d4ff;">${totalWordsCount} Kata Terdaftar</div>
                 </div>
-                <div style="font-size:24px;">🏷️</div>
+                <div style="font-size:24px;">\uD83C\uDFF7\uFE0F</div>
             </div>
         `;
         container.appendChild(summaryCard);
@@ -718,7 +867,7 @@
             group.words.forEach((w, idx) => {
                 const chip = document.createElement('span');
                 chip.style.cssText = `background:rgba(255,255,255,0.06); border:1px solid ${group.accentColor}44; border-radius:12px; padding:3px 10px; font-size:11px; display:inline-flex; align-items:center; gap:6px; color:#e0e0ff; transition: all 0.2s ease;`;
-                chip.innerHTML = `<span>${w}</span> <span style="cursor:pointer; color:#ff4757; font-weight:800;" title="Hapus">✕</span>`;
+                chip.innerHTML = `<span>${w}</span> <span style="cursor:pointer; color:#ff4757; font-weight:800;" title="Hapus">\u2715</span>`;
                 chip.querySelector('span:last-child').onclick = (e) => {
                     e.stopPropagation();
                     group.words.splice(idx, 1);
@@ -764,7 +913,7 @@
 
         mainBgCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#00d4ff; font-weight:800;">💬 Background Utama (Feed Chat)</span>
+                <span style="color:#00d4ff; font-weight:800;">ðŸ’¬ Background Utama (Feed Chat)</span>
                 <span style="font-size:10px; color:#00d4ff; font-weight:700;">FEED</span>
             </div>
 
@@ -773,7 +922,7 @@
                 <div style="display:flex; gap:6px;">
                     <input type="text" id="lapak1-main-bg-url" class="lapak1-input" value="${state.dashConfig.chatBgImage || ''}" placeholder="Masukkan URL Gambar Feed Utama..." style="flex:1;">
                     <button id="lapak1-main-bg-upload" class="lapak1-btn-primary">Upload</button>
-                    <button id="lapak1-main-bg-remove" class="lapak1-btn-danger">✕</button>
+                    <button id="lapak1-main-bg-remove" class="lapak1-btn-danger">âœ•</button>
                 </div>
             </div>
 
@@ -784,7 +933,7 @@
             ` : ''}
 
             <div class="lapak1-card-title" style="margin-top:10px;">
-                <span>📐 Posisi Layout (${state.bgPosition.toUpperCase()})</span>
+                <span>ðŸ“ Posisi Layout (${state.bgPosition.toUpperCase()})</span>
             </div>
             <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
                 ${['cover', 'contain', 'stretch', 'tile', 'center', 'span'].map(pos => `
@@ -862,7 +1011,7 @@
 
         sidebarBgCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#ffd700; font-weight:800;">🎨 Background Sidebar (css-1cmlcj3 & css-1orfco2)</span>
+                <span style="color:#ffd700; font-weight:800;">ðŸŽ¨ Background Sidebar (css-1cmlcj3 & css-1orfco2)</span>
                 <span style="font-size:10px; color:#ffd700; font-weight:700;">SIDEBARS</span>
             </div>
 
@@ -871,7 +1020,7 @@
                 <div style="display:flex; gap:6px;">
                     <input type="text" id="lapak1-sidebar-bg-url" class="lapak1-input" value="${state.dashConfig.sidebarBgImage || ''}" placeholder="Masukkan URL Gambar Sidebar..." style="flex:1;">
                     <button id="lapak1-sidebar-bg-upload" class="lapak1-btn-primary" style="background:linear-gradient(135deg, #ffd700, #ff8c00); color:#000;">Upload</button>
-                    <button id="lapak1-sidebar-bg-remove" class="lapak1-btn-danger">✕</button>
+                    <button id="lapak1-sidebar-bg-remove" class="lapak1-btn-danger">âœ•</button>
                 </div>
             </div>
 
@@ -882,7 +1031,7 @@
             ` : ''}
 
             <div class="lapak1-card-title" style="margin-top:10px;">
-                <span>📐 Posisi Layout (${state.sidebarBgPosition.toUpperCase()})</span>
+                <span>ðŸ“ Posisi Layout (${state.sidebarBgPosition.toUpperCase()})</span>
             </div>
             <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
                 ${['cover', 'contain', 'stretch', 'tile', 'center', 'span'].map(pos => `
@@ -959,7 +1108,7 @@
         containerCard.style.borderLeft = '4px solid #ff007f';
         containerCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#ff007f; font-weight:800;">🎚️ Transparansi Wadah Chat (css-1l83s7m & css-9oh56r)</span>
+                <span style="color:#ff007f; font-weight:800;">ðŸŽšï¸ Transparansi Wadah Chat (css-1l83s7m & css-9oh56r)</span>
                 <span id="lapak1-opacity-val" style="font-size:11px; color:#ff007f; font-weight:800;">${state.containerOpacity}%</span>
             </div>
 
@@ -967,7 +1116,7 @@
                 <label style="font-size:10px; color:#aaa; display:block; margin-bottom:6px;">Khusus mengatur transparansi bening wadah css-1l83s7m & css-9oh56r:</label>
                 <input type="range" id="lapak1-opacity-slider" min="0" max="100" value="${state.containerOpacity}" style="width:100%; cursor:pointer; accent-color:#ff007f;">
                 <div style="display:flex; justify-content:space-between; font-size:9px; color:#888; margin-top:4px;">
-                    <span>0% (Bening Penuh 💎)</span>
+                    <span>0% (Bening Penuh ðŸ’Ž)</span>
                     <span>50% (Sedang)</span>
                     <span>100% (Solid Pekat)</span>
                 </div>
@@ -995,7 +1144,7 @@
         slaCard.style.borderLeft = '4px solid #7b2ffc';
         slaCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#a766ff; font-weight:800;">🔔 Kontrol Notifikasi SLA</span>
+                <span style="color:#a766ff; font-weight:800;">ðŸ”” Kontrol Notifikasi SLA</span>
                 <span style="font-size:10px; color:#888;">LiveChat SLA Alert</span>
             </div>
 
@@ -1046,7 +1195,7 @@
         fontCard.style.borderLeft = '4px solid #00d4ff';
         fontCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#00d4ff; font-weight:800;">🔤 Ukuran Font Highlight</span>
+                <span style="color:#00d4ff; font-weight:800;">ðŸ”¤ Ukuran Font Highlight</span>
                 <span style="font-size:10px; color:#00d4ff; font-weight:700;">OTOMATIS (INHERIT)</span>
             </div>
             <div style="font-size:11px; color:#aaa; line-height:1.4;">
@@ -1061,12 +1210,12 @@
         backupCard.style.borderLeft = '4px solid #00f260';
         backupCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#00f260; font-weight:800;">💾 Backup & Restore Data</span>
+                <span style="color:#00f260; font-weight:800;">ðŸ’¾ Backup & Restore Data</span>
                 <span style="font-size:10px; color:#888;">JSON Format</span>
             </div>
             <div style="display:flex; gap:10px;">
-                <button id="btnExport" class="lapak1-btn-primary" style="flex:1; padding:10px;">📤 Export Backup</button>
-                <button id="btnImport" class="lapak1-btn-primary" style="flex:1; padding:10px; background:linear-gradient(135deg, #00f260, #0575e6);">📥 Import Data</button>
+                <button id="btnExport" class="lapak1-btn-primary" style="flex:1; padding:10px;">ðŸ“¤ Export Backup</button>
+                <button id="btnImport" class="lapak1-btn-primary" style="flex:1; padding:10px; background:linear-gradient(135deg, #00f260, #0575e6);">ðŸ“¥ Import Data</button>
             </div>
         `;
 
@@ -1105,10 +1254,10 @@
                     if (data.bgPos) setStore(BG_POSITION_KEY, data.bgPos);
                     if (data.sidebarPos) setStore(SIDEBAR_POS_KEY, data.sidebarPos);
                     if (data.opacity !== undefined) setStore(CONTAINER_OPACITY_KEY, data.opacity);
-                    alert('✅ Data Berhasil Diimport! Me-refresh halaman...');
+                    alert('âœ… Data Berhasil Diimport! Me-refresh halaman...');
                     location.reload();
                 } catch (err) {
-                    alert('❌ Format file JSON tidak valid!');
+                    alert('âŒ Format file JSON tidak valid!');
                 }
             };
             reader.readAsText(file);
@@ -1212,7 +1361,7 @@
             applyBackground();
             initObserver();
             runHighlight();
-            console.log('✨ LAPAK1 - Crystal Clear Transparancy (Zero Blur) v6.8.0 Loaded!');
+            console.log('âœ¨ LAPAK1 - Crystal Clear Transparancy (Zero Blur) v6.8.0 Loaded!');
         } else if (!document.body) {
             setTimeout(init, 100);
         }
