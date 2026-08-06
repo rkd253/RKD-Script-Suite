@@ -417,6 +417,17 @@
             .lc-NavigationItem-module__navigation-item__button___g-pAI[aria-label="Archives"] svg {
                 fill: #000000 !important;
             }
+
+            /* ======== TAMBAHAN: ELEMEN ARSIP DENGAN KELAS css-1j1ougx e12hl5pq0 ======== */
+            .css-1j1ougx.e12hl5pq0,
+            [class*="css-1j1ougx"][class*="e12hl5pq0"] {
+                color: #000000 !important;
+            }
+            /* Jika ada ikon SVG di dalamnya */
+            .css-1j1ougx.e12hl5pq0 svg,
+            [class*="css-1j1ougx"][class*="e12hl5pq0"] svg {
+                fill: #000000 !important;
+            }
             /* ================================================ */
 
             /* COMIC SANS MS FONT */
