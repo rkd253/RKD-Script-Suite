@@ -57,20 +57,20 @@
         isHighlighterEnabled: getStore(ENABLED_KEY, true),
         bgPosition: getStore(BG_POSITION_KEY, 'cover'),
         sidebarBgPosition: getStore(SIDEBAR_POS_KEY, 'cover'),
-        containerOpacity: getStore(CONTAINER_OPACITY_KEY, 15), // True clear 15% default!
+        containerOpacity: getStore(CONTAINER_OPACITY_KEY, 15),
         orbPos: getStore(ORB_POS_KEY, { x: 20, y: 80 }),
         dashConfig: {
             profileImg: 'https://i.imgur.com/EcWMSY4.png',
             mcLabel: 'Lapak99',
             dashBg: 'rgba(10, 10, 20, 0.96)',
             bubbleBg: 'radial-gradient(circle at 30% 30%, rgba(255,215,0,0.35), rgba(0,0,0,0.75))',
-            chatBgImage: '',    // Main Chat Feed Background
-            sidebarBgImage: '', // Background for css-1cmlcj3 & css-1orfco2 Sidebars
+            chatBgImage: '',
+            sidebarBgImage: '',
             ...getStore(CONFIG_KEY, {})
         },
         dragMoved: false,
         isDashVisible: false,
-        activeTab: 'words' // 'words', 'background', 'settings'
+        activeTab: 'words'
     };
 
     // Color Groups Definition
@@ -143,7 +143,7 @@
         setStore(CONTAINER_OPACITY_KEY, state.containerOpacity);
     }
 
-    // Chat Background Engine (Main Feed & Sidebars Perfectly Layered)
+    // Chat Background Engine
     function applyBackground() {
         let bgStyle = document.getElementById('lapak-chat-bg-style');
         if (!bgStyle) {
@@ -165,7 +165,6 @@
 
         let cssContent = '';
 
-        // 1. Background Main Feed (Visible at z-index 0, content at z-index 1)
         if (mainBgImage) {
             cssContent += `
                 .css-1dbc3ly, .css-7eezsw, [data-testid="feed-container"] {
@@ -186,7 +185,6 @@
             `;
         }
 
-        // 2. Background Sidebars (css-1cmlcj3 & css-1orfco2)
         if (sidebarBgImage) {
             cssContent += `
                 .css-1cmlcj3, .css-1orfco2 {
@@ -214,7 +212,7 @@
         bgStyle.textContent = cssContent;
     }
 
-    // Ultra-Fast Regex Engine with Flexible Boundaries
+    // Ultra-Fast Regex Engine
     let compiledRegex = null;
     let wordGroupMap = {};
 
@@ -275,8 +273,7 @@
                 --details-width: 450px !important;
             }
 
-
-            /* HIGH-SPECIFICITY 450px SIDEBAR OVERRIDES (EXCLUDING MINIMIZED/COLLAPSED PANELS) */
+            /* HIGH-SPECIFICITY 450px SIDEBAR OVERRIDES */
             html body .css-1cmlcj3:not([aria-hidden="true"]):not([data-state="collapsed"]):not([data-collapsed="true"]):not([class*="collapsed"]):not([class*="minimized"]),
             html body .css-1orfco2:not([aria-hidden="true"]):not([data-state="collapsed"]):not([data-collapsed="true"]):not([class*="collapsed"]):not([class*="minimized"]),
             html body [data-testid="chats-list"]:not([aria-hidden="true"]):not([data-state="collapsed"]):not([data-collapsed="true"]):not([class*="collapsed"]):not([class*="minimized"]),
@@ -292,14 +289,13 @@
                 flex-basis: 450px !important;
             }
 
-            /* FORCE ALL INNER CHILD CONTAINERS INSIDE ACTIVE SIDEBARS TO FILL THE 450px WIDTH */
             .css-1cmlcj3:not([aria-hidden="true"]):not([data-state="collapsed"]) > *,
             .css-1orfco2:not([aria-hidden="true"]):not([data-state="collapsed"]) > * {
                 max-width: 100% !important;
                 box-sizing: border-box !important;
             }
 
-            /* ALWAYS ENSURE ACTION BAR AND ITS BUTTONS ARE 100% VISIBLE & CLICKABLE */
+            /* ACTION BAR VISIBILITY */
             [class*="lc-ActionBar-module"],
             [class*="lc-ActionBar-module"] *,
             [data-testid="action-bar"],
@@ -309,7 +305,6 @@
                 pointer-events: auto !important;
             }
 
-            /* ACTION BAR NARROW VERTICAL CONTAINER (PREVENT CLIPPING OF TOP PROFILE BUTTON) */
             [class*="lc-ActionBar-module__action-bar"] {
                 width: 48px !important;
                 min-width: 48px !important;
@@ -322,7 +317,6 @@
                 z-index: 10 !important;
             }
 
-            /* ACTION BAR ITEMS LIST (COMPACT TOP STACKING AT TOP-RIGHT) */
             [class*="lc-ActionBar-module__action-bar__items"] {
                 display: flex !important;
                 flex-direction: column !important;
@@ -335,7 +329,6 @@
                 overflow: visible !important;
             }
 
-            /* ACTION BAR BUTTON WRAPPER & SPECIFIC ICON BUTTONS */
             [class*="lc-ActionBar-module__action-bar__items__button-wrapper"],
             .lc-ActionBar-module__action-bar__items__button-wrapper___sgdUc,
             .lc-ActionBar-module__action-bar__items__button-wrapper--vertical___8Aq0c {
@@ -363,7 +356,6 @@
                 transform: scale(1.08) !important;
             }
 
-            /* INNER BUTTON & ICON CENTERING FOR TARGET CLASS */
             .lc-Button-module__btn__icon___-CG5y,
             .lc-Button-module__btn__icon--left___Xke3Q,
             .lc-Icon-module__icon___J5RH5,
@@ -387,7 +379,47 @@
                 height: 20px !important;
             }
 
-            /* COMIC SANS MS FONT FOR TARGET CHAT PARAGRAPH TEXT */
+            /* ======== TAMBAHAN: WARNA IKON HIJAU TOSCA ======== */
+            .lc-Icon-module__icon___J5RH5,
+            .lc-Icon-module__icon--primary___lclud,
+            .lc-Button-module__btn__icon___-CG5y,
+            [class*="lc-Icon-module__icon"] {
+                color: #00d4ff !important;
+                fill: #00d4ff !important;
+                stroke: #00d4ff !important;
+            }
+
+            /* ======== AVATAR IMAGE STYLING ======== */
+            .lc-Avatar-module__avatar__image___OeTCV,
+            [class*="lc-Avatar-module__avatar__image"] {
+                border-radius: 50% !important;
+                border: 2px solid #00d4ff !important;
+                box-shadow: 0 0 12px rgba(0, 212, 255, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+                object-fit: cover !important;
+            }
+
+            .lc-Avatar-module__avatar__image___OeTCV:hover,
+            [class*="lc-Avatar-module__avatar__image"]:hover {
+                transform: scale(1.08) !important;
+                border-color: #ffd700 !important;
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 6px 20px rgba(0, 0, 0, 0.5) !important;
+            }
+
+            /* ======== ARCHIVES NAVIGATION TEXT BLACK ======== */
+            [aria-label="Archives"],
+            .lc-NavigationItem-module__navigation-item__button___g-pAI[aria-label="Archives"],
+            .lc-NavigationItem-module__navigation-item__button--active___zsO2E[aria-label="Archives"] {
+                color: #000000 !important;
+            }
+
+            [aria-label="Archives"] svg,
+            .lc-NavigationItem-module__navigation-item__button___g-pAI[aria-label="Archives"] svg {
+                fill: #000000 !important;
+            }
+            /* ================================================ */
+
+            /* COMIC SANS MS FONT */
             .lc-Typography-module__paragraph-sm___5KRhm,
             .privacy-masker,
             .css-1p4wsor,
@@ -397,7 +429,7 @@
                 font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif !important;
             }
 
-            /* BENING GLOSSY BIRU MUDA TEMBUS PANDANG FOR css-3dz5hy */
+            /* BENING GLOSSY BIRU */
             .css-3dz5hy,
             [class*="css-3dz5hy"] {
                 background: linear-gradient(135deg, rgba(135, 206, 250, 0.15) 0%, rgba(0, 150, 240, 0.2) 100%) !important;
@@ -417,7 +449,7 @@
                 transform: translateY(-1px) scale(1.008) !important;
             }
 
-            /* BENING GLOSSY KUNING TEMBUS PANDANG FOR .css-1da7yod,.css-1h9c9yl,.css-jv3dry, .css-10eivaj, .css-bdqpdr, .css-1flhal4, .css-sj0k97, .css-17le0oi,.css-axqjk1, .css-1da7yod,.css-1h9c9yl*/
+            /* BENING GLOSSY KUNING */
             .css-1da7yod,.css-1h9c9yl,.css-jv3dry, .css-10eivaj, .css-bdqpdr, .css-1flhal4, .css-sj0k97, .css-17le0oi,.css-axqjk1, .css-1da7yod, .css-1h9c9yl
             [class*="css-1da7yod"],
             .css-1h9c9yl,
@@ -441,20 +473,18 @@
                 transform: translateY(-1px) scale(1.008) !important;
             }
 
-            /* STRICTLY TARGET ONLY css-1l83s7m AND css-9oh56r AND THEIR DIRECT CHILDREN */
-            .css-1l83s7m *, .css-1l83s7m *::before, .css-1l83s7m *::after,
-            .css-9oh56r *, .css-9oh56r *::before, .css-9oh56r *::after {
+            /* TRANSPARENCY CONTAINERS */
+            .css-1l83s7m *,
+            .css-1l83s7m *::before,
+            .css-1l83s7m *::after,
+            .css-9oh56r *,
+            .css-9oh56r *::before,
+            .css-9oh56r *::after {
                 background-color: transparent !important;
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
             }
 
-            /* EXCEPTION: PRESERVE HIGHLIGHT BADGES & DASHBOARD BUTTONS */
-            [data-lapak-hl="1"], [class*="hl-"], #chat-hl-bubble, #chat-hl-dashboard, #chat-hl-dashboard * {
-                background-color: initial;
-            }
-
-            /* APPLY TRANSPARENCY SLIDER STRICTLY TO css-1l83s7m AND css-9oh56r + FIT 450px SIDEBAR */
             .css-1l83s7m,
             .css-9oh56r {
                 background-color: rgba(16, 12, 28, ${opacityAlpha}) !important;
@@ -479,7 +509,7 @@
                 overflow-wrap: break-word !important;
             }
 
-            /* ENHANCED STYLING FOR DETAILS CARDS (css-gd0tl8) FIT FOR 450px SIDEBAR */
+            /* DETAILS CARDS */
             .css-gd0tl8,
             [class*="css-gd0tl8"] {
                 width: 100% !important;
@@ -515,8 +545,6 @@
                 box-sizing: border-box !important;
             }
 
-
-            /* FIT css-d2wrxb INSIDE 450px SIDEBAR â€” 100% CRYSTAL CLEAR TRANSPARENT */
             .css-d2wrxb,
             [class*="css-d2wrxb"] {
                 width: 100% !important;
@@ -543,18 +571,7 @@
                 background: transparent !important;
             }
 
-            /* LIVECHAT MODE TERANG (LIGHT MODE): TULISAN HITAM BOLD ULTRA TAMPIL PADA LATAR BENING */
-            html[data-theme="light"] .css-d2wrxb,
-            html[data-theme="light"] [class*="css-d2wrxb"],
-            body[data-theme="light"] .css-d2wrxb,
-            body[data-theme="light"] [class*="css-d2wrxb"],
-            .lc-light-theme .css-d2wrxb,
-            .lc-light-theme [class*="css-d2wrxb"],
-            [class*="light-theme"] .css-d2wrxb,
-            [class*="light-theme"] [class*="css-d2wrxb"] {
-                background: transparent !important;
-            }
-
+            /* LIGHT MODE TEXT */
             html[data-theme="light"] .css-d2wrxb *,
             html[data-theme="light"] [class*="css-d2wrxb"] *,
             body[data-theme="light"] .css-d2wrxb *,
@@ -568,18 +585,7 @@
                 opacity: 1 !important;
             }
 
-            /* LIVECHAT MODE GELAP (DARK MODE): TULISAN PUTIH BOLD TERANG PADA LATAR BENING */
-            html[data-theme="dark"] .css-d2wrxb,
-            html[data-theme="dark"] [class*="css-d2wrxb"],
-            body[data-theme="dark"] .css-d2wrxb,
-            body[data-theme="dark"] [class*="css-d2wrxb"],
-            .lc-dark-theme .css-d2wrxb,
-            .lc-dark-theme [class*="css-d2wrxb"],
-            [class*="dark-theme"] .css-d2wrxb,
-            [class*="dark-theme"] [class*="css-d2wrxb"] {
-                background: transparent !important;
-            }
-
+            /* DARK MODE TEXT */
             html[data-theme="dark"] .css-d2wrxb *,
             html[data-theme="dark"] [class*="css-d2wrxb"] *,
             body[data-theme="dark"] .css-d2wrxb *,
@@ -593,7 +599,6 @@
                 opacity: 1 !important;
             }
 
-            /* DISTINCT ACCENT LINE FOR SIDEBARS (css-1cmlcj3 & css-1orfco2) */
             .css-1cmlcj3, .css-1orfco2 {
                 background: rgba(16, 12, 28, 0.85) !important;
                 backdrop-filter: none !important;
@@ -603,15 +608,32 @@
                 position: relative !important;
             }
 
-            /* KOTAK DENGAN SISI MELENGKUNG FOR css-99u7cn chat-item mp-lined */
             .css-99u7cn,
             .chat-item,
             .mp-lined,
             [class*="css-99u7cn"] {
-                border-radius: 12px !important;
+                border-left: 5px solid #00ff66 !important;
+                border-top-left-radius: 6px !important;
+                border-bottom-left-radius: 6px !important;
+                position: relative !important;
             }
 
-            /* Dashboard UI Components */
+            .css-99u7cn::before,
+            .chat-item::before,
+            .mp-lined::before,
+            [class*="css-99u7cn"]::before,
+            .css-99u7cn::after,
+            .chat-item::after,
+            .mp-lined::after,
+            [class*="css-99u7cn"]::after {
+                width: 5px !important;
+                background: #00ff66 !important;
+                border-radius: 6px !important;
+                box-shadow: 0 0 12px #00ff66, 0 0 4px #00ff66 !important;
+                left: 0 !important;
+            }
+
+            /* Dashboard UI */
             #chat-hl-dashboard {
                 background: rgba(10, 10, 20, 0.96) !important;
                 color: #ffffff !important;
@@ -625,18 +647,15 @@
             input:checked + .lapak1-slider { background: linear-gradient(135deg, #00d4ff, #7b2ffc); border-color: transparent; }
             input:checked + .lapak1-slider:before { transform: translateX(20px); }
 
-            /* Navigation Tabs */
             .lapak1-nav-bar { display: flex; gap: 4px; background: rgba(0, 0, 0, 0.4); padding: 4px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 14px; }
             .lapak1-tab-btn { flex: 1; padding: 8px 10px; font-size: 11px; font-weight: 700; border-radius: 8px; border: none; background: transparent; color: #8888a0; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 6px; }
             .lapak1-tab-btn:hover { color: #ffffff; background: rgba(255, 255, 255, 0.05); }
             .lapak1-tab-btn.active { background: linear-gradient(135deg, #00d4ff 0%, #7b2ffc 100%); color: #ffffff; box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3); }
 
-            /* Card Section Styling with Distinct Colored Left Borders */
             .lapak1-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); border-left: 4px solid #00d4ff; border-radius: 14px; padding: 14px; margin-bottom: 12px; transition: all 0.2s ease; color: #ffffff; }
             .lapak1-card:hover { border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35); }
             .lapak1-card-title { font-size: 12px; font-weight: 700; color: #e0e0ff; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
 
-            /* Input Fields & Buttons */
             .lapak1-input { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); color: #ffffff; border-radius: 8px; padding: 8px 12px; font-size: 12px; outline: none; transition: border-color 0.2s ease; }
             .lapak1-input:focus { border-color: #00d4ff; box-shadow: 0 0 10px rgba(0, 212, 255, 0.2); }
             .lapak1-btn-primary { background: linear-gradient(135deg, #00d4ff, #7b2ffc); color: #ffffff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
@@ -649,7 +668,7 @@
 
     updateCSS();
 
-    // Highlighting Logic - Per-Text-Node Highlighting Engine
+    // Highlighting Logic
     function highlightNode(node) {
         if (!compiledRegex || !state.isHighlighterEnabled) return;
         if (!node || node.nodeType !== 3) return;
@@ -678,7 +697,6 @@
         parent.replaceChild(span, node);
     }
 
-    // Continuous Chat Scanner (Scans all message bubbles dynamically)
     function runHighlight() {
         if (!state.isHighlighterEnabled || !compiledRegex) return;
 
@@ -700,7 +718,6 @@
         });
     }
 
-    // Debounced Observer & Event Listeners
     let highlightTimer = null;
     function scheduleHighlight() {
         if (highlightTimer) return;
@@ -718,12 +735,11 @@
         observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     }
 
-    // Instantly re-run highlight on user interaction or chat switch
     window.addEventListener('popstate', scheduleHighlight);
     window.addEventListener('hashchange', scheduleHighlight);
     document.addEventListener('click', () => setTimeout(scheduleHighlight, 150));
 
-    // Create Floating Orb
+    // Floating Orb
     const orb = document.createElement('div');
     orb.id = 'chat-hl-bubble';
     orb.style.cssText = `
@@ -746,7 +762,7 @@
         <img src="${RKD_LOGO_BASE64}" style="width: 50px; height: 50px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8)); pointer-events: none;">
     `;
 
-    // Create Dashboard Container
+    // Dashboard
     const dash = document.createElement('div');
     dash.id = 'chat-hl-dashboard';
     dash.style.cssText = `
@@ -763,7 +779,6 @@
         box-sizing: border-box;
     `;
 
-    // Prevent clicks inside dashboard from bubbling to document
     dash.addEventListener('click', (e) => {
         e.stopPropagation();
     });
@@ -788,7 +803,6 @@
     `;
     dash.appendChild(dashHeader);
 
-    // Dashboard Content Wrapper
     const dashContent = document.createElement('div');
     dashContent.style.cssText = 'padding: 16px 18px; max-height: 500px; overflow-y: auto; box-sizing: border-box;';
     dash.appendChild(dashContent);
@@ -796,7 +810,6 @@
     function renderDashboard() {
         dashContent.innerHTML = '';
 
-        // Navigation Tabs Bar
         const navBar = document.createElement('div');
         navBar.className = 'lapak1-nav-bar';
         navBar.innerHTML = `
@@ -815,7 +828,6 @@
 
         dashContent.appendChild(navBar);
 
-        // Tab Content Router
         if (state.activeTab === 'words') {
             renderWordsTab(dashContent);
         } else if (state.activeTab === 'background') {
@@ -827,7 +839,6 @@
 
     // TAB 1: KELOMPOK KATA
     function renderWordsTab(container) {
-        // Summary Header Card
         const totalWordsCount = Object.values(colorGroups).reduce((acc, g) => acc + g.words.length, 0);
         const summaryCard = document.createElement('div');
         summaryCard.className = 'lapak1-card';
@@ -843,7 +854,6 @@
         `;
         container.appendChild(summaryCard);
 
-        // Color Groups Cards (With Unique Distinct Color Left Accent Borders)
         Object.entries(colorGroups).forEach(([name, group]) => {
             const card = document.createElement('div');
             card.className = 'lapak1-card';
@@ -860,7 +870,6 @@
             `;
             card.appendChild(title);
 
-            // Chips Wrapper
             const chipsDiv = document.createElement('div');
             chipsDiv.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;';
 
@@ -877,7 +886,6 @@
             });
             card.appendChild(chipsDiv);
 
-            // Add Input Row
             const addRow = document.createElement('div');
             addRow.style.cssText = 'display:flex; gap:6px;';
             addRow.innerHTML = `
@@ -904,16 +912,16 @@
         });
     }
 
-    // TAB 2: BACKGROUND CHAT (3 PANELS: FEED, SIDEBARS & TRANSPARENCY SLIDER STRICTLY FOR css-1l83s7m & css-9oh56r)
+    // TAB 2: BACKGROUND CHAT
     function renderBackgroundTab(container) {
-        // Panel 1: Main Chat Background (Cyan Accent Border)
+        // Panel 1: Main Chat Background
         const mainBgCard = document.createElement('div');
         mainBgCard.className = 'lapak1-card';
         mainBgCard.style.borderLeft = '4px solid #00d4ff';
 
         mainBgCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#00d4ff; font-weight:800;">ðŸ’¬ Background Utama (Feed Chat)</span>
+                <span style="color:#00d4ff; font-weight:800;">💬 Background Utama (Feed Chat)</span>
                 <span style="font-size:10px; color:#00d4ff; font-weight:700;">FEED</span>
             </div>
 
@@ -922,7 +930,7 @@
                 <div style="display:flex; gap:6px;">
                     <input type="text" id="lapak1-main-bg-url" class="lapak1-input" value="${state.dashConfig.chatBgImage || ''}" placeholder="Masukkan URL Gambar Feed Utama..." style="flex:1;">
                     <button id="lapak1-main-bg-upload" class="lapak1-btn-primary">Upload</button>
-                    <button id="lapak1-main-bg-remove" class="lapak1-btn-danger">âœ•</button>
+                    <button id="lapak1-main-bg-remove" class="lapak1-btn-danger">✕</button>
                 </div>
             </div>
 
@@ -933,7 +941,7 @@
             ` : ''}
 
             <div class="lapak1-card-title" style="margin-top:10px;">
-                <span>ðŸ“ Posisi Layout (${state.bgPosition.toUpperCase()})</span>
+                <span>📐 Posisi Layout (${state.bgPosition.toUpperCase()})</span>
             </div>
             <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
                 ${['cover', 'contain', 'stretch', 'tile', 'center', 'span'].map(pos => `
@@ -1004,14 +1012,14 @@
             };
         });
 
-        // Panel 2: Background Sidebars css-1cmlcj3 & css-1orfco2 (Gold Accent Border)
+        // Panel 2: Background Sidebars
         const sidebarBgCard = document.createElement('div');
         sidebarBgCard.className = 'lapak1-card';
         sidebarBgCard.style.borderLeft = '4px solid #ffd700';
 
         sidebarBgCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#ffd700; font-weight:800;">ðŸŽ¨ Background Sidebar (css-1cmlcj3 & css-1orfco2)</span>
+                <span style="color:#ffd700; font-weight:800;">🎨 Background Sidebar (css-1cmlcj3 & css-1orfco2)</span>
                 <span style="font-size:10px; color:#ffd700; font-weight:700;">SIDEBARS</span>
             </div>
 
@@ -1020,7 +1028,7 @@
                 <div style="display:flex; gap:6px;">
                     <input type="text" id="lapak1-sidebar-bg-url" class="lapak1-input" value="${state.dashConfig.sidebarBgImage || ''}" placeholder="Masukkan URL Gambar Sidebar..." style="flex:1;">
                     <button id="lapak1-sidebar-bg-upload" class="lapak1-btn-primary" style="background:linear-gradient(135deg, #ffd700, #ff8c00); color:#000;">Upload</button>
-                    <button id="lapak1-sidebar-bg-remove" class="lapak1-btn-danger">âœ•</button>
+                    <button id="lapak1-sidebar-bg-remove" class="lapak1-btn-danger">✕</button>
                 </div>
             </div>
 
@@ -1031,7 +1039,7 @@
             ` : ''}
 
             <div class="lapak1-card-title" style="margin-top:10px;">
-                <span>ðŸ“ Posisi Layout (${state.sidebarBgPosition.toUpperCase()})</span>
+                <span>📐 Posisi Layout (${state.sidebarBgPosition.toUpperCase()})</span>
             </div>
             <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
                 ${['cover', 'contain', 'stretch', 'tile', 'center', 'span'].map(pos => `
@@ -1102,13 +1110,13 @@
             };
         });
 
-        // Panel 3: STRICT TRANSPARENCY SLIDER CONTROL FOR css-1l83s7m & css-9oh56r (Pink/Purple Accent Border)
+        // Panel 3: Transparency Slider
         const containerCard = document.createElement('div');
         containerCard.className = 'lapak1-card';
         containerCard.style.borderLeft = '4px solid #ff007f';
         containerCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#ff007f; font-weight:800;">ðŸŽšï¸ Transparansi Wadah Chat (css-1l83s7m & css-9oh56r)</span>
+                <span style="color:#ff007f; font-weight:800;">🎚️ Transparansi Wadah Chat (css-1l83s7m & css-9oh56r)</span>
                 <span id="lapak1-opacity-val" style="font-size:11px; color:#ff007f; font-weight:800;">${state.containerOpacity}%</span>
             </div>
 
@@ -1116,7 +1124,7 @@
                 <label style="font-size:10px; color:#aaa; display:block; margin-bottom:6px;">Khusus mengatur transparansi bening wadah css-1l83s7m & css-9oh56r:</label>
                 <input type="range" id="lapak1-opacity-slider" min="0" max="100" value="${state.containerOpacity}" style="width:100%; cursor:pointer; accent-color:#ff007f;">
                 <div style="display:flex; justify-content:space-between; font-size:9px; color:#888; margin-top:4px;">
-                    <span>0% (Bening Penuh ðŸ’Ž)</span>
+                    <span>0% (Bening Penuh 💎)</span>
                     <span>50% (Sedang)</span>
                     <span>100% (Solid Pekat)</span>
                 </div>
@@ -1138,13 +1146,13 @@
 
     // TAB 3: PENGATURAN & BACKUP
     function renderSettingsTab(container) {
-        // SLA Notifications Panel (Purple Accent Border)
+        // SLA Notifications Panel
         const slaCard = document.createElement('div');
         slaCard.className = 'lapak1-card';
         slaCard.style.borderLeft = '4px solid #7b2ffc';
         slaCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#a766ff; font-weight:800;">ðŸ”” Kontrol Notifikasi SLA</span>
+                <span style="color:#a766ff; font-weight:800;">🔔 Kontrol Notifikasi SLA</span>
                 <span style="font-size:10px; color:#888;">LiveChat SLA Alert</span>
             </div>
 
@@ -1189,13 +1197,13 @@
 
         container.appendChild(slaCard);
 
-        // Font Size Info Card (Cyan Accent Border)
+        // Font Size Info Card
         const fontCard = document.createElement('div');
         fontCard.className = 'lapak1-card';
         fontCard.style.borderLeft = '4px solid #00d4ff';
         fontCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#00d4ff; font-weight:800;">ðŸ”¤ Ukuran Font Highlight</span>
+                <span style="color:#00d4ff; font-weight:800;">🔤 Ukuran Font Highlight</span>
                 <span style="font-size:10px; color:#00d4ff; font-weight:700;">OTOMATIS (INHERIT)</span>
             </div>
             <div style="font-size:11px; color:#aaa; line-height:1.4;">
@@ -1204,18 +1212,18 @@
         `;
         container.appendChild(fontCard);
 
-        // Backup & Restore Card (Green Accent Border)
+        // Backup & Restore Card
         const backupCard = document.createElement('div');
         backupCard.className = 'lapak1-card';
         backupCard.style.borderLeft = '4px solid #00f260';
         backupCard.innerHTML = `
             <div class="lapak1-card-title">
-                <span style="color:#00f260; font-weight:800;">ðŸ’¾ Backup & Restore Data</span>
+                <span style="color:#00f260; font-weight:800;">💾 Backup & Restore Data</span>
                 <span style="font-size:10px; color:#888;">JSON Format</span>
             </div>
             <div style="display:flex; gap:10px;">
-                <button id="btnExport" class="lapak1-btn-primary" style="flex:1; padding:10px;">ðŸ“¤ Export Backup</button>
-                <button id="btnImport" class="lapak1-btn-primary" style="flex:1; padding:10px; background:linear-gradient(135deg, #00f260, #0575e6);">ðŸ“¥ Import Data</button>
+                <button id="btnExport" class="lapak1-btn-primary" style="flex:1; padding:10px;">📤 Export Backup</button>
+                <button id="btnImport" class="lapak1-btn-primary" style="flex:1; padding:10px; background:linear-gradient(135deg, #00f260, #0575e6);">📥 Import Data</button>
             </div>
         `;
 
@@ -1254,10 +1262,10 @@
                     if (data.bgPos) setStore(BG_POSITION_KEY, data.bgPos);
                     if (data.sidebarPos) setStore(SIDEBAR_POS_KEY, data.sidebarPos);
                     if (data.opacity !== undefined) setStore(CONTAINER_OPACITY_KEY, data.opacity);
-                    alert('âœ… Data Berhasil Diimport! Me-refresh halaman...');
+                    alert('✅ Data Berhasil Diimport! Me-refresh halaman...');
                     location.reload();
                 } catch (err) {
-                    alert('âŒ Format file JSON tidak valid!');
+                    alert('❌ Format file JSON tidak valid!');
                 }
             };
             reader.readAsText(file);
@@ -1273,7 +1281,7 @@
 
     renderDashboard();
 
-    // Toggle Dashboard Display
+    // Toggle Dashboard
     function toggleDash() {
         const isVisible = dash.style.display === 'block';
         if (isVisible) {
@@ -1297,7 +1305,7 @@
         dash.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
     }
 
-    // Dynamic Drag Handling (Active only during drag)
+    // Drag
     let startX, startY, origX, origY;
 
     function onMouseMove(e) {
@@ -1339,7 +1347,7 @@
         }
     });
 
-    // Master Toggle Switch Event
+    // Master Toggle
     setTimeout(() => {
         const masterToggle = dash.querySelector('#lapak1-master-toggle');
         if (masterToggle) {
@@ -1353,7 +1361,7 @@
         }
     }, 100);
 
-    // Initialization
+    // Init
     function init() {
         if (document.body && !document.getElementById('chat-hl-bubble')) {
             document.body.appendChild(orb);
@@ -1361,7 +1369,7 @@
             applyBackground();
             initObserver();
             runHighlight();
-            console.log('âœ¨ LAPAK1 - Crystal Clear Transparancy (Zero Blur) v6.8.0 Loaded!');
+            console.log('✨ LAPAK1 - Crystal Clear Transparancy (Zero Blur) v6.8.0 Loaded!');
         } else if (!document.body) {
             setTimeout(init, 100);
         }
