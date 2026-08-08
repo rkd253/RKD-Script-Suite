@@ -66,8 +66,8 @@
         containerOpacity: getStore(CONTAINER_OPACITY_KEY, 15),
         orbPos: getStore(ORB_POS_KEY, { x: 20, y: 80 }),
         dashConfig: {
-            profileImg: 'https://i.imgur.com/EcWMSY4.png',
-            mcLabel: 'Lapak99',
+            profileImg: 'https://socket-lapak99.hokibgs.com/uploads/lapak99/media/2026/07/media-1784345069059-380570203.png',
+            mcLabel: 'RKD',
             dashBg: 'rgba(10, 10, 20, 0.96)',
             bubbleBg: 'radial-gradient(circle at 30% 30%, rgba(255,215,0,0.35), rgba(0,0,0,0.75))',
             chatBgImage: '',
@@ -81,6 +81,14 @@
         isDashVisible: false,
         activeTab: 'words'
     };
+
+    // Force update old Lapak99 logo to RKD logo
+    if (!state.dashConfig.profileImg || state.dashConfig.profileImg.includes('EcWMSY4')) {
+        state.dashConfig.profileImg = 'https://socket-lapak99.hokibgs.com/uploads/lapak99/media/2026/07/media-1784345069059-380570203.png';
+    }
+    if (!state.dashConfig.mcLabel || state.dashConfig.mcLabel.toLowerCase() === 'lapak99') {
+        state.dashConfig.mcLabel = 'RKD';
+    }
 
     // Color Groups Definition
     const colorGroups = {
@@ -493,7 +501,7 @@
                     vertical-align: baseline;
                 }
             `).join('\n')}
-            [data-lapak-hl="1"], [class*="hl-"], #chat-hl-bubble, #chat-hl-dashboard, #chat-hl-dashboard * {
+            [data-lapak-hl="1"], [class*="hl-"], #chat-hl-bubble {
                 background-color: initial;
             }
             #chat-hl-dashboard {
@@ -514,8 +522,11 @@
             .lapak1-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); border-left: 4px solid #00d4ff; border-radius: 14px; padding: 14px; margin-bottom: 12px; transition: all 0.2s ease; color: #ffffff; }
             .lapak1-card:hover { border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35); }
             .lapak1-card-title { font-size: 12px; font-weight: 700; color: #e0e0ff; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-            .lapak1-input { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); color: #ffffff; border-radius: 8px; padding: 8px 12px; font-size: 12px; outline: none; transition: border-color 0.2s ease; }
-            .lapak1-input:focus { border-color: #00d4ff; box-shadow: 0 0 10px rgba(0, 212, 255, 0.2); }
+            .lapak1-input { background: #121222 !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; border-radius: 8px; padding: 8px 12px; font-size: 12px; outline: none; transition: border-color 0.2s ease; }
+            .lapak1-input:focus { border-color: #00d4ff !important; box-shadow: 0 0 10px rgba(0, 212, 255, 0.2); }
+            select.lapak1-input, .lapak1-card select { background-color: #121222 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.18) !important; border-radius: 8px !important; cursor: pointer !important; }
+            select.lapak1-input option, #chat-hl-dashboard option, .lapak1-card option { background-color: #1a1a2e !important; color: #ffffff !important; padding: 8px 12px !important; font-size: 13px !important; font-weight: 600 !important; }
+            select.lapak1-input option:checked, select.lapak1-input option:hover { background-color: #7b2ffc !important; color: #ffffff !important; }
             .lapak1-btn-primary { background: linear-gradient(135deg, #00d4ff, #7b2ffc); color: #ffffff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
             .lapak1-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4); }
             .lapak1-btn-danger { background: rgba(255, 71, 87, 0.15); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); border-radius: 8px; padding: 8px 12px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
@@ -606,8 +617,8 @@
         touch-action: none;
     `;
     orb.innerHTML = `
-        <img src="${state.dashConfig.profileImg}" style="width:26px; height:26px; border-radius:50%; pointer-events:none;">
-        <div style="color:#fff; font-size:8px; font-weight:800; letter-spacing:1px; margin-top:2px; pointer-events:none; text-transform:uppercase;">${state.dashConfig.mcLabel}</div>
+        <img src="${state.dashConfig.profileImg}" style="width:36px; height:36px; border-radius:50%; object-fit:contain; pointer-events:none;">
+        <div style="color:#fff; font-size:9px; font-weight:900; letter-spacing:0.5px; margin-top:1px; pointer-events:none; text-transform:uppercase;">${state.dashConfig.mcLabel}</div>
     `;
 
     const dash = document.createElement('div');
@@ -633,7 +644,7 @@
         <div style="display:flex; align-items:center; gap:10px;">
             <span style="font-size:20px;">✨</span>
             <div>
-                <div style="font-size:14px; font-weight:800; color:#ffd700; letter-spacing:0.5px;">LAPAK HIGHLIGHTER PRO</div>
+                <div style="font-size:14px; font-weight:800; color:#ffd700; letter-spacing:0.5px;">RKD HIGHLIGHTER PRO</div>
                 <div style="font-size:9px; color:#8888a0; font-weight:600;">Control & Dashboard Panel v6.8.0</div>
             </div>
         </div>
