@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (function () {
-    'use strict';   
+    'use strict';
 
     // ====== Konfigurasi ======
     const BLINK_DELAY_MS = 180000; // 3 menit (Merah Berkedip + ⚠️)
@@ -33,13 +33,11 @@
     const archTags = [
         'archived', 'customer left', 'inactivity', 'meninggalkan',
         'followup', 'sent to', 'joined', 'assigned', 'invited', 'closed',
-        'transferred', 'ditransfer', 'left', 'ended', 'expired', 'habis'
+        'transferred', 'ditransfer'
     ];
 
     const detectIsTyping = (item) => {
         if (!item) return false;
-        // Hanya deteksi elemen indikator khusus, jangan scan seluruh teks item
-        // karena teks "..." di akhir pesan (truncation) akan terbaca sebagai typing.
         const typingEl = item.querySelector(
             '[class*="typing"], [class*="dots"], [data-test*="typing"], [data-testid*="typing"], ' +
             '.typing-indicator, [aria-label*="typing"], [class*="lc-dots"], [class*="lc-typing"], ' +
@@ -49,20 +47,15 @@
 
         if (typingEl) return true;
 
-        // Fallback: Cek apakah ada elemen yang secara spesifik mengandung teks 'mengetik' atau 'typing'
-        // tapi bukan bagian dari preview pesan.
         const dotsEl = item.querySelector('.chat-item__message--typing, .lc-typing-indicator');
         if (dotsEl) return true;
 
         return false;
     };
 
-    // Helper functions to check notification settings
-    // Use localStorage as a runtime bridge from Script 1
     const isNotif2minEnabled = () => localStorage.getItem(SLA_NOTIF_2MIN_KEY) !== 'false';
     const isNotif3minEnabled = () => localStorage.getItem(SLA_NOTIF_3MIN_KEY) !== 'false';
 
-    // Function to clear specific type of SLA toasts
     const clearSlaToasts = (type) => {
         const host = document.querySelector('.my-toast-host');
         if (!host) return;
@@ -83,12 +76,9 @@
         });
     };
 
-    // Listen for setting changes from dashboard
     window.addEventListener('slaNotifSettingChanged', (e) => {
         const { type, enabled } = e.detail;
         console.log(`🔔 SLA Notif ${type} changed to: ${enabled ? 'ON' : 'OFF'}`);
-
-        // If turned OFF, clear existing toasts of that type
         if (!enabled) {
             clearSlaToasts(type);
         }
@@ -98,61 +88,81 @@
     // Utilities (URL & Chat ID)
     // =========================
     const getActiveChatId = () => {
-        // 1. Cek via attribute aria-selected atau class active pada elemen manapun di list
-        const selectedEl = document.querySelector('[aria-selected="true"], [data-selected="true"], li[class*="selected"], li[class*="active"]');
-        if (selectedEl) {
-            const item = selectedEl.closest('li[data-testid^="chat-item-"]') || selectedEl.closest('.chat-item');
-            if (item) {
-                const id = getChatIdFromItem(item);
-                if (id) return id;
-            }
-            const tid = selectedEl.getAttribute('data-testid') || selectedEl.closest('[data-testid]')?.getAttribute('data-testid') || '';
+        const selectedLi = document.querySelector('li[data-testid^="chat-item-"][aria-selected="true"], li[class*="selected"], li[class*="active"]');
+        if (selectedLi) {
+            const tid = selectedLi.getAttribute('data-testid') || '';
             const m = tid.match(/chat-item-([^/]+)/i);
             if (m) return m[1];
         }
 
-        // 2. Fallback via URL
         const m = location.pathname.match(/\/chats\/(?:[^/]+\/)?([^/]+)/i);
         return m ? m[1] : null;
     };
 
-    const manuallyRepliedIds = new Map(); // chatId -> timestamp (untuk cleanup otomatis)
+    const manuallyRepliedIds = new Map();
 
-    // --- FITUR BARU: Deteksi Kirim Pesan untuk Reset Instan ---
     const handleManualReply = () => {
         const activeId = getActiveChatId();
         if (activeId) {
             console.log(`🚀 [${activeId}] Reply terdeteksi via Input! Mereset Timer...`);
 
-            // Mark as manually replied to prevent restart while sidebar lags
             manuallyRepliedIds.set(activeId, Date.now());
 
             unrepliedStartTimes.delete(activeId);
             saveUnrepliedTimers();
 
-            // Cari item dan bersihkan visualnya segera
             const item = findItemByChatId(activeId);
             if (item) {
                 item.classList.remove('blink-red', 'is-red');
-                item.classList.add('replied-instant'); // Force green state visually
+                item.classList.add('replied-instant');
                 delete item.dataset.redToastShown;
                 delete item.dataset.yellowToastShown;
                 removeWarningBadge(item);
             }
-            updateLiveToastIndices(); // Tutup toast segera
+            updateLiveToastIndices();
         }
     };
 
-    // Listen untuk klik tombol Send dan tekan Enter
+    const SEND_AND_ACTION_BTN_SELECTOR = [
+        '[data-testid="send-button"]',
+        '[data-testid*="send-button"]',
+        '[data-testid*="send_button"]',
+        '[data-testid*="action-bar"] button',
+        '[data-testid*="action-bar-button"]',
+        '[class*="ActionBar-module__action-bar"] [class*="Button-module__btn"]',
+        '[class*="ActionBar-module__action-bar"] button',
+        '[class*="action-bar__items__button-wrapper__button"]',
+        '[class*="Button-module__btn--icon-only"]',
+
+        '[class*="css-n7fkea"]',
+        '[class*="css-1093tfy"] button',
+        '[class*="send-button"]',
+        '[class*="SendButton"]',
+        'button.send',
+        'button[type="submit"]',
+        'button[aria-label*="Send" i]',
+        'button[aria-label*="Kirim" i]'
+    ].join(', ');
+
+    const findLiveChatButton = (target) => {
+        if (!target) return null;
+        const btn = target.closest(SEND_AND_ACTION_BTN_SELECTOR);
+        if (btn) return btn;
+        const iconOrSvg = target.closest('[class*="lc-Icon"], [class*="Icon-module__icon"], svg, path');
+        if (iconOrSvg) {
+            return iconOrSvg.closest('button, [role="button"], [class*="Button-module__btn"], [class*="action-bar__items__button"], [class*="css-n7fkea"]');
+        }
+        return null;
+    };
+
     document.addEventListener('click', (e) => {
-        if (e.target.closest('[data-testid="send-button"], [class*="send-button"], button.send')) {
+        if (findLiveChatButton(e.target)) {
             handleManualReply();
         }
     }, true);
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey && !e.altKey) {
-            // Cek apakah sedang fokus di area pesan
             if (document.activeElement.matches('[data-testid="message-input"], [contenteditable="true"], textarea')) {
                 handleManualReply();
             }
@@ -204,7 +214,7 @@
         const key = storageKeyForItem(item);
         if (key) {
             GM_setValue(key, token);
-            localStorage.setItem(key, token); // bridge
+            localStorage.setItem(key, token);
         }
     };
     const getSavedColor = (item) => {
@@ -239,10 +249,8 @@
     const showToast = (message, accent = TOAST_ACCENT_COLOR, chatId = null, duration = TOAST_LIFETIME_MS, onUserClose = null) => {
         const host = ensureToastHost();
 
-        // --- ANTI-SPAM NOTIFIKASI ---
         const existingToast = host.querySelector(`.my-toast[data-chat-id="${chatId}"]`);
         if (chatId && existingToast) {
-            // Jika notifikasi untuk chat ini sudah ada, update pesannya saja, jangan buat baru
             const msgSpan = existingToast.querySelector('.my-toast-msg');
             if (msgSpan) {
                 if (message.includes('#')) {
@@ -252,7 +260,6 @@
                     msgSpan.textContent = message;
                 }
             }
-            // Update warna aksen jika berubah (misal dari kuning ke merah)
             existingToast.style.setProperty('--toast-accent', accent);
             updateLiveToastIndices();
             return;
@@ -293,7 +300,6 @@
         const close = (isUserAction = false) => {
             if (isUserAction && onUserClose) onUserClose();
 
-            // Bersihkan flag Shown di item agar bisa dipicu lagi nanti jika diperlukan
             if (chatId) {
                 const itm = findItemByChatId(chatId);
                 if (itm) {
@@ -306,7 +312,6 @@
             setTimeout(() => toast.remove(), 200);
         };
 
-        // --- FITUR QUICK-JUMP ---
         toast.addEventListener('click', () => {
             if (chatId) {
                 const item = findItemByChatId(chatId);
@@ -331,12 +336,11 @@
     // =========================
     // Toggle logic + Timer kuning & Merah (Locked Timestamp)
     // =========================
-    const bootTime = Date.now(); // Catat waktu booting script
+    const bootTime = Date.now();
     const UNREPLIED_STORAGE_KEY = 'chatUnrepliedStartTimes';
     const initUnrepliedMap = () => {
         let saved = GM_getValue(UNREPLIED_STORAGE_KEY);
         if (saved === undefined) {
-            // Migration
             saved = localStorage.getItem(UNREPLIED_STORAGE_KEY);
             if (saved) {
                 try {
@@ -350,14 +354,14 @@
         return new Map(Object.entries(saved).map(([id, time]) => [id, Number(time)]));
     };
 
-    const yellowTimers = new Map(); // chatId -> timeoutId
+    const yellowTimers = new Map();
     const unrepliedStartTimes = initUnrepliedMap();
 
     const saveUnrepliedTimers = () => {
         const obj = {};
         unrepliedStartTimes.forEach((v, k) => obj[k] = v);
         GM_setValue(UNREPLIED_STORAGE_KEY, obj);
-        localStorage.setItem(UNREPLIED_STORAGE_KEY, JSON.stringify(obj)); // bridge
+        localStorage.setItem(UNREPLIED_STORAGE_KEY, JSON.stringify(obj));
     };
 
     const setYellowTimer = (item, enable) => {
@@ -406,7 +410,6 @@
         const chatId = getChatIdFromItem(item);
         if (!chatId) return;
 
-        // --- DETEKSI REPLY AGENT YANG LEBIH AKURAT ---
         const hasReplyIcon = !!(
             item.querySelector('[data-testid="replied"]') ||
             item.querySelector('svg[data-testid="Icon--reply"]') ||
@@ -419,7 +422,6 @@
         const itemText_lower = (item.textContent || "").toLowerCase();
         const hasReply = !!hasReplyIcon;
 
-        // --- CLEANUP MANUAL REPLY STATUS ---
         if (hasReply || hasUnread) {
             manuallyRepliedIds.delete(chatId);
             item.classList.remove('replied-instant');
@@ -427,8 +429,6 @@
             delete item.dataset.yellowToastSuppressed;
         }
 
-        // --- FIX: Deteksi Pesan Klien di Chat Aktif ---
-        // Jika chat aktif, hasUnread biasanya false. Kita cek DOM chat window.
         if (isActive && manuallyRepliedIds.has(chatId)) {
             const allMsgs = document.querySelectorAll('[data-testid="agent-message"], [data-testid="customer-message"]');
             if (allMsgs.length > 0) {
@@ -440,7 +440,6 @@
             }
         }
 
-        // --- SAFETY TIMEOUT: Jika flag manual reply macet > 30 detik, hapus paksa ---
         if (manuallyRepliedIds.has(chatId)) {
             const replyTime = manuallyRepliedIds.get(chatId);
             if (Date.now() - replyTime > 30000) {
@@ -486,7 +485,6 @@
         const isTransferred = itemText.includes('transferred') || itemText.includes('ditransfer');
         const isRichMessage = itemText.includes('sent a rich message') || itemText.includes('mengirim pesan');
 
-        // Deteksi jika preview teks diawali dengan nama CS (biasanya indikasi agen sudah membalas)
         const isAgentAction = isRichMessage || (/^[a-z0-9]+\s+[a-z0-9]+\s+sent/i.test(itemText)) || itemText.includes('you:');
 
         if (!unrepliedStartTimes.has(chatId) && (hasUnread || (!hasReplyIcon && !isTransferred && !isAgentAction))) {
@@ -494,7 +492,6 @@
             saveUnrepliedTimers();
         }
 
-        // --- EVALUASI TAHAPAN WAKTU (2 Menit & 3 Menit) ---
         const startTime = unrepliedStartTimes.get(chatId);
         if (!startTime) {
             item.classList.remove('blink-red', 'is-red', 'blink-yellow');
@@ -503,11 +500,10 @@
 
         const elapsed = Date.now() - startTime;
 
-        // 1. TAHAP FINAL: 3 MENIT (Merah Berkedip)
         if (elapsed >= BLINK_DELAY_MS) {
             item.classList.add('is-red');
             item.classList.add('blink-red');
-            item.classList.remove('blink-yellow'); // Hilangkan kuning bila sudah merah
+            item.classList.remove('blink-yellow');
             addWarningBadge(item);
 
             if (!isActive && !item.dataset.redToastShown && !item.dataset.redToastSuppressed && isNotif3minEnabled()) {
@@ -517,12 +513,11 @@
                 item.dataset.redToastShown = '1';
             }
         }
-        // 2. TAHAP SIAGA: 2 MENIT (Kuning Berdetak Pelan)
         else if (elapsed >= YELLOW_THRESHOLD_MS) {
             item.classList.add('is-red');
             item.classList.remove('blink-red');
-            item.classList.add('blink-yellow'); // Detak pelan kuning
-            removeWarningBadge(item); // Belum saatnya badge ⚠️
+            item.classList.add('blink-yellow');
+            removeWarningBadge(item);
 
             if (!isActive && !item.dataset.yellowToastShown && !item.dataset.yellowToastSuppressed && isNotif2minEnabled()) {
                 showToast(`⚡ 2 MENIT: Segera Balas (#1)`, TOAST_ACCENT_COLOR, chatId, TOAST_LIFETIME_MS, () => {
@@ -531,7 +526,6 @@
                 item.dataset.yellowToastShown = '1';
             }
         } else {
-            // Dibawah 2 menit (Merah Solid saja atau sesuai applySingleChatStyling)
             item.classList.add('is-red');
             item.classList.remove('blink-red', 'blink-yellow');
             removeWarningBadge(item);
@@ -542,8 +536,6 @@
         }
     };
 
-    // Fungsi untuk update semua angka di notifikasi agar AKTUAL (Live)
-    // DAN otomatis menutup hanya jika beneran sudah dibalas (timer dihapus)
     const updateLiveToastIndices = () => {
         const toasts = document.querySelectorAll('.my-toast[data-chat-id]');
         const allItems = Array.from(document.querySelectorAll('.chat-item'));
@@ -552,21 +544,16 @@
             const chatId = toast.dataset.chatId;
             const item = findItemByChatId(chatId);
 
-            // LOGIKA AUDIT: Toast hanya boleh hilang jika timer unreplied sudah dihapus (sudah dibalas/archive)
-            // atau jika chat item sudah tidak ada di sidebar
             const itemText = item ? (item.textContent || "").toLowerCase() : "";
             const isArchived = archTags.some(function (tag) { return itemText.indexOf(tag) !== -1; });
             const hasTimer = unrepliedStartTimes.has(chatId);
-            const isActive = (chatId === getActiveChatId()); // Cek apakah chat sedang dibuka
+            const isActive = (chatId === getActiveChatId());
 
-            // LOGIKA: Tutup jika: Item hilang, Timer hilang, di-Archive, atau SEDANG DIBUKA (Seen)
             const shouldClose = !item || !hasTimer || isArchived || isActive;
 
             if (shouldClose) {
                 if (!toast.classList.contains('hide')) {
                     console.log(`🧹 Menutup notifikasi (Navigasi/Selesai): ${chatId}`);
-
-                    // Bersihkan flag Shown agar bisa muncul lagi jika nanti pindah chat lagi
                     if (item) {
                         delete item.dataset.redToastShown;
                         delete item.dataset.yellowToastShown;
@@ -576,7 +563,6 @@
                     setTimeout(() => toast.remove(), 200);
                 }
             } else {
-                // Update angka baris jika masih aktif (tetap muncul sampai dibalas)
                 const liveIdxSpan = toast.querySelector('.live-idx');
                 if (liveIdxSpan && item) {
                     const currentIdx = allItems.indexOf(item) + 1;
@@ -586,11 +572,9 @@
         });
     };
 
-    // === PERFORMANCE OPTIMIZATION: Visibility-aware Interval ===
     let periodicCheckerId = null;
 
     function runPeriodicChecker() {
-        // Skip jika tab tidak terlihat
         if (document.hidden) return;
 
         const allItems = document.querySelectorAll('.chat-item');
@@ -599,12 +583,9 @@
         allItems.forEach(item => {
             const id = getChatIdFromItem(item);
             if (id) activeIds.add(id);
-            // Kita panggil ulang styling untuk update status blink/badge
             applySingleChatStyling(item);
         });
 
-        // Cleanup: Hapus timer dari storage hanya jika chat benar-benar hilang permanen
-        // JANGAN hapus jika masih dalam masa loading (Grace Period 10 detik pertama)
         const isBooting = (Date.now() - bootTime < 10000);
         let isChanged = false;
 
@@ -618,22 +599,17 @@
             if (isChanged) saveUnrepliedTimers();
         }
 
-        // Update angka baris di notifikasi agar selalu aktual (100% akurat)
         updateLiveToastIndices();
     }
 
-    // Start interval - 500ms adalah angka aman agar tidak lag
     periodicCheckerId = setInterval(runPeriodicChecker, 500);
 
-    // Pause/resume saat tab visibility berubah
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
-            // Tab aktif kembali - jalankan segera
             runPeriodicChecker();
         }
     });
 
-    // tokenOrNull: 'yellow' | 'black' | null
     const applyToggleToken = (item, tokenOrNull) => {
         if (!item) return;
         if (tokenOrNull === null) { clearSavedColor(item); setYellowTimer(item, false); }
@@ -682,40 +658,7 @@
     // Layout (Sidebar width + CSS var)
     // =========================
     const applySidebarWidth = () => {
-        const leftSidebar = document.querySelector('.css-1cmlcj3, [data-testid="chats-list"]');
-        const rightSidebar = document.querySelector('.css-1orfco2, [data-testid="customer-details"], [data-testid="details-panel"]');
-        if (leftSidebar) {
-            const isLeftMinimized = leftSidebar.getAttribute('aria-hidden') === 'true' || 
-                                   leftSidebar.getAttribute('data-state') === 'collapsed' || 
-                                   leftSidebar.classList.contains('collapsed') || 
-                                   leftSidebar.classList.contains('minimized');
-            if (!isLeftMinimized) {
-                leftSidebar.style.width = '350px';
-                leftSidebar.style.minWidth = '350px';
-                leftSidebar.style.maxWidth = '350px';
-                leftSidebar.style.paddingRight = '10px';
-                document.documentElement.style.setProperty('--mp-left-sidebar-w', '350px');
-            } else {
-                leftSidebar.style.width = '';
-                leftSidebar.style.minWidth = '';
-                leftSidebar.style.maxWidth = '';
-            }
-        }
-        if (rightSidebar) {
-            const isRightMinimized = rightSidebar.getAttribute('aria-hidden') === 'true' || 
-                                    rightSidebar.getAttribute('data-state') === 'collapsed' || 
-                                    rightSidebar.classList.contains('collapsed') || 
-                                    rightSidebar.classList.contains('minimized');
-            if (!isRightMinimized) {
-                rightSidebar.style.width = '320px';
-                rightSidebar.style.minWidth = '320px';
-                rightSidebar.style.maxWidth = '320px';
-            } else {
-                rightSidebar.style.width = '';
-                rightSidebar.style.minWidth = '';
-                rightSidebar.style.maxWidth = '';
-            }
-        }
+        // Native sidebar width preserved
     };
 
     // =======================================
@@ -742,7 +685,6 @@
 
         const isLeft = archTags.some(function (tag) { return itemText.indexOf(tag) !== -1; });
 
-        // --- TRANSFERRED & RICH MESSAGE LOGIC ---
         const isTransferred = itemText.includes('transferred') || itemText.includes('ditransfer');
         const isRichMessage = itemText.includes('sent a rich message') || itemText.includes('mengirim pesan');
         const isAgentAction = isRichMessage || (/^[a-z0-9]+\s+[a-z0-9]+\s+sent/i.test(itemText)) || itemText.includes('you:');
@@ -753,7 +695,6 @@
         let startTime = unrepliedStartTimes.get(chatId);
         const now = Date.now();
 
-        // Jika timer sudah sangat lama (misal > 30 menit) dan baru muncul lagi, reset saja.
         if (startTime && (now - startTime > 1800000)) {
             unrepliedStartTimes.delete(chatId);
             startTime = null;
@@ -761,45 +702,38 @@
         }
 
         const elapsed = startTime ? (now - startTime) : 0;
-        let leftColor = '#ff0000'; // Merah Terang
+        let leftColor = '#ff0000';
         let isRedState = false;
 
-        // --- CEK MANUAL OVERRIDE (Instan Hijau) ---
         const isManuallyReplied = manuallyRepliedIds.has(chatId);
 
-        // Jika ditransfer atau mengirim rich message dan tidak ada pesan baru (unread), hapus timer jika ada
         if ((isTransferred || isAgentAction) && !hasUnread && unrepliedStartTimes.has(chatId)) {
             unrepliedStartTimes.delete(chatId);
             saveUnrepliedTimers();
             startTime = null;
         }
 
-        // --- LOGIKA PRIORITAS WARNA (PROFESSIONAL MASTER PRIORITY) ---
         const isSlaAlert = (hasUnread || (unrepliedStartTimes.has(chatId) && !hasReply)) && (elapsed >= YELLOW_THRESHOLD_MS);
 
-        // 1. STATUS ARCHIVE/LEFT (HIGHEST PRIORITY): Langsung kunci warna biru gelap & stop semua indikator lain.
         if (isLeft) {
             item.classList.remove('is-typing', 'blink-red', 'is-red', 'blink-yellow');
             leftColor = '#011635ff';
             isRedState = false;
         }
-        // 2. TAHAP SLA ALERT: Jika sudah >= 2 menit, abaikan pelangi agar Agent fokus SLA.
         else if (isSlaAlert) {
             item.classList.remove('is-typing');
             isRedState = true;
             if (elapsed >= BLINK_DELAY_MS) {
-                leftColor = '#ff0000'; // Red Blink (3m)
+                leftColor = '#ff0000';
             } else {
-                leftColor = '#ffb300'; // Kuning Amber (2m)
+                leftColor = '#ffb300';
             }
         }
-        // 3. TYPING RAINBOW: Muncul sebagai hiasan selama durasi chat masih aman (< 2 menit).
         else if (isTyping) {
             item.classList.add('is-typing');
             leftColor = 'transparent';
             isRedState = false;
         }
-        // 4. SAVED TAGS: Manual override (Yellow/Black)
         else if (saved === 'yellow') {
             item.classList.remove('is-typing');
             leftColor = '#ffb300';
@@ -807,19 +741,16 @@
             item.classList.remove('is-typing');
             leftColor = '#021736ff';
         }
-        // 5. BELUM DIBALAS (FASE AWAL < 2 MENIT): Merah Statis
         else if (hasUnread || (unrepliedStartTimes.has(chatId) && !hasReply)) {
             item.classList.remove('is-typing');
             isRedState = true;
             leftColor = '#ff0000';
         }
-        // 6. SUDAH DIBALAS / DEFAULT: Hijau Emerald
         else {
             item.classList.remove('is-typing', 'blink-red', 'is-red', 'blink-yellow');
             leftColor = '#00a300';
         }
 
-        // --- TERAPKAN CSS VARIABLES ---
         const { r, g, b } = hexToRgb(leftColor);
         item.style.setProperty('--leftbar-color', leftColor);
         item.style.setProperty('--leftbar-rgb', `${r}, ${g}, ${b}`);
@@ -829,11 +760,9 @@
 
         if (getComputedStyle(item).position === 'static') item.style.position = 'relative';
 
-        // Reset default LiveChat styling
         item.style.backgroundColor = '';
         item.style.color = '';
 
-        // Jalankan logic blink & badge
         setRedBlinkState(item, isRedState);
     };
 
@@ -841,7 +770,6 @@
         const allItems = document.querySelectorAll('.chat-item');
         allItems.forEach(item => applySingleChatStyling(item));
 
-        // Tambahan: Notifikasi MODE SERIUS
         const unreplied = Array.from(allItems).filter(item => {
             const hasReplyIcon = item.querySelector('[data-testid="replied"]');
             const itemText = (item.textContent || "").toLowerCase();
@@ -855,83 +783,30 @@
         });
 
         if (unreplied.length > 3 && !document.body.dataset.seriousToastShown) {
-            showToast('🔥 MODE SERIUS: >3 Chat Pending!', TOAST_ACCENT_COLOR_RED, null, 10000); // Auto-hide 10 detik
+            showToast('🔥 MODE SERIUS: >3 Chat Pending!', TOAST_ACCENT_COLOR_RED, null, 10000);
             document.body.dataset.seriousToastShown = '1';
 
-            // Reset agar bisa muncul lagi setelah 1 menit
             setTimeout(() => {
                 delete document.body.dataset.seriousToastShown;
-            }, 60000); // 1 menit
+            }, 60000);
         }
     };
 
     const injectMinimalStyles = () => {
         const style = document.createElement('style');
         style.textContent = `
-/* —— COMIC SANS MS FONT FOR TARGET CHAT PARAGRAPH TEXT —— */
-.lc-Typography-module__paragraph-sm___5KRhm,
-.privacy-masker,
-.css-1p4wsor,
-[class*="lc-Typography-module__paragraph-sm"],
-[class*="privacy-masker"],
-[class*="css-1p4wsor"] {
-    font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif !important;
-}
-
-/* —— BENING GLOSSY BIRU MUDA TEMBUS PANDANG FOR css-3dz5hy —— */
-.css-3dz5hy,
-[class*="css-3dz5hy"] {
-    background: linear-gradient(135deg, rgba(135, 206, 250, 0.15) 0%, rgba(0, 150, 240, 0.2) 100%) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(135, 206, 250, 0.3) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
-    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-}
-
-.css-3dz5hy:hover,
-[class*="css-3dz5hy"]:hover {
-    background: linear-gradient(135deg, rgba(135, 206, 250, 0.22) 0%, rgba(0, 165, 255, 0.28) 100%) !important;
-    border-color: rgba(135, 206, 250, 0.5) !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
-    transform: translateY(-1px) scale(1.008) !important;
-}
-
-/* —— BENING GLOSSY KUNING TEMBUS PANDANG FOR css-1da7yod —— */
-.css-1da7yod,
-[class*="css-1da7yod"] {
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.16) 0%, rgba(255, 175, 0, 0.22) 100%) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(255, 215, 0, 0.35) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-}
-
-.css-1da7yod:hover,
-[class*="css-1da7yod"]:hover {
-    background: linear-gradient(135deg, rgba(255, 225, 50, 0.24) 0%, rgba(255, 190, 0, 0.3) 100%) !important;
-    border-color: rgba(255, 225, 100, 0.55) !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
-    transform: translateY(-1px) scale(1.008) !important;
-}
-
-/* —— Garis kiri seragam dengan ujung melengkung —— */
+/* —— Garis kiri seragam —— */
 .chat-item.mp-lined::before {
 content:"";
 position:absolute;
 left:0; top:0; bottom:0;
-width: var(--leftbar-w, 5px); /* Diperlapis menjadi 5px agar lebih tegas */
+width: var(--leftbar-w, 5px);
 background: var(--leftbar-color, currentColor);
-border-top-left-radius: 12px !important;
-border-bottom-left-radius: 12px !important;
+border-radius: 0;
 transform-origin:left center;
 z-index: 10;
 pointer-events: none;
 transition: background 0.4s ease, border-color 0.4s ease, transform 0.3s ease;
-/* Outline & Shadow lebih tegas agar tidak menyatu dengan BACKGROUND PUTIH */
 box-shadow: 1px 0 4px rgba(0,0,0,0.4), inset -1px 0 0 rgba(0,0,0,0.1);
 }
 
@@ -949,7 +824,7 @@ box-shadow: 1px 0 4px rgba(0,0,0,0.4), inset -1px 0 0 rgba(0,0,0,0.1);
     animation: leftBarPulseRed .7s ease-in-out infinite;
 }
 .chat-item.blink-yellow::before {
-    animation: leftBarPulseYellow 2s ease-in-out infinite; /* Detak pelan (2 detik) */
+    animation: leftBarPulseYellow 2s ease-in-out infinite;
 }
 
 /* —— Toast host —— */
@@ -976,10 +851,10 @@ align-items: center;
 gap: 10px;
 padding: 12px 36px 12px 16px;
 border-radius: 12px;
-background: rgba(15, 15, 20, 0.98); /* Lebih gelap & solid */
+background: rgba(15, 15, 20, 0.98);
 color: #ffffff;
 border: 2px solid var(--toast-accent, ${TOAST_ACCENT_COLOR});
-box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 10px rgba(0,0,0,0.2); /* Shadow lebih kuat */
+box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 10px rgba(0,0,0,0.2);
 width: 280px;
 max-width: 280px;
 overflow: hidden;
@@ -1063,11 +938,11 @@ animation: rainbowPulse 3s linear infinite;
 
 /* 🌈 Mode Typing Rainbow (Tanpa Merah agar tidak terkecoh) */
 @keyframes rainbowBar {
-    0% { background: #00ff00; } /* Hijau */
-    20% { background: #00ffff; } /* Cyan */
-    40% { background: #0000ff; } /* Biru */
-    60% { background: #ff00ff; } /* Magenta */
-    80% { background: #ffff00; } /* Kuning */
+    0% { background: #00ff00; }
+    20% { background: #00ffff; }
+    40% { background: #0000ff; }
+    60% { background: #ff00ff; }
+    80% { background: #ffff00; }
     100% { background: #00ff00; }
 }
 .chat-item.is-typing::before {
@@ -1079,11 +954,10 @@ animation: rainbowPulse 3s linear infinite;
 /* —— Warning Badge (3 menit) —— */
 .warning-badge-3min {
     position: absolute;
-    right: 8px; /* Lebih ke pinggir */
+    right: 8px;
     bottom: 8px;
-    font-size: 20px; /* Lebih besar */
+    font-size: 20px;
     z-index: 100;
-    /* Efek Glow & Shadow Ganda agar terbaca di putih */
     filter: drop-shadow(0 0 5px rgba(255, 255, 0, 0.8)) drop-shadow(0 2px 5px rgba(0,0,0,0.6));
     animation: badgePulse 0.8s ease-in-out infinite;
     user-select: none;
@@ -1095,95 +969,14 @@ animation: rainbowPulse 3s linear infinite;
     50% { transform: scale(1.4); filter: drop-shadow(0 0 15px rgba(255, 255, 0, 1)) drop-shadow(0 4px 8px rgba(0,0,0,0.8)); }
 }
 
-/* ALWAYS ENSURE ACTION BAR AND ITS BUTTONS ARE 100% VISIBLE & CLICKABLE */
-[class*="lc-ActionBar-module"],
-[class*="lc-ActionBar-module"] *,
-[data-testid="action-bar"],
-[data-testid="action-bar"] * {
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-}
-
-/* ACTION BAR NARROW VERTICAL CONTAINER (PREVENT CLIPPING OF TOP PROFILE BUTTON) */
-[class*="lc-ActionBar-module__action-bar"] {
-    width: 48px !important;
-    min-width: 48px !important;
-    max-width: 48px !important;
-    flex: 0 0 48px !important;
-    background: rgba(16, 12, 28, 0.85) !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.06) !important;
-    box-sizing: border-box !important;
-    overflow: visible !important;
-    z-index: 10 !important;
-}
-
-/* ACTION BAR ITEMS LIST (COMPACT TOP STACKING AT TOP-RIGHT) */
-[class*="lc-ActionBar-module__action-bar__items"] {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 6px !important;
-    padding: 4px 2px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    overflow: visible !important;
-}
-
-/* ACTION BAR BUTTON WRAPPER & SPECIFIC ICON BUTTONS */
-[class*="lc-ActionBar-module__action-bar__items__button-wrapper"],
-.lc-ActionBar-module__action-bar__items__button-wrapper___sgdUc,
-.lc-ActionBar-module__action-bar__items__button-wrapper--vertical___8Aq0c {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
-    min-height: 36px !important;
-    max-width: 36px !important;
-    max-height: 36px !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    border-radius: 8px !important;
-    transition: all 0.2s ease-in-out !important;
-    background: transparent !important;
-    box-sizing: border-box !important;
-}
-
-[class*="lc-ActionBar-module__action-bar__items__button-wrapper"]:hover,
-.lc-ActionBar-module__action-bar__items__button-wrapper___sgdUc:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    transform: scale(1.08) !important;
-}
-
-/* INNER BUTTON & ICON CENTERING FOR TARGET CLASS */
-.lc-Button-module__btn__icon___-CG5y,
-.lc-Button-module__btn__icon--left___Xke3Q,
-.lc-Icon-module__icon___J5RH5,
-.lc-Icon-module__icon--primary___lclud,
-[class*="lc-ActionBar-module__action-bar__items__button-wrapper"] button,
-[class*="lc-ActionBar-module__action-bar__items__button-wrapper"] a,
-[class*="lc-ActionBar-module__action-bar__items__button-wrapper"] [role="button"],
-[class*="lc-ActionBar-module__action-bar__items__button-wrapper"] svg,
-[class*="lc-ActionBar-module__action-bar__items__button-wrapper"] img {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin: auto !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-.lc-Icon-module__icon___J5RH5,
-.lc-Button-module__btn__icon___-CG5y {
-    width: 20px !important;
-    height: 20px !important;
+/* ===== TAMBAHAN COMIC SANS MS UNTUK SEMUA CHAT ITEM ===== */
+.chat-item.mp-lined,
+.chat-item.mp-lined *,
+.css-1ka4ht.mp-lined,
+.css-1ka4ht.mp-lined * {
+    font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif !important;
 }
 `;
-
         document.head.appendChild(style);
     };
 
@@ -1191,8 +984,8 @@ animation: rainbowPulse 3s linear infinite;
     // Global keybinds (Alt+. / Alt+/)
     // =========================
     document.addEventListener('keydown', (e) => {
-        const isRainbow = e.ctrlKey && (e.key === '.' || e.code === 'Period'); // Ctrl + .
-        const isBlack = e.altKey && (e.key === '/' || e.code === 'Slash' || e.code === 'NumpadDivide'); // Alt + /
+        const isRainbow = e.ctrlKey && (e.key === '.' || e.code === 'Period');
+        const isBlack = e.altKey && (e.key === '/' || e.code === 'Slash' || e.code === 'NumpadDivide');
         if (!isRainbow && !isBlack) return;
         e.preventDefault();
 
@@ -1200,7 +993,7 @@ animation: rainbowPulse 3s linear infinite;
         if (!item) return;
 
         const current = getSavedColor(item);
-        const desired = isRainbow ? TAG_RAINBOW : 'black'; // kalau rainbow toggle rainbow, kalau black toggle black
+        const desired = isRainbow ? TAG_RAINBOW : 'black';
         const nextToken = (current === desired) ? null : desired;
 
         applyToggleToken(item, nextToken);
@@ -1209,7 +1002,6 @@ animation: rainbowPulse 3s linear infinite;
     // =========================
     // Observer & bootstrap - OPTIMIZED
     // =========================
-    // Debounce helper untuk observer
     function debounceUI(func, wait) {
         let timeout;
         return function executedFunction(...args) {
@@ -1218,20 +1010,17 @@ animation: rainbowPulse 3s linear infinite;
         };
     }
 
-    // Debounced styling function for general UI updates (PENTING AGAR TIDAK LAG)
     const debouncedStyling = debounceUI(() => {
         applySidebarWidth();
         applyAllChatStyling();
         updateLiveToastIndices();
-    }, 80); // 80ms: instan di mata, tapi ringan di prosesor
+    }, 80);
 
     const observer = new MutationObserver((mutations) => {
-        // Deteksi apakah ada perubahan DI DALAM chat-item
         const isRelevant = mutations.some(m => {
             const target = (m.type === 'attributes' || m.type === 'characterData') ? m.target : m.addedNodes[0];
             if (!target) return false;
 
-            // Jika teks atau elemen berubah di dalam .chat-item, maka itu RELEVAN
             const node = (target.nodeType === 3) ? target.parentElement : target;
             return node && (node.closest?.('.chat-item') || (node.classList && node.classList.contains('chat-item')));
         });
@@ -1242,7 +1031,6 @@ animation: rainbowPulse 3s linear infinite;
     });
 
     const init = () => {
-        // Observe seluruh body untuk cakupan maksimal (Penting untuk SPA seperti LiveChat)
         observer.observe(document.body, {
             childList: true,
             subtree: true,
@@ -1252,23 +1040,21 @@ animation: rainbowPulse 3s linear infinite;
 
         applySidebarWidth();
         applyAllChatStyling();
-        injectMinimalStyles(); // CSS garis kiri + toast accent
+        injectMinimalStyles();
         enablePriorityNavigation();
     };
 
     onRouteChange(() => {
         debouncedStyling();
     });
+
     // =========================
     // === 🔴 Deteksi Spam Langsung Saat Pesan Baru Masuk ===
     function setupLiveSpamDetector() {
-        // normalisasi teks (hapus tanda baca, ubah ke huruf kecil)
         const normalize = txt => txt.replace(/[!?.]/g, '').trim().toLowerCase();
 
-        // tempat menyimpan teks pesan yang sudah pernah muncul
         const seenMessages = new Map();
 
-        // fungsi untuk menandai pesan spam
         const markAsSpam = (el, count) => {
             el.style.color = '#ff0000';
             el.style.fontWeight = '900';
@@ -1277,9 +1063,7 @@ animation: rainbowPulse 3s linear infinite;
             el.style.boxShadow = 'inset 0 0 10px rgba(0,0,0,0.1)';
             el.setAttribute('title', `Spam terdeteksi (${count}x)`);
         };
-        // fungsi untuk memproses satu pesan
         const processMessage = (el) => {
-            // Ambil semua teks termasuk <span> dan <a> di dalam bubble chat
             const text = normalize(
                 Array.from(el.querySelectorAll('*'))
                     .map(n => n.textContent)
@@ -1291,15 +1075,12 @@ animation: rainbowPulse 3s linear infinite;
             const count = (seenMessages.get(text) || 0) + 1;
             seenMessages.set(text, count);
 
-            // Tandai spam kalau muncul 2 kali atau lebih
             if (count >= 2) markAsSpam(el, count);
         };
 
-        // proses semua pesan yang sudah ada saat awal
         document.querySelectorAll('[data-testid="message-text"], .message__text, .message, .message-text')
             .forEach(processMessage);
 
-        // pantau pesan baru yang masuk
         const chatContainer = document.querySelector('[data-testid="chat-messages-list"]') || document.body;
         const observer = new MutationObserver(mutations => {
             for (const m of mutations) {
@@ -1316,7 +1097,6 @@ animation: rainbowPulse 3s linear infinite;
         console.log('✅ Live spam detector aktif');
     }
 
-    // aktifkan deteksi spam
     setupLiveSpamDetector();
 
     waitForElement('.chat-item', init);

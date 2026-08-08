@@ -304,9 +304,51 @@
         }
     }, true);
 
-    // Intercept Click on Send Button
+    // Robust selector for LiveChat Send Button & Action Bar Buttons
+    var SEND_AND_ACTION_BTN_SELECTOR = [
+        '[data-testid="send-button"]',
+        '[data-testid*="send-button"]',
+        '[data-testid*="send_button"]',
+        '[data-testid*="action-bar"] button',
+        '[data-testid*="action-bar-button"]',
+        '[class*="ActionBar-module__action-bar"] [class*="Button-module__btn"]',
+        '[class*="ActionBar-module__action-bar"] button',
+        '[class*="action-bar__items__button-wrapper__button"]',
+        '[class*="lc-ActionBar"] button',
+        '[class*="lc-ActionBar"] [class*="lc-Button"]',
+        '[class*="Button-module__btn--icon-only"]',
+        '[class*="css-n7fkea"]',
+        '[class*="css-1093tfy"] button',
+        '[class*="send-button"]',
+        '[class*="SendButton"]',
+        'button.send',
+        'button[type="submit"]',
+        'button[aria-label*="Send" i]',
+        'button[aria-label*="Kirim" i]'
+    ].join(', ');
+
+    function findLiveChatButton(target) {
+        if (!target) return null;
+        // Direct match if the clicked element itself is a button matching selector
+        if (target.matches && target.matches(SEND_AND_ACTION_BTN_SELECTOR)) {
+            return target;
+        }
+        var btn = target.closest(SEND_AND_ACTION_BTN_SELECTOR);
+        if (btn) return btn;
+        var iconOrSvg = target.closest('[class*="lc-Icon"], [class*="Icon-module__icon"], svg, path');
+        if (iconOrSvg) {
+            return iconOrSvg.closest('button, [role="button"], [class*="Button-module__btn"], [class*="action-bar__items__button"], [class*="css-n7fkea"]');
+        }
+        return null;
+    }
+    var style2 = document.createElement('style');
+    style2.textContent = '.css-1h4yvv { overflow: visible !important; }';
+    document.head.appendChild(style2);
+
+
+    // Intercept Click on Send Button & Action Bar Buttons
     window.addEventListener("click", function (e) {
-        var sendBtn = e.target.closest('[data-testid="send-button"], [class*="send-button"], button.send');
+        var sendBtn = findLiveChatButton(e.target);
         if (sendBtn) {
             var input = document.querySelector('[contenteditable="true"]') || document.querySelector("textarea");
             if (input) {

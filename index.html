@@ -104,7 +104,7 @@
           <path class="hud-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
           <path class="hud-circle-fg stroke-hud" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
         </svg>
-        <div class="hud-ring-text">7/7</div>
+        <div class="hud-ring-text">4/4</div>
       </div>
       <div class="hud-stat-label">📜 ACTIVE SCRIPTS</div>
     </div>
@@ -211,63 +211,6 @@
         </a>
       </div>
 
-      <!-- Card 5 -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">P5</div>
-          <div>
-            <div class="card-label">PLUGIN_05</div>
-            <div class="card-name">Word Highlighter (Lapak 5)</div>
-          </div>
-        </div>
-        <div class="card-desc">Visual word marking with real-time drag-and-drop control panel (Frosted Glass UI).</div>
-        <div class="card-tags">
-          <span class="tag red">HOTKEY: CTRL+H</span>
-          <span class="tag">STORE: GM_STORAGE</span>
-        </div>
-        <a href="lapak5.user.js" class="btn btn-red">
-          🔴 Install <span class="btn-sub">LAPAK 5</span>
-        </a>
-      </div>
-
-      <!-- Card 6 -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">P6</div>
-          <div>
-            <div class="card-label">PLUGIN_06</div>
-            <div class="card-name">Neural Shield (Lapak 6)</div>
-          </div>
-        </div>
-        <div class="card-desc">Real-time duplication analysis engine. Prevents outgoing spam messages.</div>
-        <div class="card-tags">
-          <span class="tag blue">MODE: PASSIVE</span>
-          <span class="tag">ALERT: DANGER</span>
-        </div>
-        <a href="lapak6.user.js" class="btn btn-blue">
-          🔵 Install <span class="btn-sub">LAPAK 6</span>
-        </a>
-      </div>
-
-      <!-- Card 7 -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">P7</div>
-          <div>
-            <div class="card-label">PLUGIN_07</div>
-            <div class="card-name">Minimal UI + SLA (Lapak 7)</div>
-          </div>
-        </div>
-        <div class="card-desc">Minimal UI with SLAs, Accent Toasts, and Fixed Sidebars.</div>
-        <div class="card-tags">
-          <span class="tag">UI: MINIMAL</span>
-          <span class="tag green">SLA: ACTIVE</span>
-        </div>
-        <a href="lapak7.user.js" class="btn btn-purple">
-          💜 Install <span class="btn-sub">LAPAK 7</span>
-        </a>
-      </div>
-
     </div>
 
     <div class="btn-all-wrap">
@@ -312,25 +255,6 @@
               <span class="hud-chart-bar-val">P4</span>
             </div>
             <span class="hud-chart-bar-label">MangaTh</span>
-          </div>
-          <div class="hud-chart-bar-item">
-            <div class="hud-chart-bar" style="--val: 85%;">
-              <span class="hud-chart-bar-val">P5</span>
-            </div>
-            <span class="hud-chart-bar-label">WordHigh 5</span>
-          </div>
-          <div class="hud-chart-bar-item">
-            <div class="hud-chart-bar" style="--val: 55%;">
-              <span class="hud-chart-bar-val">P6</span>
-            </div>
-            <span class="hud-chart-bar-label">NeuralSh 6</span>
-          </div>
-          <div class="hud-chart-bar-item">
-            <div class="hud-chart-bar" style="--val: 70%;">
-              <span class="hud-chart-bar-val">P7</span>
-            </div>
-            <span class="hud-chart-bar-label">Minimal 7</span>
-          </div>
         </div>
       </div>
     </div>
@@ -616,11 +540,11 @@ function toggleSidebar() {
 }
 
 function installAll() {
-  const links = ['lapak1.user.js', 'lapak2.user.js', 'lapak3.user.js', 'lapak4.user.js', 'lapak5.user.js', 'lapak6.user.js', 'lapak7.user.js'];
+  const links = ['lapak1.user.js', 'lapak2.user.js', 'lapak3.user.js', 'lapak4.user.js'];
   links.forEach((url, i) => {
     setTimeout(() => { window.open(url, '_blank'); }, i * 1200);
   });
-  showToast('📦 Membuka semua 7 script...');
+  showToast('📦 Membuka semua script...');
 }
 
 function showToast(msg) {
