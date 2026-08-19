@@ -359,6 +359,8 @@ function animateCounter(element, target) {
   requestAnimationFrame(tick);
 }
 
+let lastAutoCheckTime = 0;
+
 function updateStats(rows) {
   const data = Array.isArray(rows) ? rows : [];
   let total = data.length;
@@ -394,6 +396,28 @@ function updateStats(rows) {
   animateCounter(el.statRejected, rejected);
   animateCounter(el.statPending, pending);
   animateCounter(el.statSuksesCek, suksesCek);
+
+  // Auto check status if pending >= 10
+  if (pending >= 10) {
+    const now = Date.now();
+    if (now - lastAutoCheckTime > 20000) { // Throttle: max once every 20 seconds
+      lastAutoCheckTime = now;
+      console.log(`🤖 Auto-Cek dipicu karena pending mencapai ${pending}`);
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'BONUSSMB_TRIGGER_VERIFICATION' }, () => {
+          if (chrome.runtime.lastError) {
+            // Ignore port closed
+          }
+        });
+      }
+      if (typeof showCenterNotif === 'function') {
+        showCenterNotif(`🤖 Auto-Cek Status otomatis karena antrian pending >= 10!`, 4000);
+      }
+      if (typeof setStatus === 'function') {
+        setStatus(`🤖 Auto-Cek Status otomatis aktif (Pending: ${pending})...`);
+      }
+    }
+  }
 
   // Update Donut Chart
   const donutApproved = document.getElementById('donutApproved');
