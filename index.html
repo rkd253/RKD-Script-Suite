@@ -3,622 +3,811 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RKD Dashboard Pro — Script & Extension Suite</title>
-<meta name="description" content="Premium automation dashboard for LiveChat scripts and Chrome extensions by RKD.">
-<link rel="icon" type="image/png" href="rkd_logo.png">
+<title>RKD Suite God-Mode 2030 — Cyber Automation Suite</title>
+<meta name="description" content="God-Mode Cyberpunk Automation Suite for LiveChat scripts, Chrome extensions, and tools by RKD.">
+<link rel="icon" type="image/png" href="rkd_logo_transparent.png">
 <link rel="stylesheet" href="dashboard.css">
 </head>
-<body>
+<body data-theme="cyan">
 <div class="cyber-bg"></div>
 
-<!-- Mobile Menu Toggle -->
-<button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+<!-- FEATURE 1: 60FPS MATRIX PARTICLE CANVAS -->
+<canvas id="cyberMatrixCanvas"></canvas>
 
-<!-- ===== SIDEBAR ===== -->
-<aside class="sidebar">
-  <button class="desktop-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
-    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-  </button>
-  <div class="sidebar-header">
-    <div class="sidebar-logo">
-      <img src="rkd_logo.png" alt="RKD Logo" class="sidebar-logo-img">
+<!-- ===== ULTIMATE TOP CONTROL CENTER (FULL WIDTH) ===== -->
+<header class="ultimate-topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo-circle">
+      <img src="rkd_logo_transparent.png" alt="RKD Logo" class="topbar-logo-img">
     </div>
-    <div class="sidebar-brand">RKD SUITE</div>
-    <div class="sidebar-version">DASHBOARD PRO v2.0</div>
-    <div class="sidebar-status-box">
-      <span class="status-indicator-dot"></span>
-      <span class="status-indicator-text">DECRYPT_CORE: ACTIVE</span>
+    <div class="topbar-brand-group">
+      <div class="topbar-brand-title">RKD SUITE PRO <span class="v-badge">v3.5 GOD-MODE</span></div>
+      <div class="topbar-brand-sub">CYBER AUTOMATION COMMAND CENTER 2030</div>
     </div>
   </div>
 
-  <nav class="sidebar-nav">
-    <div class="nav-label">Main Menu</div>
-    <a href="#" class="nav-item active" onclick="switchTab('scripts', this)" id="nav-scripts">
-      <span class="nav-badge-code">SRC</span> Script Installer
-      <span class="nav-badge">4</span>
-    </a>
-    <a href="#" class="nav-item" onclick="switchTab('extensions', this)" id="nav-extensions">
-      <span class="nav-badge-code">EXT</span> Extensions
-      <span class="nav-badge ext">3</span>
-    </a>
+  <!-- LIVE INSTANT SEARCH BAR -->
+  <div class="topbar-search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="liveSearchInput" class="topbar-search-input" placeholder="Cari script, extension, atau kalkulator..." oninput="filterModules()">
+    <span class="search-clear-btn" onclick="clearSearch()" title="Clear search">✕</span>
+  </div>
 
-    <div class="nav-label">Desktop Apps</div>
-    <a href="#" class="nav-item" onclick="switchTab('keyboard', this)" id="nav-keyboard">
-      <span class="nav-badge-code">KBD</span> Perfect Keyboard
-    </a>
+  <div class="topbar-right-group">
+    <!-- FEATURE 2: SFX AUDIO TOGGLE -->
+    <button type="button" id="sfxToggleBtn" class="sfx-toggle-btn" onclick="toggleSFX()" title="Toggle Cyber Sound Effects">🔊 SFX ON</button>
 
-    <div class="nav-label">Web Tools</div>
-    <a href="#" class="nav-item" onclick="switchTab('tools', this)" id="nav-tools">
-      <span class="nav-badge-code">CAL</span> Calculators
-    </a>
+    <!-- HUD Theme Switcher -->
+    <div class="theme-switcher-bar">
+      <span class="theme-label">TEMA:</span>
+      <div class="theme-dots">
+        <button type="button" class="theme-dot active" data-theme="cyan" title="Cyan Cyberpunk" style="background:#00f0ff;"></button>
+        <button type="button" class="theme-dot" data-theme="pink" title="Pink Cyberpunk" style="background:#ff007f;"></button>
+        <button type="button" class="theme-dot" data-theme="green" title="Matrix Hacker Green" style="background:#00e5a0;"></button>
+        <button type="button" class="theme-dot" data-theme="gold" title="Sultan Gold" style="background:#f59e0b;"></button>
+      </div>
+    </div>
 
-    <div class="nav-label">System</div>
-    <a href="#" class="nav-item" onclick="switchTab('guide', this)" id="nav-guide">
-      <span class="nav-badge-code">DOC</span> Panduan Install
-    </a>
+    <!-- System Status Indicator -->
+    <div class="system-status-pill">
+      <span class="status-dot"></span>
+      <span class="status-text">SYSTEM ONLINE</span>
+    </div>
+  </div>
+</header>
+
+<!-- ===== MAIN CONTAINER ===== -->
+<main class="ultimate-container">
+
+  <!-- ===== HERO SPOTLIGHT & OVERDRIVE BAR ===== -->
+  <section class="ultimate-hero">
+    <div class="radar-scanline-horizontal"></div>
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-welcome">WAKTU SISTEM: <span id="cyberClock">00:00:00</span></div>
+        <h1 class="hero-main-title">RKD AUTOMATION LAUNCHER</h1>
+        <p class="hero-main-desc">Pusat kendali otomatisasi Tampermonkey, Ekstensi Chrome, Aplikasi Desktop, dan Web Tools untuk agen LiveChat.</p>
+        
+        <!-- Quick Telemetry HUD Badges -->
+        <div class="telemetry-bar">
+          <div class="telemetry-item">
+            <span class="t-icon">📜</span>
+            <span class="t-val hud-ring-text-scripts">0/4</span>
+            <span class="t-lbl">SCRIPTS TERPASANG</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="t-icon">🧩</span>
+            <span class="t-val">3/3</span>
+            <span class="t-lbl">EXTENSIONS READY</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="t-icon">⚡</span>
+            <span class="t-val">12ms</span>
+            <span class="t-lbl">PING LOW LATENCY</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <button type="button" class="btn-overdrive-main" onclick="installAll()">
+          <span class="btn-icon">⚡</span>
+          <div class="btn-txt-wrap">
+            <span class="btn-title">OVERDRIVE INSTALL ALL</span>
+            <span class="btn-sub">Buka 4 Tampermonkey Scripts Instan</span>
+          </div>
+        </button>
+        <button type="button" class="btn-overdrive-sub" onclick="downloadAllExtensions()">
+          <span class="btn-icon">📦</span>
+          <div class="btn-txt-wrap">
+            <span class="btn-title">DOWNLOAD ALL EXTENSIONS</span>
+            <span class="btn-sub">Unduh Paket 3 File .ZIP Ekstensi</span>
+          </div>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CATEGORY PILL NAVIGATION ===== -->
+  <nav class="category-nav-bar">
+    <button type="button" class="cat-pill active" onclick="switchCategory('all', this)">
+      <span>🔥 ALL MODULES</span> <span class="cat-count">13</span>
+    </button>
+    <button type="button" class="cat-pill" onclick="switchCategory('scripts', this)">
+      <span>📜 SCRIPTS</span> <span class="cat-count">4</span>
+    </button>
+    <button type="button" class="cat-pill" onclick="switchCategory('extensions', this)">
+      <span>🧩 EXTENSIONS</span> <span class="cat-count">3</span>
+    </button>
+    <button type="button" class="cat-pill" onclick="switchCategory('keyboard', this)">
+      <span>⌨️ APPS</span> <span class="cat-count">2</span>
+    </button>
+    <button type="button" class="cat-pill" onclick="switchCategory('tools', this)">
+      <span>🧮 CALCULATORS</span> <span class="cat-count">4</span>
+    </button>
+    <button type="button" class="cat-pill" onclick="switchCategory('guide', this)">
+      <span>📖 GUIDE</span>
+    </button>
   </nav>
 
-  <!-- SIGNATURE in Sidebar -->
-  <div class="sidebar-signature">
-    <div class="sig-label">— TERTANDA PEMBUAT —</div>
+  <!-- ===== CATEGORY SECTION 1: SCRIPTS ===== -->
+  <div class="category-section-block" data-category="scripts">
+    <div class="cat-section-header scripts-hdr">
+      <h2>📜 TAMPERMONKEY SCRIPTS AUTOMATION</h2>
+      <span class="sec-badge cyan">4 MODULES</span>
+    </div>
+    <div class="ultimate-grid">
+      <!-- SCRIPT 1 -->
+      <div class="module-card card-type-scripts" data-search="word highlighter lapak1 ctrl+h gm_storage plugin_01 domain red">
+        <div class="card-top">
+          <div class="badge-emblem cyan">P1</div>
+          <div class="card-title-group">
+            <span class="card-code">PLUGIN_01</span>
+            <h3 class="card-title">Word Highlighter & Dashboard</h3>
+          </div>
+          <button type="button" class="btn-inspect-trigger" onclick="inspectModule('PLUGIN_01', 'Word Highlighter & Dashboard', 'Visual word marking dengan control panel drag-and-drop real-time.')" title="Pratinjau Kode">🔍 CODE</button>
+          <span class="card-status-badge ready" id="status-lapak1">⚡ SIAP INSTALL</span>
+        </div>
+        <p class="card-description">Visual word marking dengan control panel drag-and-drop real-time untuk penanda kata otomatis.</p>
+        <div class="card-tag-row">
+          <span class="tag red">HOTKEY: CTRL+H</span>
+          <span class="tag">STORE: GM_STORAGE</span>
+        </div>
+        <div class="card-footer">
+          <a href="lapak1.user.js" class="btn-card btn-red" id="install-btn-lapak1" data-install-key="lapak1">
+            🔴 Install <span class="btn-sub">DOMAIN RED</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- SCRIPT 2 -->
+      <div class="module-card card-type-scripts" data-search="neural shield anti-spam lapak2 passive shield_ui plugin_02 domain blue">
+        <div class="card-top">
+          <div class="badge-emblem blue">P2</div>
+          <div class="card-title-group">
+            <span class="card-code">PLUGIN_02</span>
+            <h3 class="card-title">Neural Shield: Anti-Spam</h3>
+          </div>
+          <button type="button" class="btn-inspect-trigger" onclick="inspectModule('PLUGIN_02', 'Neural Shield: Anti-Spam', 'Engine analisis duplikasi pesan real-time untuk memblokir spam.')" title="Pratinjau Kode">🔍 CODE</button>
+          <span class="card-status-badge ready" id="status-lapak2">⚡ SIAP INSTALL</span>
+        </div>
+        <p class="card-description">Engine analisis duplikasi pesan real-time untuk memblokir spam dan pesan berulang secara otomatis.</p>
+        <div class="card-tag-row">
+          <span class="tag blue">MODE: PASSIVE</span>
+          <span class="tag">ALERT: SHIELD_UI</span>
+        </div>
+        <div class="card-footer">
+          <a href="lapak2.user.js" class="btn-card btn-blue" id="install-btn-lapak2" data-install-key="lapak2">
+            🔵 Install <span class="btn-sub">DOMAIN BLUE</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- SCRIPT 3 -->
+      <div class="module-card card-type-scripts" data-search="wallpaper queue indication lapak3 manga_skin dynamic plugin_03 domain purple">
+        <div class="card-top">
+          <div class="badge-emblem purple">P3</div>
+          <div class="card-title-group">
+            <span class="card-code">PLUGIN_03</span>
+            <h3 class="card-title">Wallpaper & Queue Indication</h3>
+          </div>
+          <button type="button" class="btn-inspect-trigger" onclick="inspectModule('PLUGIN_03', 'Wallpaper & Queue Indication', 'Kustomisasi latar belakang deep wallpaper dengan indikator antrean.')" title="Pratinjau Kode">🔍 CODE</button>
+          <span class="card-status-badge ready" id="status-lapak3">⚡ SIAP INSTALL</span>
+        </div>
+        <p class="card-description">Kustomisasi latar belakang deep wallpaper dengan sistem indikator prioritas antrean dinamis.</p>
+        <div class="card-tag-row">
+          <span class="tag">UI: MANGA_SKIN</span>
+          <span class="tag green">PRIO: DYNAMIC</span>
+        </div>
+        <div class="card-footer">
+          <a href="lapak3.user.js" class="btn-card btn-purple" id="install-btn-lapak3" data-install-key="lapak3">
+            💜 Install <span class="btn-sub">DOMAIN PURPLE</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- SCRIPT 4 -->
+      <div class="module-card card-type-scripts" data-search="manga theme booster pack lapak4 alt+x manga_booster plugin_04 domain purple">
+        <div class="card-top">
+          <div class="badge-emblem purple">P4</div>
+          <div class="card-title-group">
+            <span class="card-code">PLUGIN_04</span>
+            <h3 class="card-title">Manga Theme (Booster Pack)</h3>
+          </div>
+          <button type="button" class="btn-inspect-trigger" onclick="inspectModule('PLUGIN_04', 'Manga Theme (Booster Pack)', 'Tampilan skin manga/AoT dengan tekstur kertas khusus & SFX speed lines.')" title="Pratinjau Kode">🔍 CODE</button>
+          <span class="card-status-badge ready" id="status-lapak4">⚡ SIAP INSTALL</span>
+        </div>
+        <p class="card-description">Tampilan skin manga/AoT dengan tekstur kertas khusus, elemen visual melayang, dan SFX speed lines.</p>
+        <div class="card-tag-row">
+          <span class="tag">UI: MANGA_BOOSTER</span>
+          <span class="tag purple">HOTKEY: ALT+X</span>
+        </div>
+        <div class="card-footer">
+          <a href="lapak4.user.js" class="btn-card btn-purple" id="install-btn-lapak4" data-install-key="lapak4">
+            💜 Install <span class="btn-sub">DOMAIN PURPLE</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY SECTION 2: EXTENSIONS ===== -->
+  <div class="category-section-block" data-category="extensions">
+    <div class="cat-section-header extensions-hdr">
+      <h2>🧩 CHROME EXTENSION PACKAGES (.ZIP)</h2>
+      <span class="sec-badge gold">3 PACKAGES</span>
+    </div>
+    <div class="ultimate-grid">
+      <!-- EXTENSION 1 -->
+      <div class="module-card card-type-extensions" data-search="imagelens ocr extension chrome ext .zip tesseract">
+        <div class="card-top">
+          <div class="badge-emblem cyan">E1</div>
+          <div class="card-title-group">
+            <span class="card-code">EXTENSION_01</span>
+            <h3 class="card-title">ImageLens OCR Extension</h3>
+          </div>
+          <span class="card-status-badge ready" id="status-ocr">⚡ SIAP DOWNLOAD</span>
+        </div>
+        <p class="card-description">Ekstensi Chrome pintar untuk menyalin teks dari gambar secara instan. Powered by Tesseract.js OCR engine.</p>
+        <div class="card-tag-row">
+          <span class="tag blue">TYPE: CHROME EXT</span>
+          <span class="tag">FORMAT: .ZIP</span>
+        </div>
+        <div class="card-footer">
+          <a href="imagelens-ocr.zip" download class="btn-card btn-cyan" id="install-btn-ocr" data-install-key="ocr">
+            ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- EXTENSION 2 -->
+      <div class="module-card card-type-extensions" data-search="bonus scatter pro v3.5 premium chrome ext automation">
+        <div class="card-top">
+          <div class="badge-emblem gold">E2</div>
+          <div class="card-title-group">
+            <span class="card-code">EXTENSION_02</span>
+            <h3 class="card-title">Bonus Scatter Pro V3.5 Premium <span class="new-tag">NEW UPDATE</span></h3>
+          </div>
+          <span class="card-status-badge ready" id="status-scatter">⚡ SIAP DOWNLOAD</span>
+        </div>
+        <p class="card-description">Extension premium untuk automation bonus scatter. Fitur lengkap: auto-check status, ticket filler, grafik visual, dan hotkeys.</p>
+        <div class="card-tag-row">
+          <span class="tag gold">TYPE: CHROME EXT</span>
+          <span class="tag">VERSION: 3.5 Premium</span>
+        </div>
+        <div class="card-footer">
+          <a href="Bonus_Scatter_ProV2.zip" download class="btn-card btn-gold" id="install-btn-scatter" data-install-key="scatter">
+            ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- EXTENSION 3 -->
+      <div class="module-card card-type-extensions" data-search="password generator template copier chrome ext">
+        <div class="card-top">
+          <div class="badge-emblem purple">E3</div>
+          <div class="card-title-group">
+            <span class="card-code">EXTENSION_03</span>
+            <h3 class="card-title">Password Generator & Template Copier</h3>
+          </div>
+          <span class="card-status-badge ready" id="status-passgen">⚡ SIAP DOWNLOAD</span>
+        </div>
+        <p class="card-description">Generate passwords and copy them pre-formatted with custom text templates instantly.</p>
+        <div class="card-tag-row">
+          <span class="tag">TYPE: CHROME EXT</span>
+          <span class="tag">VERSION: 1.0.0</span>
+        </div>
+        <div class="card-footer">
+          <a href="password_generator.zip" download class="btn-card btn-purple" id="install-btn-passgen" data-install-key="passgen">
+            ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY SECTION 3: APPS ===== -->
+  <div class="category-section-block" data-category="keyboard">
+    <div class="cat-section-header apps-hdr">
+      <h2>⌨️ DESKTOP EXECUTABLE APPS (.EXE)</h2>
+      <span class="sec-badge green">2 APPLICATIONS</span>
+    </div>
+    <div class="ultimate-grid">
+      <!-- APP 1 -->
+      <div class="module-card card-type-apps" data-search="perfect keyboard 9.1 app_01 exe installer">
+        <div class="card-top">
+          <div class="badge-emblem blue">K1</div>
+          <div class="card-title-group">
+            <span class="card-code">APP_01</span>
+            <h3 class="card-title">Perfect Keyboard 9.1</h3>
+          </div>
+          <span class="card-status-badge ready">⚡ SIAP DOWNLOAD</span>
+        </div>
+        <p class="card-description">Aplikasi Perfect Keyboard versi 9.1 standar installer executable file.</p>
+        <div class="card-tag-row">
+          <span class="tag blue">TYPE: EXE</span>
+          <span class="tag">INSTALLER</span>
+        </div>
+        <div class="card-footer">
+          <a href="pk versi 9.1.exe" download class="btn-card btn-blue">
+            ⬇️ Download <span class="btn-sub">FILE .EXE</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- APP 2 -->
+      <div class="module-card card-type-apps" data-search="perfect keyboard free 9.2.0 app_02 exe free">
+        <div class="card-top">
+          <div class="badge-emblem green">K2</div>
+          <div class="card-title-group">
+            <span class="card-code">APP_02</span>
+            <h3 class="card-title">Perfect Keyboard Free 9.2.0</h3>
+          </div>
+          <span class="card-status-badge ready">⚡ SIAP DOWNLOAD</span>
+        </div>
+        <p class="card-description">Aplikasi Perfect Keyboard versi terbaru 9.2.0 (Free version installer).</p>
+        <div class="card-tag-row">
+          <span class="tag green">TYPE: EXE</span>
+          <span class="tag">FREE VER</span>
+        </div>
+        <div class="card-footer">
+          <a href="pk_free versi 9.2.0.exe" download class="btn-card btn-green">
+            ⬇️ Download <span class="btn-sub">FILE .EXE</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY SECTION 4: CALCULATORS & TOOLS ===== -->
+  <div class="category-section-block" data-category="tools">
+    <div class="cat-section-header tools-hdr">
+      <h2>🧮 WEB CALCULATORS & LOCAL TOOLS</h2>
+      <span class="sec-badge purple">4 WEB TOOLS</span>
+    </div>
+    <div class="ultimate-grid">
+      <!-- TOOL 1 -->
+      <div class="module-card card-type-tools" data-search="calculator mahjong web_tool_01 web app netlify">
+        <div class="card-top">
+          <div class="badge-emblem green">W1</div>
+          <div class="card-title-group">
+            <span class="card-code">WEB_TOOL_01</span>
+            <h3 class="card-title">Calculator Mahjong</h3>
+          </div>
+          <span class="card-status-badge ready">🌐 ONLINE APP</span>
+        </div>
+        <p class="card-description">Alat hitung otomatis khusus untuk permainan Mahjong. Web app responsif, hitung instan & akurat.</p>
+        <div class="card-tag-row">
+          <span class="tag green">TYPE: WEB APP</span>
+          <span class="tag">NETLIFY HOST</span>
+        </div>
+        <div class="card-footer">
+          <a href="https://calculatormahjong.netlify.app/" target="_blank" class="btn-card btn-green">
+            🌐 BUKA WEB APP <span class="btn-sub">NEW TAB</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- TOOL 2 -->
+      <div class="module-card card-type-tools" data-search="calculator hadiah togel 303 web_tool_02 web app github pages">
+        <div class="card-top">
+          <div class="badge-emblem red">W2</div>
+          <div class="card-title-group">
+            <span class="card-code">WEB_TOOL_02</span>
+            <h3 class="card-title">Calculator Hadiah Togel 303</h3>
+          </div>
+          <span class="card-status-badge ready">🌐 ONLINE APP</span>
+        </div>
+        <p class="card-description">Sistem perhitungan otomatis untuk hadiah togel. Cepat, tepat, dan memudahkan rekapitulasi data harian.</p>
+        <div class="card-tag-row">
+          <span class="tag red">TYPE: WEB APP</span>
+          <span class="tag">GITHUB PAGES</span>
+        </div>
+        <div class="card-footer">
+          <a href="https://rkd253.github.io/calculatorhadiahtogel303/file%20upload/" target="_blank" class="btn-card btn-red">
+            🌐 BUKA WEB APP <span class="btn-sub">NEW TAB</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- TOOL 3 -->
+      <div class="module-card card-type-tools" data-search="calculator standar web_tool_03 local app cyber ui">
+        <div class="card-top">
+          <div class="badge-emblem purple">W3</div>
+          <div class="card-title-group">
+            <span class="card-code">WEB_TOOL_03</span>
+            <h3 class="card-title">Calculator Standar</h3>
+          </div>
+          <span class="card-status-badge ready">⚡ LOCAL APP</span>
+        </div>
+        <p class="card-description">Kalkulator standar dengan desain cyberpunk premium. Mendukung fitur dasar matematika dengan layout grid glassmorphism.</p>
+        <div class="card-tag-row">
+          <span class="tag purple">TYPE: LOCAL APP</span>
+          <span class="tag">CYBER UI</span>
+        </div>
+        <div class="card-footer">
+          <a href="calc-standard.html" class="btn-card btn-purple">
+            🌐 BUKA KALKULATOR <span class="btn-sub">LOCAL</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- TOOL 4 -->
+      <div class="module-card card-type-tools" data-search="currency converter web_tool_04 local app live api">
+        <div class="card-top">
+          <div class="badge-emblem cyan">W4</div>
+          <div class="card-title-group">
+            <span class="card-code">WEB_TOOL_04</span>
+            <h3 class="card-title">Currency Converter</h3>
+          </div>
+          <span class="card-status-badge ready">⚡ LOCAL APP</span>
+        </div>
+        <p class="card-description">Kalkulator konversi mata uang lengkap. Otomatis mengambil kurs (exchange rates) real-time dari Live API.</p>
+        <div class="card-tag-row">
+          <span class="tag cyan">TYPE: LOCAL APP</span>
+          <span class="tag">LIVE API</span>
+        </div>
+        <div class="card-footer">
+          <a href="calc-currency.html" class="btn-card btn-cyan">
+            🌐 BUKA KONVERTER <span class="btn-sub">LOCAL</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORY SECTION 5: GUIDE ===== -->
+  <div class="category-section-block" data-category="guide">
+    <div class="cat-section-header guide-hdr">
+      <h2>📖 PANDUAN INSTALASI & SISTEM</h2>
+      <span class="sec-badge blue">DOCUMENTATION</span>
+    </div>
+    <div class="ultimate-grid">
+      <div class="module-card guide-full-card" data-search="panduan install step tampermonkey chrome extension">
+        <div class="card-top">
+          <div class="badge-emblem cyan">DOC</div>
+          <div class="card-title-group">
+            <span class="card-code">SYSTEM_GUIDE</span>
+            <h3 class="card-title">Panduan Langkah Instalasi</h3>
+          </div>
+        </div>
+        <div class="guide-steps-grid">
+          <div class="guide-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <h4>Klik Tombol Install / Download</h4>
+              <p>Untuk <strong>Tampermonkey Script</strong>: klik tombol Install pada modul yang diinginkan. Tab baru akan terbuka otomatis.<br>Untuk <strong>Chrome Extension</strong>: klik Download, lalu extract file .ZIP yang terunduh.</p>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <h4>Konfirmasi di Tampermonkey / Chrome</h4>
+              <p>Untuk <strong>Script</strong>: Tampermonkey akan menampilkan konfirmasi install, klik "Install".<br>Untuk <strong>Extension</strong>: Buka <code>chrome://extensions</code>, aktifkan Developer Mode, lalu klik "Load Unpacked" dan pilih folder hasil extract.</p>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <h4>Selesai — Siap Digunakan!</h4>
+              <p>Script atau Extension langsung aktif. Buka LiveChat dan fitur otomatisasi akan berjalan secara real-time.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NO RESULTS MESSAGE -->
+  <div class="no-results-msg" id="noResultsMsg" style="display: none;">
+    <div class="no-results-icon">🔍</div>
+    <h3>Modul Tidak Ditemukan</h3>
+    <p>Tidak ada script, extension, atau kalkulator yang cocok dengan kata kunci pencarian kamu.</p>
+  </div>
+
+  <!-- SIGNATURE FOOTER -->
+  <footer class="ultimate-footer">
     <div class="sig-scanner-frame">
       <div class="sig-scanner-line"></div>
       <img src="signature.png" alt="RKD Signature" class="sig-img">
     </div>
-    <div class="sig-name">Made in By RKD</div>
-  </div>
-</aside>
-
-<!-- ===== MAIN CONTENT ===== -->
-<main class="main">
-
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div>
-      <div class="topbar-title" id="page-title">Script Installer</div>
-      <div class="topbar-sub">Tampermonkey one-click install suite</div>
-    </div>
-    <div class="topbar-right">
-      <!-- HUD Theme Switcher -->
-      <div class="theme-switcher-bar">
-        <span class="theme-label">TEMA HUD:</span>
-        <div class="theme-dots">
-          <button type="button" class="theme-dot active" data-theme="cyan" title="Cyan Cyberpunk" style="background:#00f0ff;"></button>
-          <button type="button" class="theme-dot" data-theme="pink" title="Pink Cyberpunk" style="background:#ff007f;"></button>
-          <button type="button" class="theme-dot" data-theme="green" title="Matrix Hacker Green" style="background:#00e5a0;"></button>
-          <button type="button" class="theme-dot" data-theme="gold" title="Sultan Gold" style="background:#f59e0b;"></button>
-        </div>
-      </div>
-
-      <!-- Cyber HUD Moved Here -->
-      <div class="topbar-hud">
-        <div class="hud-core">
-          <div class="hud-ring"></div>
-          <div class="hud-ring inner"></div>
-        </div>
-        <div class="hud-bars">
-          <span></span><span></span><span></span><span></span><span></span>
-        </div>
-        <div class="hud-text">UPLINK ACTIVE</div>
-      </div>
-      
-      <div class="status-dot"></div>
-      <span class="status-text">System Online</span>
-    </div>
-  </div>
-
-  <!-- HUD Stats Row -->
-  <div class="hud-stats-row">
-    <div class="hud-stat-card">
-      <div class="hud-ring-wrap">
-        <svg class="hud-circle-svg" viewBox="0 0 36 36">
-          <path class="hud-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          <path class="hud-circle-fg stroke-hud" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-        </svg>
-        <div class="hud-ring-text hud-ring-text-scripts">0/4</div>
-      </div>
-      <div class="hud-stat-label">📜 ACTIVE SCRIPTS</div>
-    </div>
-    <div class="hud-stat-card">
-      <div class="hud-ring-wrap">
-        <svg class="hud-circle-svg" viewBox="0 0 36 36">
-          <path class="hud-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          <path class="hud-circle-fg stroke-hud" stroke-dasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-        </svg>
-        <div class="hud-ring-text">100%</div>
-      </div>
-      <div class="hud-stat-label">🧩 EXTENSIONS READY</div>
-    </div>
-    <div class="hud-stat-card">
-      <div class="hud-ring-wrap">
-        <svg class="hud-circle-svg" viewBox="0 0 36 36">
-          <path class="hud-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          <path class="hud-circle-fg stroke-hud animate-rotate" stroke-dasharray="60, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-        </svg>
-        <div class="hud-ring-text">12ms</div>
-      </div>
-      <div class="hud-stat-label">📶 SYSTEM PING</div>
-    </div>
-  </div>
-
-  <!-- ===== SECTION: SCRIPTS ===== -->
-  <div class="section active" id="sec-scripts">
-    <div class="section-title">Tampermonkey Scripts</div>
-    <div class="cards-grid">
-
-      <!-- Card 1 -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">P1</div>
-          <div>
-            <div class="card-label">PLUGIN_01</div>
-            <div class="card-name">Word Highlighter & Dashboard</div>
-          </div>
-          <span class="card-status-badge ready" id="status-lapak1">⚡ SIAP INSTALL</span>
-        </div>
-        <div class="card-desc">Visual word marking with real-time drag-and-drop control panel.</div>
-        <div class="card-tags">
-          <span class="tag red">HOTKEY: CTRL+H</span>
-          <span class="tag">STORE: GM_STORAGE</span>
-        </div>
-        <a href="lapak1.user.js" class="btn btn-red" id="install-btn-lapak1" data-install-key="lapak1">
-          🔴 Install <span class="btn-sub">DOMAIN RED</span>
-        </a>
-      </div>
-
-      <!-- Card 2 -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">P2</div>
-          <div>
-            <div class="card-label">PLUGIN_02</div>
-            <div class="card-name">Neural Shield: Anti-Spam</div>
-          </div>
-          <span class="card-status-badge ready" id="status-lapak2">⚡ SIAP INSTALL</span>
-        </div>
-        <div class="card-desc">Real-time duplication analysis engine. Prevents outgoing spam messages.</div>
-        <div class="card-tags">
-          <span class="tag blue">MODE: PASSIVE</span>
-          <span class="tag">ALERT: SHIELD_UI</span>
-        </div>
-        <a href="lapak2.user.js" class="btn btn-blue" id="install-btn-lapak2" data-install-key="lapak2">
-          🔵 Install <span class="btn-sub">DOMAIN BLUE</span>
-        </a>
-      </div>
-
-      <!-- Card 3 -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">P3</div>
-          <div>
-            <div class="card-label">PLUGIN_03</div>
-            <div class="card-name">Wallpaper & Queue Indication</div>
-          </div>
-          <span class="card-status-badge ready" id="status-lapak3">⚡ SIAP INSTALL</span>
-        </div>
-        <div class="card-desc">Deep background skinning with dynamic queue priority indicator system.</div>
-        <div class="card-tags">
-          <span class="tag">UI: MANGA_SKIN</span>
-          <span class="tag green">PRIO: DYNAMIC</span>
-        </div>
-        <a href="lapak3.user.js" class="btn btn-purple" id="install-btn-lapak3" data-install-key="lapak3">
-          💜 Install <span class="btn-sub">DOMAIN PURPLE</span>
-        </a>
-      </div>
-
-      <!-- Card 4 -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">P4</div>
-          <div>
-            <div class="card-label">PLUGIN_04</div>
-            <div class="card-name">Manga Theme (Booster Pack)</div>
-          </div>
-          <span class="card-status-badge ready" id="status-lapak4">⚡ SIAP INSTALL</span>
-        </div>
-        <div class="card-desc">Enhanced manga/AoT skin with paper textures, floating visuals, and SFX speed lines.</div>
-        <div class="card-tags">
-          <span class="tag">UI: MANGA_BOOSTER</span>
-          <span class="tag purple">HOTKEY: ALT+X</span>
-        </div>
-        <a href="lapak4.user.js" class="btn btn-purple" id="install-btn-lapak4" data-install-key="lapak4">
-          💜 Install <span class="btn-sub">DOMAIN PURPLE</span>
-        </a>
-      </div>
-
-    </div>
-
-    <div class="btn-all-wrap">
-      <button class="btn-all" onclick="installAll()">⚡ OVERDRIVE: INSTALL ALL</button>
-    </div>
-
-    <!-- HUD Hologram Chart Panel -->
-    <div class="hud-chart-panel">
-      <div class="hud-chart-title">📡 LIVE DATA STREAM SCANNER</div>
-      <div class="hud-chart-container">
-        <!-- Y-axis indicators -->
-        <div class="hud-chart-y">
-          <span>100%</span>
-          <span>75%</span>
-          <span>50%</span>
-          <span>25%</span>
-          <span>0%</span>
-        </div>
-        <!-- Chart Grid & Bars -->
-        <div class="hud-chart-bars-wrap">
-          <div class="hud-chart-grid-lines"></div>
-          <div class="hud-chart-bar-item">
-            <div class="hud-chart-bar" style="--val: 85%;">
-              <span class="hud-chart-bar-val">P1</span>
-            </div>
-            <span class="hud-chart-bar-label">WordHigh</span>
-          </div>
-          <div class="hud-chart-bar-item">
-            <div class="hud-chart-bar" style="--val: 55%;">
-              <span class="hud-chart-bar-val">P2</span>
-            </div>
-            <span class="hud-chart-bar-label">NeuralSh</span>
-          </div>
-          <div class="hud-chart-bar-item">
-            <div class="hud-chart-bar" style="--val: 70%;">
-              <span class="hud-chart-bar-val">P3</span>
-            </div>
-            <span class="hud-chart-bar-label">QueueInd</span>
-          </div>
-          <div class="hud-chart-bar-item">
-            <div class="hud-chart-bar" style="--val: 90%;">
-              <span class="hud-chart-bar-val">P4</span>
-            </div>
-            <span class="hud-chart-bar-label">MangaTh</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="notice">
-      <strong>INTERFACE PROTOCOL:</strong> Pastikan folder <code>live-chat</code> kamu berisi file <code>.user.js</code> agar instalasi sekali klik ini berjalan lancar.
-    </div>
-  </div>
-
-  <!-- ===== SECTION: EXTENSIONS ===== -->
-  <div class="section" id="sec-extensions">
-    <div class="section-title">Chrome Extensions</div>
-    
-    <div id="updateNotifV3" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; box-shadow: 0 0 15px rgba(236,72,153,0.2);">
-      <div style="font-size: 24px;">🎉</div>
-      <div>
-        <div style="color: #ec4899; font-weight: bold; margin-bottom: 4px; text-shadow: 0 0 5px rgba(236,72,153,0.5);">Update Terbaru: Bonus Scatter Pro V3.5 Premium!</div>
-        <div style="font-size: 13px; color: #e2e8f0; line-height: 1.4;">Telah hadir update dengan statistik grafik visual, popup konfirmasi kustom, deteksi tiket ganda, dan hotkeys! Yuk segera di-download.</div>
-      </div>
-    </div>
-
-    <div class="cards-grid">
-
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">E1</div>
-          <div>
-            <div class="card-label">EXTENSION_01</div>
-            <div class="card-name">ImageLens OCR Extension</div>
-          </div>
-          <span class="card-status-badge ready" id="status-ocr">⚡ SIAP DOWNLOAD</span>
-        </div>
-        <div class="card-desc">Ekstensi Chrome pintar untuk menyalin teks dari gambar secara instan. Powered by Tesseract.js OCR engine.</div>
-        <div class="card-tags">
-          <span class="tag blue">TYPE: CHROME EXT</span>
-          <span class="tag">FORMAT: .ZIP</span>
-        </div>
-        <a href="imagelens-ocr.zip" download class="btn btn-cyan" id="install-btn-ocr" data-install-key="ocr">
-          ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
-        </a>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">E2</div>
-          <div>
-            <div class="card-label">EXTENSION_02</div>
-            <div class="card-name" style="display:flex; align-items:center;">
-              Bonus Scatter Pro V3.5 Premium 
-              <span id="updateBadgeV3" style="background: linear-gradient(135deg, #ec4899, #be185d); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: bold; box-shadow: 0 0 10px rgba(236, 72, 153, 0.6); letter-spacing: 0.5px;">NEW UPDATE</span>
-            </div>
-          </div>
-          <span class="card-status-badge ready" id="status-scatter">⚡ SIAP DOWNLOAD</span>
-        </div>
-        <div class="card-desc">Extension premium untuk automation bonus scatter. Fitur lengkap: auto-check status, ticket filler, dan dashboard terintegrasi.</div>
-        <div class="card-tags">
-          <span class="tag">TYPE: CHROME EXT</span>
-          <span class="tag">VERSION: 3.5 Premium</span>
-        </div>
-        <a href="Bonus_Scatter_ProV2.zip" download class="btn btn-gold" id="install-btn-scatter" data-install-key="scatter">
-          ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
-        </a>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">E3</div>
-          <div>
-            <div class="card-label">EXTENSION_03</div>
-            <div class="card-name">Password Generator & Template Copier</div>
-          </div>
-          <span class="card-status-badge ready" id="status-passgen">⚡ SIAP DOWNLOAD</span>
-        </div>
-        <div class="card-desc">Generate passwords and copy them pre-formatted with custom text templates.</div>
-        <div class="card-tags">
-          <span class="tag">TYPE: CHROME EXT</span>
-          <span class="tag">VERSION: 1.0.0</span>
-        </div>
-        <a href="password_generator.zip" download class="btn btn-purple" id="install-btn-passgen" data-install-key="passgen">
-          ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
-        </a>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ===== SECTION: PERFECT KEYBOARD ===== -->
-  <div class="section" id="sec-keyboard">
-    <div class="section-title">Perfect Keyboard Tools</div>
-    <div class="cards-grid">
-
-
-      <!-- Card 2: PK Versi 9.1 -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">K1</div>
-          <div>
-            <div class="card-label">APP_01</div>
-            <div class="card-name">Perfect Keyboard 9.1</div>
-          </div>
-        </div>
-        <div class="card-desc">Aplikasi Perfect Keyboard versi 9.1 standar (Executable file).</div>
-        <div class="card-tags">
-          <span class="tag">TYPE: EXE</span>
-          <span class="tag">INSTALLER</span>
-        </div>
-        <a href="pk versi 9.1.exe" download class="btn btn-blue">
-          ⬇️ Download <span class="btn-sub">FILE .EXE</span>
-        </a>
-      </div>
-
-      <!-- Card 3: PK Free Versi 9.2.0 -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-badge-circle">K2</div>
-          <div>
-            <div class="card-label">APP_02</div>
-            <div class="card-name">Perfect Keyboard Free 9.2.0</div>
-          </div>
-        </div>
-        <div class="card-desc">Aplikasi Perfect Keyboard versi terbaru 9.2.0 (Free version).</div>
-        <div class="card-tags">
-          <span class="tag">TYPE: EXE</span>
-          <span class="tag">FREE VER</span>
-        </div>
-        <a href="pk_free versi 9.2.0.exe" download class="btn btn-green">
-          ⬇️ Download <span class="btn-sub">FILE .EXE</span>
-        </a>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ===== SECTION: TOOLS ===== -->
-  <div class="section" id="sec-tools">
-    <div class="section-title">Web Calculators</div>
-    <div class="cards-grid">
-      
-      <div class="card" style="border-color: rgba(34,197,94,0.2);">
-        <div class="card-head">
-          <div class="card-icon" style="background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3);">🀄</div>
-          <div>
-            <div class="card-label" style="color: #4ade80;">WEB_TOOL_01</div>
-            <div class="card-name">Calculator Mahjong</div>
-          </div>
-        </div>
-        <div class="card-desc">Alat hitung otomatis khusus untuk permainan Mahjong. Web app responsif, hitung instan & akurat.</div>
-        <div class="card-tags">
-          <span class="tag green">TYPE: WEB APP</span>
-          <span class="tag">NETLIFY HOST</span>
-        </div>
-        <a href="https://calculatormahjong.netlify.app/" target="_blank" class="btn" style="background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 4px 20px rgba(16,185,129,0.3);">
-          🌐 BUKA WEB APP <span class="btn-sub">NEW TAB</span>
-        </a>
-      </div>
-
-      <div class="card" style="border-color: rgba(239,68,68,0.2);">
-        <div class="card-head">
-          <div class="card-icon" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);">🔢</div>
-          <div>
-            <div class="card-label" style="color: #f87171;">WEB_TOOL_02</div>
-            <div class="card-name">Calculator Hadiah Togel 303</div>
-          </div>
-        </div>
-        <div class="card-desc">Sistem perhitungan otomatis untuk hadiah togel. Cepat, tepat, dan memudahkan rekapitulasi data harian.</div>
-        <div class="card-tags">
-          <span class="tag red">TYPE: WEB APP</span>
-          <span class="tag">GITHUB PAGES</span>
-        </div>
-        <a href="https://rkd253.github.io/calculatorhadiahtogel303/file%20upload/" target="_blank" class="btn" style="background: linear-gradient(135deg, #f43f5e, #be123c); box-shadow: 0 4px 20px rgba(244,63,94,0.3);">
-          🌐 BUKA WEB APP <span class="btn-sub">NEW TAB</span>
-        </a>
-      </div>
-
-      <div class="card" style="border-color: rgba(168,85,247,0.2);">
-        <div class="card-head">
-          <div class="card-icon" style="background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.3);">🧮</div>
-          <div>
-            <div class="card-label" style="color: #c084fc;">WEB_TOOL_03</div>
-            <div class="card-name">Calculator Standar</div>
-          </div>
-        </div>
-        <div class="card-desc">Kalkulator standar dengan desain cyberpunk premium. Mendukung fitur dasar matematika dengan layout grid glassmorphism.</div>
-        <div class="card-tags">
-          <span class="tag">TYPE: LOCAL APP</span>
-          <span class="tag">CYBER UI</span>
-        </div>
-        <a href="calc-standard.html" class="btn btn-purple">
-          🌐 BUKA KALKULATOR <span class="btn-sub">LOCAL</span>
-        </a>
-      </div>
-
-      <div class="card" style="border-color: rgba(14,165,233,0.2);">
-        <div class="card-head">
-          <div class="card-icon" style="background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3);">💱</div>
-          <div>
-            <div class="card-label" style="color: #7dd3fc;">WEB_TOOL_04</div>
-            <div class="card-name">Currency Converter</div>
-          </div>
-        </div>
-        <div class="card-desc">Kalkulator konversi mata uang lengkap. Otomatis mengambil kurs (exchange rates) real-time dari Live API.</div>
-        <div class="card-tags">
-          <span class="tag blue">TYPE: LOCAL APP</span>
-          <span class="tag">LIVE API</span>
-        </div>
-        <a href="calc-currency.html" class="btn btn-cyan">
-          🌐 BUKA KONVERTER <span class="btn-sub">LOCAL</span>
-        </a>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ===== SECTION: GUIDE ===== -->
-  <div class="section" id="sec-guide">
-    <div class="section-title">Panduan Instalasi</div>
-    <div class="cards-grid">
-      <div class="card">
-        <div class="card-head">
-          <div class="card-icon">1️⃣</div>
-          <div>
-            <div class="card-label">STEP 1</div>
-            <div class="card-name">Klik Tombol Install / Download</div>
-          </div>
-        </div>
-        <div class="card-desc">Untuk <strong>Tampermonkey Script</strong>: klik tombol Install pada card script yang diinginkan. Tab baru akan terbuka otomatis.<br><br>Untuk <strong>Chrome Extension</strong>: klik Download, lalu extract file .ZIP yang terunduh.</div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <div class="card-icon">2️⃣</div>
-          <div>
-            <div class="card-label">STEP 2</div>
-            <div class="card-name">Konfirmasi di Tampermonkey / Chrome</div>
-          </div>
-        </div>
-        <div class="card-desc">Untuk <strong>Script</strong>: Tampermonkey akan menampilkan konfirmasi install, klik "Install".<br><br>Untuk <strong>Extension</strong>: Buka <code>chrome://extensions</code>, aktifkan Developer Mode, lalu klik "Load Unpacked" dan pilih folder yang sudah di-extract.</div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <div class="card-icon">3️⃣</div>
-          <div>
-            <div class="card-label">STEP 3</div>
-            <div class="card-name">Selesai — Siap Digunakan!</div>
-          </div>
-        </div>
-        <div class="card-desc">Script atau Extension langsung aktif. Buka LiveChat dan fitur otomatis akan berjalan. Untuk mengatur preferensi, gunakan dashboard masing-masing plugin.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== SECTION: ABOUT ===== -->
-  <div class="section" id="sec-about">
-    <div class="section-title">About This Project</div>
-    <div class="card" style="max-width:600px; margin: 0 auto;">
-      <div class="card-desc" style="text-align:center; font-size:14px; line-height:2;">
-        Suite automation premium yang dirancang khusus untuk meningkatkan produktivitas LiveChat Agent. Semua script dan extension dikembangkan dengan performa tinggi, UI modern, dan stabilitas maksimal.
-      </div>
-    </div>
-
-  </div>
+    <div class="sig-title">TERTANDA PEMBUAT — Made By RKD</div>
+    <div class="sig-sub">LiveChat Automation Suite Pro © 2030 God-Mode Edition</div>
+  </footer>
 
 </main>
 
-<div id="toast"></div>
-
-<!-- ===== FLOATING NEXT-GEN BOTTOM DOCK ===== -->
-<div class="floating-bottom-dock">
-  <a href="#" class="dock-item active" onclick="switchTab('scripts', this)" id="dock-scripts">
-    <span>📜 Scripts</span> <span class="dock-badge">4</span>
-  </a>
-  <a href="#" class="dock-item" onclick="switchTab('extensions', this)" id="dock-extensions">
-    <span>🧩 Extensions</span> <span class="dock-badge">3</span>
-  </a>
-  <a href="#" class="dock-item" onclick="switchTab('keyboard', this)" id="dock-keyboard">
-    <span>⌨️ Apps</span>
-  </a>
-  <a href="#" class="dock-item" onclick="switchTab('tools', this)" id="dock-tools">
-    <span>🧮 Tools</span>
-  </a>
-  <a href="#" class="dock-item" onclick="switchTab('guide', this)" id="dock-guide">
-    <span>📖 Guide</span>
-  </a>
+<!-- FEATURE 4: QUICK INSPECTION MODAL -->
+<div class="modal-overlay" id="inspectModal" onclick="closeInspectModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-badge" id="modalBadge">PLUGIN_01</span>
+        <h3 class="modal-title" id="modalTitle">Module Code Inspector</h3>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeInspectModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-info-row">
+        <div class="info-pill"><span>STATUS:</span> <strong id="modalStatus">SIAP INSTALL</strong></div>
+        <div class="info-pill"><span>AUTHOR:</span> <strong>RKD SUITE PRO</strong></div>
+        <div class="info-pill"><span>VERSION:</span> <strong>v3.5 GOD-MODE</strong></div>
+      </div>
+      <div class="code-box-wrap">
+        <div class="code-box-header">
+          <span>📜 MANIFEST & SCRIPT HEADER</span>
+          <button type="button" class="btn-copy-code" onclick="copyModalCode()">📋 COPY CODE</button>
+        </div>
+        <pre class="code-box-content" id="modalCodeSnippet">// Loading manifest...</pre>
+      </div>
+    </div>
+  </div>
 </div>
 
+<div id="toast"></div>
+
 <script>
-function switchTab(tab, el) {
-  if (window.event) window.event.preventDefault();
-  // Hide all sections
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  // Deactivate all nav and dock items
-  document.querySelectorAll('.nav-item, .dock-item').forEach(n => n.classList.remove('active'));
-  // Show target
-  const targetSec = document.getElementById('sec-' + tab);
-  if (targetSec) targetSec.classList.add('active');
-  
-  // Highlight clicked or matching nav items
-  const navEl = document.getElementById('nav-' + tab);
-  const dockEl = document.getElementById('dock-' + tab);
-  if (navEl) navEl.classList.add('active');
-  if (dockEl) dockEl.classList.add('active');
+// ===== FEATURE 1: 60FPS MATRIX PARTICLE CANVAS ENGINE =====
+const canvas = document.getElementById('cyberMatrixCanvas');
+if (canvas) {
+  const ctx = canvas.getContext('2d');
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+  let mouse = { x: width / 2, y: height / 2, radius: 140 };
+
+  window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+
+  const particles = [];
+  const particleCount = Math.min(75, Math.floor(width / 22));
+
+  for (let i = 0; i < particleCount; i++) {
+    particles.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 1.1,
+      vy: (Math.random() - 0.5) * 1.1,
+      size: Math.random() * 2 + 1,
+      color: ['#00f0ff', '#ff007f', '#00e5a0', '#a855f7'][Math.floor(Math.random() * 4)]
+    });
+  }
+
+  function renderMatrixCanvas() {
+    ctx.clearRect(0, 0, width, height);
+
+    for (let i = 0; i < particles.length; i++) {
+      let p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < 0 || p.x > width) p.vx *= -1;
+      if (p.y < 0 || p.y > height) p.vy *= -1;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+
+      let dx = mouse.x - p.x;
+      let dy = mouse.y - p.y;
+      let dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < mouse.radius) {
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(mouse.x, mouse.y);
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 0.5 * (1 - dist / mouse.radius);
+        ctx.stroke();
+      }
+
+      for (let j = i + 1; j < particles.length; j++) {
+        let p2 = particles[j];
+        let pdx = p2.x - p.x;
+        let pdy = p2.y - p.y;
+        let pdist = Math.sqrt(pdx * pdx + pdy * pdy);
+
+        if (pdist < 90) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = 0.35 * (1 - pdist / 90);
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(renderMatrixCanvas);
+  }
+  renderMatrixCanvas();
+}
+
+// ===== FEATURE 2: SYNTHETIC WEB AUDIO API SFX ENGINE =====
+let audioCtx = null;
+let sfxEnabled = localStorage.getItem('rkdSFX') !== 'false';
+
+function initAudio() {
+  if (!audioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) audioCtx = new AudioContext();
+  }
+}
+
+function playBleep(freq = 800, type = 'sine', duration = 0.08) {
+  if (!sfxEnabled) return;
+  try {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (e) {}
+}
+
+function playWarpSFX() {
+  if (!sfxEnabled) return;
+  try {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.35);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.35);
+  } catch (e) {}
+}
+
+function toggleSFX() {
+  sfxEnabled = !sfxEnabled;
+  localStorage.setItem('rkdSFX', sfxEnabled ? 'true' : 'false');
+  const btn = document.getElementById('sfxToggleBtn');
+  if (btn) {
+    btn.textContent = sfxEnabled ? '🔊 SFX ON' : '🔇 SFX MUTE';
+    btn.classList.toggle('muted', !sfxEnabled);
+  }
+  showToast(sfxEnabled ? '🔊 Efek suara cyber AKTIF' : '🔇 Efek suara DIBUNGKAMP');
+  if (sfxEnabled) playBleep(1000, 'sine', 0.1);
+}
+
+// ===== FEATURE 3: 3D HOLOGRAPHIC PARALLAX CARD TILT =====
+document.querySelectorAll('.module-card').forEach(card => {
+  card.addEventListener('mouseenter', () => playBleep(600, 'sine', 0.05));
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -7;
+    const rotateY = ((x - centerX) / centerX) * 7;
+
+    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px)`;
+  });
+
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+  });
+});
+
+// ===== FEATURE 4: QUICK INSPECT MODAL ENGINE =====
+function inspectModule(codeName, titleName, descText, snippetCode) {
+  initAudio();
+  playBleep(900, 'triangle', 0.1);
+  const modal = document.getElementById('inspectModal');
+  document.getElementById('modalBadge').textContent = codeName;
+  document.getElementById('modalTitle').textContent = titleName;
+  document.getElementById('modalCodeSnippet').textContent = snippetCode || `// ==UserScript==\n// @name         ${titleName}\n// @namespace    RKD_SUITE_GODMODE\n// @version      3.5.0 GOD-MODE\n// @author       Made By RKD\n// @match        *://*/*\n// @grant        GM_setValue\n// @grant        GM_getValue\n// ==/UserScript==\n\n/* Description: ${descText} */\n\n(function() {\n    'use strict';\n    console.log('[RKD_SUITE] Module ${codeName} loaded in God-Mode.');\n})();`;
+  if (modal) modal.classList.add('show');
+}
+
+function closeInspectModal(e) {
+  const modal = document.getElementById('inspectModal');
+  if (modal) modal.classList.remove('show');
+  playBleep(400, 'sine', 0.06);
+}
+
+function copyModalCode() {
+  const code = document.getElementById('modalCodeSnippet').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    showToast('📋 Potongan kode tersalin ke clipboard!');
+    playBleep(1200, 'sine', 0.1);
+  });
+}
+
+// Live Clock
+function updateClock() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
+  const clockEl = document.getElementById('cyberClock');
+  if (clockEl) clockEl.textContent = timeStr;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Category Switching with Section Blocks
+function switchCategory(cat, el) {
+  playBleep(700, 'sine', 0.05);
+  document.querySelectorAll('.cat-pill').forEach(pill => pill.classList.remove('active'));
   if (el) el.classList.add('active');
 
-  // Update topbar
-  const titles = { scripts:'Script Installer', extensions:'Extensions', tools:'Web Calculators', guide:'Panduan Install', about:'About & Signature', keyboard:'Perfect Keyboard Tools' };
-  const pageTitle = document.getElementById('page-title');
-  if (pageTitle) pageTitle.textContent = titles[tab] || tab;
+  const blocks = document.querySelectorAll('.category-section-block');
+  let visibleCount = 0;
   
-  // Close mobile sidebar
-  const sidebar = document.querySelector('.sidebar');
-  if (sidebar) sidebar.classList.remove('open');
-}
-
-function toggleSidebar() {
-  document.querySelector('.sidebar').classList.toggle('collapsed');
-  document.querySelector('.main').classList.toggle('expanded');
-}
-
-function installAll() {
-  const links = ['lapak1.user.js', 'lapak2.user.js', 'lapak3.user.js', 'lapak4.user.js'];
-  links.forEach((url, i) => {
-    setTimeout(() => { window.open(url, '_blank'); }, i * 1200);
+  blocks.forEach(block => {
+    const blockCat = block.dataset.category;
+    if (cat === 'all' || blockCat === cat) {
+      block.style.display = 'block';
+      block.querySelectorAll('.module-card').forEach(c => c.style.display = 'flex');
+      visibleCount++;
+    } else {
+      block.style.display = 'none';
+    }
   });
-  showToast('📦 Membuka semua script...');
+
+  const noRes = document.getElementById('noResultsMsg');
+  if (noRes) noRes.style.display = (visibleCount === 0) ? 'block' : 'none';
 }
 
-function downloadAllExtensions() {
-  const links = ['imagelens-ocr.zip', 'Bonus_Scatter_ProV2.zip', 'password_generator.zip'];
-  links.forEach((url, i) => {
-    setTimeout(() => {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = '';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }, i * 1000);
+// Live Search Filter
+function filterModules() {
+  const query = document.getElementById('liveSearchInput').value.toLowerCase().trim();
+  const blocks = document.querySelectorAll('.category-section-block');
+  let totalCardsVisible = 0;
+
+  blocks.forEach(block => {
+    const cards = block.querySelectorAll('.module-card');
+    let blockCardsVisible = 0;
+
+    cards.forEach(card => {
+      const searchText = (card.dataset.search || '') + ' ' + card.innerText.toLowerCase();
+      if (query === '' || searchText.includes(query)) {
+        card.style.display = 'flex';
+        blockCardsVisible++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (blockCardsVisible > 0) {
+      block.style.display = 'block';
+      totalCardsVisible += blockCardsVisible;
+    } else {
+      block.style.display = 'none';
+    }
   });
-  showToast('📦 Mengunduh semua extension bundle...');
+
+  const noRes = document.getElementById('noResultsMsg');
+  if (noRes) noRes.style.display = (totalCardsVisible === 0) ? 'block' : 'none';
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+function clearSearch() {
+  const input = document.getElementById('liveSearchInput');
+  if (input) {
+    input.value = '';
+    filterModules();
+  }
 }
 
-// ===== POINT 1: HUD THEME SWITCHER ENGINE =====
+// Theme Engine
 function applyMainTheme(themeName) {
   document.body.setAttribute('data-theme', themeName);
   document.querySelectorAll('.theme-dot').forEach(dot => {
@@ -630,14 +819,15 @@ function applyMainTheme(themeName) {
 document.querySelectorAll('.theme-dot').forEach(dot => {
   dot.addEventListener('click', () => {
     applyMainTheme(dot.dataset.theme);
-    showToast(`🎨 Tema HUD diubah ke: ${dot.title}`);
+    playBleep(1100, 'triangle', 0.08);
+    showToast(`🎨 Tema diubah ke: ${dot.title}`);
   });
 });
 
 const savedTheme = localStorage.getItem('rkdMainTheme') || 'cyan';
 applyMainTheme(savedTheme);
 
-// ===== POINT 2: REAL-TIME INSTALL STATUS MANAGER =====
+// Install Tracker
 function markInstalled(moduleKey) {
   localStorage.setItem('installed_' + moduleKey, 'true');
   updateInstallStatuses();
@@ -676,22 +866,46 @@ document.querySelectorAll('a[data-install-key]').forEach(a => {
   a.addEventListener('click', () => {
     const key = a.dataset.installKey;
     markInstalled(key);
+    playBleep(1200, 'sine', 0.12);
     showToast(`⚡ Modul ${key.toUpperCase()} ditandai terpasang.`);
   });
 });
 
 updateInstallStatuses();
 
-// Expire V3 update notification and badge after 3 days (June 28, 2026)
-const updateExpDate = new Date('2026-06-28T00:00:00');
-if (new Date() > updateExpDate) {
-  const badge = document.getElementById('updateBadgeV3');
-  const notif = document.getElementById('updateNotifV3');
-  if (badge) badge.style.display = 'none';
-  if (notif) notif.style.display = 'none';
+// Actions
+function installAll() {
+  playWarpSFX();
+  const links = ['lapak1.user.js', 'lapak2.user.js', 'lapak3.user.js', 'lapak4.user.js'];
+  links.forEach((url, i) => {
+    setTimeout(() => { window.open(url, '_blank'); }, i * 1200);
+  });
+  showToast('📦 Membuka semua script...');
+}
+
+function downloadAllExtensions() {
+  playWarpSFX();
+  const links = ['imagelens-ocr.zip', 'Bonus_Scatter_ProV2.zip', 'password_generator.zip'];
+  links.forEach((url, i) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }, i * 1000);
+  });
+  showToast('📦 Mengunduh semua extension bundle...');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
 }
 </script>
-
-<script src="theme-manager.js"></script>
 </body>
 </html>
