@@ -29,7 +29,9 @@ function parseBulk(text) {
     const transactionId = normalizeTicketCode(parts[1] || '');
     const betting = parts[2];
     if (!userId || !transactionId) continue;
+    const isTS = userIdRaw.toLowerCase().endsWith(' ts');
     const item = { userId, userIdRaw, transactionId };
+    if (isTS) item.isTS = true;
     if (typeof betting !== 'undefined' && betting !== '') item.betting = betting;
     items.push(item);
   }
@@ -98,6 +100,7 @@ function buildConfig() {
   const adminUrl = normalizeLine(el.adminUrl.value);
   const startDate = normalizeLine(el.startDate.value);
   const endDate = normalizeLine(el.endDate.value);
+  const yesterdayDate = el.yesterdayDate ? normalizeLine(el.yesterdayDate.value) : '';
   const agentHeaders = String(el.agentHeaders.value || '');
   const todayDate = todayISO();
 
@@ -105,6 +108,7 @@ function buildConfig() {
   if (adminUrl) cfg.adminUrl = adminUrl;
   if (startDate) cfg.startDate = startDate;
   if (endDate) cfg.endDate = endDate;
+  if (yesterdayDate) cfg.yesterdayDate = yesterdayDate;
   cfg.todayDate = todayDate;
   cfg.processMode = 'auto';
 

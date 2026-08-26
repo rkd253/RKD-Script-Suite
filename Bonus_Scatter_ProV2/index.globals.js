@@ -15,6 +15,7 @@ const el = {
   sendBtn: document.getElementById('sendBtn'),
   copyBtn: document.getElementById('copyBtn'),
   clearBtn: document.getElementById('clearBtn'),
+  assistantBtn: document.getElementById('assistantBtn'),
   searchStatusBtn: document.getElementById('searchStatusBtn'),
   adminUrl: document.getElementById('adminUrl'),
   autoStatusCheck: document.getElementById('autoStatusCheck'),
@@ -41,9 +42,14 @@ const el = {
   statApproved: document.getElementById('statApproved'),
   statRejected: document.getElementById('statRejected'),
   statPending: document.getElementById('statPending'),
-  statSuksesCek: document.getElementById('statSuksesCek'),
+  statLimit: document.getElementById('statLimit') || document.getElementById('statSuksesCek'),
+  statSuksesCek: document.getElementById('statLimit') || document.getElementById('statSuksesCek'),
   // Duplicate warning
   duplicateWarning: document.getElementById('duplicateWarning'),
+  yesterdayDate: document.getElementById('yesterdayDate'),
+  isTS: document.getElementById('isTS'),
+  tableSearch: document.getElementById('tableSearch'),
+  soundToggleBtn: document.getElementById('soundToggleBtn'),
 };
 
 function todayISO() {
@@ -52,6 +58,45 @@ function todayISO() {
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
+}
+
+function yesterdayISO() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+let lastTrackedDate = todayISO();
+
+function performMidnightRollover(newDate) {
+  const targetDate = newDate || todayISO();
+  const targetYesterday = yesterdayISO();
+  console.log(`[CekBonus] 📅 Pergantian hari (00:00) terdeteksi: ${targetDate}`);
+  
+  if (el.startDate) el.startDate.value = targetDate;
+  if (el.endDate) el.endDate.value = targetDate;
+  if (el.yesterdayDate) el.yesterdayDate.value = targetYesterday;
+  
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({
+        startDate: targetDate,
+        endDate: targetDate,
+        yesterdayDate: targetYesterday,
+        todayDate: targetDate
+      });
+    }
+  } catch (e) {}
+
+  if (typeof showCenterNotif === 'function') {
+    showCenterNotif(`📅 Pergantian Hari (00:00)!\nTanggal otomatis diperbarui ke ${targetDate}`, 4000);
+  }
+  if (typeof setStatus === 'function') {
+    setStatus(`📅 Tanggal otomatis diperbarui ke hari baru: ${targetDate}`);
+  }
 }
 
 function updateClock() {
@@ -70,6 +115,13 @@ function updateClock() {
   
   if (el.clockTime) el.clockTime.textContent = `${hours}:${minutes}:${seconds}`;
   if (el.clockDate) el.clockDate.textContent = `${day}, ${date} ${month} ${year}`;
+
+  // Cek pergantian hari (00:00:00 rollover)
+  const currentISO = todayISO();
+  if (currentISO !== lastTrackedDate) {
+    lastTrackedDate = currentISO;
+    performMidnightRollover(currentISO);
+  }
 }
 
 setInterval(updateClock, 1000);
@@ -77,13 +129,17 @@ updateClock();
 
 el.startDate.value = todayISO();
 el.endDate.value = todayISO();
-el.adminUrl.value = 'https://agent.png777.com';
+if (el.yesterdayDate) el.yesterdayDate.value = yesterdayISO();
+el.adminUrl.value = 'https://lapak99.idrbo2.com/';
 
 function setBridgeBadge(mode, text) {
   el.bridgeText.textContent = text;
-  el.bridgeDot.classList.remove('ok', 'bad');
+  el.bridgeDot.classList.remove('ok', 'bad', 'extension');
   if (mode === 'ok') el.bridgeDot.classList.add('ok');
   if (mode === 'bad') el.bridgeDot.classList.add('bad');
+  if (text && text.toLowerCase().includes('extension')) {
+    el.bridgeDot.classList.add('extension');
+  }
 }
 
 function setStatus(text) {

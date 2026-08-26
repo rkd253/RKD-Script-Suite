@@ -63,66 +63,114 @@ const BONUSSMB_TICKETS_URL = 'https://bonussmb.com/tickets';
 const BONUSSMB_HISTORY_URL = 'https://bonussmb.com/history';
 
 async function verifyBonussmbStatus(userId, transactionId) {
-    return new Promise(async (resolve) => {
-        chrome.tabs.query({ url: "*://bonussmb.com/*" }, async (tabs) => {
-            let tab = tabs && tabs[0];
-            let isTemporaryTab = false;
-            
-            if (!tab) {
-                // Jika tidak ada tab bonussmb terbuka, buat tab baru di background secara temporer
-                isTemporaryTab = true;
-                const opened = await new Promise((resOpen) => {
-                    getBestNormalWindowId((targetWindowId) => {
-                        const createOpts = { url: BONUSSMB_TICKETS_URL, active: false };
-                        if (targetWindowId) createOpts.windowId = targetWindowId;
-                        chrome.tabs.create(createOpts, (newTab) => {
-                            if (!newTab || !newTab.id) {
-                                resOpen(null);
-                            } else {
-                                ensureTabLoaded(newTab.id, 20000).then(() => resOpen(newTab));
-                            }
+    return new Promise((resolve) => {
+        chrome.windows.getLastFocused((currentWindow) => {
+            const curWinId = currentWindow ? currentWindow.id : null;
+            chrome.tabs.query({ url: "*://bonussmb.com/*" }, async (tabs) => {
+                let tab = null;
+                if (tabs && tabs.length > 0) {
+                    // Urutkan tab agar tab aktif di jendela yang sedang fokus berada di posisi teratas
+                    tabs.sort((a, b) => {
+                        const aCurrentWin = curWinId && a.windowId === curWinId;
+                        const bCurrentWin = curWinId && b.windowId === curWinId;
+                        if (aCurrentWin && a.active) return -1;
+                        if (bCurrentWin && b.active) return 1;
+                        if (a.active) return -1;
+                        if (b.active) return 1;
+                        if (aCurrentWin) return -1;
+                        if (bCurrentWin) return 1;
+                        return 0;
+                    });
+                    tab = tabs[0];
+                }
+                
+                let isTemporaryTab = false;
+                if (!tab) {
+                    // Jika tidak ada tab bonussmb terbuka, buat tab baru di background secara temporer
+                    isTemporaryTab = true;
+                    const opened = await new Promise((resOpen) => {
+                        getBestNormalWindowId((targetWindowId) => {
+                            const createOpts = { url: BONUSSMB_TICKETS_URL, active: false };
+                            if (targetWindowId) createOpts.windowId = targetWindowId;
+                            chrome.tabs.create(createOpts, (newTab) => {
+                                if (!newTab || !newTab.id) {
+                                    resOpen(null);
+                                } else {
+                                    ensureTabLoaded(newTab.id, 20000).then(() => resOpen(newTab));
+                                }
+                            });
                         });
                     });
-                });
-                
-                if (!opened) {
-                    resolve({ ok: false, error: 'Failed to open temporary tab' });
-                    return;
+                    
+                    if (!opened) {
+                        resolve({ ok: false, error: 'Failed to open temporary tab' });
+                        return;
+                    }
+                    tab = opened;
                 }
-                tab = opened;
-            }
-            
-            const tabId = tab.id;
-            const currentUrl = tab.url || tab.pendingUrl || '';
-            
-            // Tentukan halaman mana yang dicek pertama berdasarkan URL tab saat ini (untuk meminimalkan redirect)
-            const firstUrl = currentUrl.includes('history') ? BONUSSMB_HISTORY_URL : BONUSSMB_TICKETS_URL;
-            const secondUrl = firstUrl === BONUSSMB_HISTORY_URL ? BONUSSMB_TICKETS_URL : BONUSSMB_HISTORY_URL;
-            
-            console.log(`[BonusScatter] Verifying status for ${userId} using tab ${tabId}. Checking first: ${firstUrl}`);
-            
-            // Langkah A: Cek di halaman pertama
-            const firstResult = await verifyOnPage(tabId, userId, transactionId, firstUrl);
-            if (firstResult && firstResult.ok && firstResult.status !== 'NOT_FOUND') {
+                
+                const tabId = tab.id;
+                let currentUrl = tab.url || tab.pendingUrl || '';
+
+                // Jika tab tidak berada di halaman tickets atau history, navigasikan ke tickets terlebih dahulu
+                if (!currentUrl.includes('tickets') && !currentUrl.includes('history')) {
+                    console.log(`[BonusScatter] Tab URL ${currentUrl} is not on tickets/history. Navigating to tickets page...`);
+                    await new Promise((resNav) => {
+                        chrome.tabs.update(tabId, { url: BONUSSMB_TICKETS_URL }, () => {
+                            ensureTabLoaded(tabId, 20000).then(() => resNav(true));
+                        });
+                    });
+                    currentUrl = BONUSSMB_TICKETS_URL;
+                }
+                
+                // Tentukan halaman mana yang dicek pertama berdasarkan URL tab saat ini (untuk meminimalkan redirect)
+                const firstUrl = currentUrl.includes('history') ? BONUSSMB_HISTORY_URL : BONUSSMB_TICKETS_URL;
+                const secondUrl = firstUrl === BONUSSMB_HISTORY_URL ? BONUSSMB_TICKETS_URL : BONUSSMB_HISTORY_URL;
+                
+                console.log(`[BonusScatter] Verifying status for ${userId} using tab ${tabId}. Checking first: ${firstUrl}`);
+                
+                // Cek di halaman pertama
+                let result = await verifyOnPage(tabId, userId, transactionId, firstUrl);
+
+                // Jika pengecekan pertama gagal (navigation_failed atau error lainnya), lakukan hard redirect ke firstUrl
+                if (!result || !result.ok) {
+                    console.log(`[BonusScatter] First page check failed or navigation failed. Forcing tab update to ${firstUrl}...`);
+                    await new Promise((resNav) => {
+                        chrome.tabs.update(tabId, { url: firstUrl }, () => {
+                            ensureTabLoaded(tabId, 20000).then(() => resNav(true));
+                        });
+                    });
+                    result = await verifyOnPage(tabId, userId, transactionId, firstUrl);
+                }
+
+                // TAHAP 2: Jika tidak ditemukan di halaman pertama (NOT_FOUND atau error), coba cek di halaman kedua
+                if (!result || !result.ok || result.status === 'NOT_FOUND') {
+                    console.log(`[BonusScatter] Ticket not found on ${firstUrl}. Switching to ${secondUrl} and retrying status check...`);
+                    let secondResult = await verifyOnPage(tabId, userId, transactionId, secondUrl);
+
+                    // Jika soft navigation ke halaman kedua gagal, lakukan hard redirect
+                    if (!secondResult || !secondResult.ok) {
+                        console.log(`[BonusScatter] Soft navigation to second page failed. Forcing tab update to ${secondUrl}...`);
+                        await new Promise((resNav) => {
+                            chrome.tabs.update(tabId, { url: secondUrl }, () => {
+                                ensureTabLoaded(tabId, 20000).then(() => resNav(true));
+                            });
+                        });
+                        secondResult = await verifyOnPage(tabId, userId, transactionId, secondUrl);
+                    }
+
+                    if (secondResult && secondResult.ok) {
+                        result = secondResult;
+                    }
+                }
+
                 if (isTemporaryTab) {
                     chrome.tabs.remove(tabId, () => {
-                        void chrome.runtime.lastError; // Clear potential closed tab error
+                        void chrome.runtime.lastError;
                     });
                 }
-                resolve(firstResult);
-                return;
-            }
-            
-            console.log(`[BonusScatter] Status not found on first page or failed. Checking second: ${secondUrl}`);
-            
-            // Langkah B: Cek di halaman kedua
-            const secondResult = await verifyOnPage(tabId, userId, transactionId, secondUrl);
-            if (isTemporaryTab) {
-                chrome.tabs.remove(tabId, () => {
-                    void chrome.runtime.lastError; // Clear potential closed tab error
-                });
-            }
-            resolve(secondResult);
+                resolve(result);
+            });
         });
     });
 }
@@ -136,34 +184,14 @@ async function verifyOnPage(tabId, userId, transactionId, targetUrl) {
                 return;
             }
             
-            const currentUrl = tab.url || tab.pendingUrl || '';
-            const needsRedirect = !currentUrl.includes(targetUrl);
-            
-            if (needsRedirect) {
-                console.log(`[BonusScatter] Redirecting tab ${tabId} to ${targetUrl}`);
-                chrome.tabs.update(tabId, { url: targetUrl }, () => {
-                    const updateErr = chrome.runtime.lastError;
-                    if (updateErr) {
-                        resolve({ ok: false, error: updateErr.message });
-                        return;
-                    }
-                    ensureTabLoaded(tabId, 15000).then(async () => {
-                        const ready = await ensureBonussmbReceiver(tabId);
-                        if (!ready.ok) {
-                            resolve({ ok: false, error: 'receiver_not_ready_after_redirect' });
-                            return;
-                        }
-                        sendCheckMessage(tabId, userId, transactionId, targetUrl, resolve);
-                    });
-                });
-            } else {
-                const ready = await ensureBonussmbReceiver(tabId);
-                if (!ready.ok) {
-                    resolve({ ok: false, error: 'receiver_not_ready' });
-                    return;
-                }
-                sendCheckMessage(tabId, userId, transactionId, targetUrl, resolve);
+            // TIDAK melakukan redirect apapun untuk mencegah logout.
+            // Langsung kirim pesan ke content script di halaman yang sedang aktif.
+            const ready = await ensureBonussmbReceiver(tabId);
+            if (!ready.ok) {
+                resolve({ ok: false, error: 'receiver_not_ready' });
+                return;
             }
+            sendCheckMessage(tabId, userId, transactionId, targetUrl, resolve);
         });
     });
 }
@@ -211,7 +239,25 @@ function ensureBonussmbAlarm() {
     }
 }
 
+function checkAndPerformMidnightRollover() {
+    try {
+        const currentToday = getTodayDateString();
+        chrome.storage.local.get(['todayDate', 'startDate', 'endDate', 'yesterdayDate'], (res) => {
+            if (!res.todayDate || res.todayDate !== currentToday) {
+                console.log(`[CekBonus] 📅 Pergantian Hari (00:00) terdeteksi di Background. Mengupdate tanggal ke ${currentToday}`);
+                chrome.storage.local.set({
+                    todayDate: currentToday,
+                    startDate: currentToday,
+                    endDate: currentToday,
+                    yesterdayDate: getYesterdayDateString()
+                });
+            }
+        });
+    } catch (e) {}
+}
+
 function initAutoBackground() {
+    checkAndPerformMidnightRollover();
     ensureKeepAliveAlarm();
     ensureBonussmbAlarm();
     Promise.resolve(ensureOffscreenDocument()).catch(() => {});
@@ -237,6 +283,8 @@ try {
     chrome.alarms.onAlarm.addListener((alarm) => {
         if (!alarm) return;
 
+        checkAndPerformMidnightRollover();
+
         if (alarm.name === KEEPALIVE_ALARM) {
             chrome.storage.local.get(['autoStartEnabled'], (res) => {
                 const enabled = typeof res.autoStartEnabled === 'boolean' ? res.autoStartEnabled : true;
@@ -246,14 +294,10 @@ try {
         }
 
         if (alarm.name === BONUSSMB_AUTO_ALARM) {
-            chrome.storage.local.get(['autoStartEnabled', 'autoStatusCheck'], (res) => {
+            chrome.storage.local.get(['autoStartEnabled'], (res) => {
                 const autoStart = typeof res.autoStartEnabled === 'boolean' ? res.autoStartEnabled : true;
-                const statusCheck = typeof res.autoStatusCheck === 'boolean' ? res.autoStatusCheck : true;
                 if (autoStart) {
                     processPendingBonussmbInputs();
-                    if (statusCheck) {
-                        processPendingBonussmbVerifications();
-                    }
                 }
             });
         }
@@ -325,7 +369,6 @@ async function processPendingBonussmbVerifications() {
                 } else if (result && result.status === 'NOT_FOUND') {
                     await updateVerifiedStatusAsync(r.userId, r.transactionId, 'NOT_FOUND', '');
                 } else {
-                    // TIMEOUT atau error: tetap update sebagai PENDING agar tidak stuck selamanya
                     const currentV = String(r.verifiedStatus || '').trim();
                     if (currentV === '' || currentV === '-' || currentV === 'N/A') {
                         await updateVerifiedStatusAsync(r.userId, r.transactionId, 'PENDING', '');
@@ -336,7 +379,8 @@ async function processPendingBonussmbVerifications() {
                 console.error(`[BonusScatter] Verify error for ${r.transactionId}:`, verifyErr);
             }
             
-            await new Promise(res => setTimeout(res, 800));
+            // Jeda 30 detik antar tiket untuk menghindari deteksi bot / rate limiting
+            await new Promise(res => setTimeout(res, 30000));
         }
     } catch (e) {
         console.error('[BonusScatter] Roket S2 Error:', e);
@@ -419,7 +463,10 @@ try {
         if (next.length === 0) return;
         chrome.storage.local.get(['autoStartEnabled'], (res) => {
             const enabled = typeof res.autoStartEnabled === 'boolean' ? res.autoStartEnabled : true;
-            if (enabled) startNextProcess();
+            // Otomatis jalan jika antrian pending mencapai minimal 10 atau jika ada proses yang sedang berjalan
+            if (enabled && (next.length >= 10 || activeProcesses > 0)) {
+                startNextProcess();
+            }
         });
     });
 } catch {
@@ -608,9 +655,11 @@ function performBonussmbFill(finalResult) {
             return;
         }
 
+        const rawUser = String(finalResult.userIdRaw || finalResult.userId || '').trim();
+        const finalUserRaw = (finalResult.isTS && !rawUser.toLowerCase().endsWith(' ts')) ? `${rawUser} TS` : rawUser;
         const payload = {
             userId: finalResult.userId,
-            userIdRaw: finalResult.userIdRaw,
+            userIdRaw: finalUserRaw,
             transactionId: finalResult.transactionId,
             debetValue: finalResult.debetValue,
             scatterTitle: finalResult.scatterTitle,
@@ -627,14 +676,14 @@ function performBonussmbFill(finalResult) {
             } catch {}
         };
 
-        const openHistoryTab = () => {
+        const openTicketsTab = () => {
             return new Promise((resolveOpen) => {
                 getBestNormalWindowId((targetWindowId) => {
-                    const createOpts = { url: BONUSSMB_HISTORY_URL, active: false };
+                    const createOpts = { url: BONUSSMB_TICKETS_URL, active: false };
                     if (targetWindowId) createOpts.windowId = targetWindowId;
                     chrome.tabs.create(createOpts, (tab) => {
                         if (!tab || !tab.id) {
-                            resolveOpen({ ok: false, error: 'Gagal membuka tab history' });
+                            resolveOpen({ ok: false, error: 'Gagal membuka tab tiket' });
                             return;
                         }
                         const tabId = tab.id;
@@ -649,7 +698,7 @@ function performBonussmbFill(finalResult) {
 
         const maxAttempts = 3;
         const attemptFill = (attempt) => {
-            openHistoryTab().then((opened) => {
+            openTicketsTab().then((opened) => {
                 if (!opened.ok) {
                     enqueueBonussmbStatus(finalResult.userId, finalResult.transactionId, 'Gagal input', opened.error || 'open_tab_failed');
                     done();
@@ -670,54 +719,33 @@ function performBonussmbFill(finalResult) {
 
                 ensureBonussmbReceiver(tabId).then((ready) => {
                     if (!ready.ok) {
-                        finish('Gagal input', ready.error || 'receiver_not_ready_history', true);
+                        finish('Gagal input', ready.error || 'receiver_not_ready_tickets', true);
                         return;
                     }
 
-                    // 1. Cek jumlah klaim dulu
-                    chrome.tabs.sendMessage(tabId, { type: 'BONUSSMB_COUNT_CLAIMS', payload: { userId: finalResult.userId } }, (countResp) => {
-                        const lastErr = chrome.runtime.lastError;
-                        if (lastErr) {
-                            finish('Gagal input', lastErr.message || 'count_claims_failed', true);
+                    chrome.tabs.sendMessage(tabId, { type: 'BONUSSMB_FILL_TICKET', payload }, (resp) => {
+                        const fillErr = chrome.runtime.lastError;
+                        if (fillErr) {
+                            finish('Gagal input', fillErr.message || 'send_failed', true);
                             return;
                         }
 
-                        if (countResp && countResp.ok && typeof countResp.count === 'number' && countResp.count >= 2) {
-                            // Max claim tercapai
-                            finish('Batas claim', `Max 2x claim (Sudah claim ${countResp.count}x)`, false);
+                        if (resp && resp.ok) {
+                            finish('Sudah input', '', false);
                             return;
                         }
 
-                        // 2. Aman, lanjut ke tiket
-                        chrome.tabs.update(tabId, { url: BONUSSMB_TICKETS_URL }, () => {
-                            ensureTabLoaded(tabId, 20000).then(() => {
-                                ensureBonussmbReceiver(tabId).then((readyTick) => {
-                                    if (!readyTick.ok) {
-                                        finish('Gagal input', readyTick.error || 'receiver_not_ready_tickets', true);
-                                        return;
-                                    }
+                        const errText = resp && resp.error ? String(resp.error) : 'unknown';
+                        const isLimit = errText.includes('maksimal klaim') || errText.includes('limit') || errText.includes('mencapai');
+                        const isTaken = errText.includes('The ticket code has already been taken.') || errText.toLowerCase().includes('already been taken');
+                        const isTransient = errText.includes('Dialog Form Tiket') || errText.includes('Form Tiket') || errText.includes('Field belum muncul');
+                        const retryable = !isTaken && !isLimit && isTransient;
+                        
+                        let finalStatus = 'Gagal input';
+                        if (isTaken) finalStatus = 'Ticket sudah ada';
+                        else if (isLimit) finalStatus = 'Batas claim';
 
-                                    chrome.tabs.sendMessage(tabId, { type: 'BONUSSMB_FILL_TICKET', payload }, (resp) => {
-                                        const fillErr = chrome.runtime.lastError;
-                                        if (fillErr) {
-                                            finish('Gagal input', fillErr.message || 'send_failed', true);
-                                            return;
-                                        }
-
-                                        if (resp && resp.ok) {
-                                            finish('Sudah input', '', false);
-                                            return;
-                                        }
-
-                                        const errText = resp && resp.error ? String(resp.error) : 'unknown';
-                                        const isTaken = errText.includes('The ticket code has already been taken.') || errText.toLowerCase().includes('already been taken');
-                                        const isTransient = errText.includes('Dialog Form Tiket') || errText.includes('Form Tiket') || errText.includes('Field belum muncul');
-                                        const retryable = !isTaken && isTransient;
-                                        finish(isTaken ? 'Ticket sudah ada' : 'Gagal input', errText, retryable);
-                                    });
-                                });
-                            });
-                        });
+                        finish(finalStatus, errText, retryable);
                     });
                 });
             });
@@ -801,7 +829,11 @@ function processBonussmbStatusQueue() {
                 continue;
             }
             const r = next[idx] && typeof next[idx] === 'object' ? next[idx] : {};
-            next[idx] = { ...r, bonussmbStatus: it.status, bonussmbDetail: it.detail };
+            const updatedRow = { ...r, bonussmbStatus: it.status, bonussmbDetail: it.detail };
+            if (it.status === 'Batas claim') {
+                updatedRow.verifiedStatus = 'LIMIT';
+            }
+            next[idx] = updatedRow;
         }
 
         chrome.storage.local.set({ jutawanResults: next }, () => {
@@ -999,7 +1031,8 @@ function postToAppsScript(result) {
                             const r = it && typeof it === 'object' ? it : null;
                             if (!r) return;
                             if (String(r.statusCek || '') !== 'Sukses cek') return;
-                            enqueueBonussmbFill(r);
+                            const mergedRow = next.find(row => String(row.userId) === String(r.userId) && String(row.transactionId) === String(r.transactionId));
+                            enqueueBonussmbFill(mergedRow || r);
                         });
                     } catch {}
 
@@ -1130,17 +1163,28 @@ function startNextProcess() {
     // ==========================================================
     // ==========================================================
     
-    chrome.storage.local.get(["txQueue", "agentHeaders", "executorName", "adminUrl", "startDate", "endDate", "todayDate", "processMode"], (res) => {
+    chrome.storage.local.get(["txQueue", "agentHeaders", "executorName", "adminUrl", "startDate", "endDate", "yesterdayDate", "todayDate", "processMode"], (res) => {
         let txQueue = res.txQueue || [];
         const agentHeaders = res.agentHeaders || null;
         const adminUrl = res.adminUrl || DEFAULT_ADMIN_URL;
-        const todayDate = res.todayDate || getTodayDateString();
-        const startDate = res.startDate || todayDate;
-        const endDate = res.endDate || todayDate;
+
+        const currentToday = getTodayDateString();
+        const storedToday = res.todayDate;
+        const isNewDay = storedToday && storedToday !== currentToday;
+        const todayDate = currentToday;
+        const startDate = isNewDay ? currentToday : (res.startDate || todayDate);
+        const endDate = isNewDay ? currentToday : (res.endDate || todayDate);
+        const yesterdayDate = isNewDay ? getYesterdayDateString() : (res.yesterdayDate || getYesterdayDateString());
+
+        if (isNewDay) {
+            console.log(`[CekBonus] 📅 Pergantian hari terdeteksi di startNextProcess: ${currentToday}`);
+            chrome.storage.local.set({ todayDate, startDate, endDate, yesterdayDate });
+        }
+
         const executorName = res.executorName || (agentHeaders ? agentHeaders["X-Agent-User"] : "") || "executor";
         const processMode = res.processMode || "auto";
         try {
-            console.log('[CekBonus] startNextProcess build=3.1.0 mode=', processMode, 'hasToken=', hasUsableAccessToken(agentHeaders));
+            console.log('[CekBonus] startNextProcess build=3.5.0 mode=', processMode, 'hasToken=', hasUsableAccessToken(agentHeaders));
         } catch {}
 
         // Jika antrian kosong, proses selesai
@@ -1206,14 +1250,18 @@ function startNextProcess() {
                 const canApi = hasUsableAccessToken(agentHeaders);
                 const runApi = (processMode === 'auto') ? canApi : (wantsApi && canApi);
 
+                const isItemTS = currentItem.isTS === true || String(currentItem.userIdRaw || '').toLowerCase().endsWith(' ts');
+                const searchStartDate = isItemTS ? yesterdayDate : startDate;
+                const searchEndDate = isItemTS ? yesterdayDate : endDate;
+
                 if (runApi) {
                     processItemViaApi({
                         currentItem,
                         agentHeaders,
                         executorName,
                         adminUrl,
-                        startDate,
-                        endDate,
+                        startDate: searchStartDate,
+                        endDate: searchEndDate,
                         mode: 'api_full',
                     }).catch((e) => {
                         saveResult(
@@ -1224,6 +1272,7 @@ function startNextProcess() {
                                 scatterTitle: `Error: ${String(e && e.message ? e.message : e)}`,
                                 expectedBetting: typeof currentItem.betting !== 'undefined' ? String(currentItem.betting) : '',
                                 detailBetting: '',
+                                isTS: isItemTS,
                             },
                             null,
                             executorName
@@ -1237,8 +1286,8 @@ function startNextProcess() {
                         token,
                         executorName,
                         adminUrl,
-                        startDate,
-                        endDate,
+                        searchStartDate,
+                        searchEndDate,
                         todayDate
                     );
                 }
@@ -1270,10 +1319,19 @@ const scriptToGetRoundCount = () => {
     };
 };
 
-const DEFAULT_ADMIN_URL = "https://agent.png777.com";
+const DEFAULT_ADMIN_URL = "https://lapak99.idrbo2.com";
 
 function getTodayDateString() {
     const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function getYesterdayDateString() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
@@ -1647,7 +1705,7 @@ function isHistoryUrl(url) {
     const u = String(url || '');
     return u.includes('public.u2uyu876x.com/history/') ||
         u.includes('public-api.u2uyu876x.com/web-api/operator-proxy/v1/History/GetBetHistory') ||
-        u.includes('agent.png777.com/keterangan-detail.html');
+        u.includes('lapak99.idrbo2.com/keterangan-detail.html') || u.includes('agent.png777.com/keterangan-detail.html');
 }
 
 function getBestNormalWindowId(callback) {
@@ -1747,6 +1805,7 @@ function updateAuthHeaderRules() {
 
         const domains = [
             adminHost,
+            'lapak99.idrbo2.com',
             'agent.png777.com',
             'public.u2uyu876x.com',
             'public-api.u2uyu876x.com',
@@ -2234,6 +2293,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     if (!merged.userIdRaw && typeof q.userIdRaw !== 'undefined') merged.userIdRaw = String(q.userIdRaw);
                     if (!merged.expectedBetting && typeof q.betting !== 'undefined' && q.betting !== '') merged.expectedBetting = String(q.betting);
                     if (!merged.statusCek) merged.statusCek = 'Pending';
+                    if (q.isTS !== undefined) merged.isTS = q.isTS;
                     nextResults[idx] = merged;
                     continue;
                 }
@@ -2250,17 +2310,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                     detailBetting: '',
                     bonussmbStatus: '',
                     bonussmbDetail: '',
+                    isTS: q.isTS || false,
                 });
                 indexByKey.set(key, nextResults.length - 1);
             }
 
             const toSave = { txQueue: finalQueue, jutawanResults: nextResults };
-            ['executorName','adminUrl','startDate','endDate','todayDate','agentHeaders','processMode'].forEach((k) => {
+            ['executorName','adminUrl','startDate','endDate','yesterdayDate','todayDate','agentHeaders','processMode'].forEach((k) => {
                 if (typeof config[k] !== 'undefined') toSave[k] = config[k];
             });
 
             chrome.storage.local.set(toSave, () => {
-                startNextProcess();
+                const shouldAutoStart = finalQueue.length >= 10 || config.forceStart === true || config.processMode === 'auto_immediate' || activeProcesses > 0;
+                if (shouldAutoStart) {
+                    console.log(`[CekBonus] 🚀 Memulai batch process. Pending count: ${finalQueue.length} (Threshold >= 10 atau forceStart/active).`);
+                    startNextProcess();
+                } else {
+                    console.log(`[CekBonus] ⏳ Antrian pending: ${finalQueue.length}/10. Menunggu hingga 10 pending untuk auto-check, atau klik proses.`);
+                }
                 sendResponse({ status: 'accepted', count: finalQueue.length });
             });
         });
@@ -2568,9 +2635,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (changes.txQueue) {
         chrome.storage.local.get(["txQueue", "agentHeaders", "executorName", "adminUrl", "startDate", "endDate"], (res) => {
-            const hasQueue = Array.isArray(res.txQueue) && res.txQueue.length > 0;
+            const queueLen = Array.isArray(res.txQueue) ? res.txQueue.length : 0;
             const cfgOk = !!(res.agentHeaders && res.agentHeaders["X-Access-Token"]);
-            if (hasQueue && cfgOk) {
+            // Otomatis jalan jika antrian pending mencapai minimal 10 atau ada proses berjalan
+            if (cfgOk && (queueLen >= 10 || activeProcesses > 0)) {
+                console.log(`[CekBonus] 🤖 Auto-Check triggered via storage change: pending = ${queueLen} (>= 10).`);
                 startNextProcess();
             }
         });

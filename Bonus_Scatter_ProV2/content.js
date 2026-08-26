@@ -1,6 +1,7 @@
 // Listener untuk pesan dari background.js setelah halaman utama dimuat
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === "startProcess") {
+    setRobotActive(true);
     startProcess(
       msg.userId,
       msg.transactionId,
@@ -14,6 +15,119 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     sendResponse({ status: "running" });
   }
 });
+
+// ===== ROBOT ACTIVE INDICATOR INJECTION =====
+function setRobotActive(isActive) {
+  const robot = document.getElementById('bonus-scatter-robot');
+  if (!robot) return;
+  if (isActive) {
+    robot.classList.add('checking');
+    const label = robot.querySelector('.robot-label');
+    if (label) label.textContent = 'CHECKING...';
+    robot.style.border = '1.5px solid #00d4ff';
+    robot.style.color = '#00d4ff';
+    robot.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+  } else {
+    robot.classList.remove('checking');
+    const label = robot.querySelector('.robot-label');
+    if (label) label.textContent = 'PRO ACTIVE';
+    robot.style.border = '1.5px solid #a855f7';
+    robot.style.color = '#c084fc';
+    robot.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+  }
+}
+
+function injectRobotIndicator() {
+  return; // Disabled robot indicator display on admin pages
+
+  const robot = document.createElement('div');
+  robot.id = 'bonus-scatter-robot';
+  robot.title = 'Bonus Scatter Pro Extension is ACTIVE 🤖';
+  robot.style.cssText = `
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #121214, #1a1a24);
+    border: 1.5px solid #a855f7;
+    border-radius: 8px;
+    padding: 6px 12px;
+    margin-left: 10px;
+    color: #c084fc;
+    font-family: 'Outfit', 'Segoe UI', sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    user-select: none;
+    vertical-align: middle;
+    transition: all 0.3s ease;
+  `;
+
+  robot.onmouseover = () => {
+    if (!robot.classList.contains('checking')) {
+      robot.style.border = '1.5px solid #00d4ff';
+      robot.style.color = '#00d4ff';
+      robot.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+    }
+  };
+  robot.onmouseout = () => {
+    if (!robot.classList.contains('checking')) {
+      robot.style.border = '1.5px solid #a855f7';
+      robot.style.color = '#c084fc';
+      robot.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+    }
+  };
+
+  robot.innerHTML = `
+    <span class="robot-emoji" style="font-size: 14px; display: inline-block; transition: transform 0.3s ease;">🤖</span>
+    <span class="robot-label" style="text-shadow: 0 0 5px currentColor;">PRO ACTIVE</span>
+  `;
+
+  if (!document.getElementById('bonus-scatter-robot-styles')) {
+    const style = document.createElement('style');
+    style.id = 'bonus-scatter-robot-styles';
+    style.textContent = `
+      #bonus-scatter-robot.checking {
+        animation: robotFloat 1s ease-in-out infinite;
+      }
+      #bonus-scatter-robot.checking .robot-emoji {
+        animation: robotSpin 1s linear infinite !important;
+      }
+      @keyframes robotFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+      }
+      @keyframes robotSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const targetToInsert = txInput.parentElement.classList.contains('search-input') 
+    ? txInput.parentElement 
+    : (txInput.closest('.search') || txInput.parentElement || txInput);
+
+  if (targetToInsert && targetToInsert.parentNode) {
+    targetToInsert.parentNode.insertBefore(robot, targetToInsert.nextSibling);
+    console.log('[BonusScatter] Robot active indicator successfully injected.');
+  }
+}
+
+function initRobotIndicator() {
+  injectRobotIndicator();
+  setInterval(injectRobotIndicator, 2000);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initRobotIndicator);
+} else {
+  initRobotIndicator();
+}
 
 async function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -145,6 +259,66 @@ async function navigateCalendarTo(targetYear, targetMonth, todayYear, todayMonth
   }
 }
 
+function findDateInput(isStart) {
+  const keywords = isStart ? ['startdate', 'begintime', 'starttime', 'begindate', 'tanggalawal', 'tanggalmulai'] : ['enddate', 'endtime', 'enddate', 'tanggalakhir'];
+  
+  const selectors = isStart ? [
+    'input[name="startDate"]',
+    'input#startDate',
+    'input[name="beginTime"]',
+    'input#beginTime',
+    'input[name="startTime"]',
+    'input[name="beginDate"]',
+    '#beginTime',
+    '#startTime'
+  ] : [
+    'input[name="endDate"]',
+    'input#endDate',
+    'input[name="endTime"]',
+    'input#endTime',
+    'input[name="endDate"]',
+    '#endTime'
+  ];
+  
+  for (const sel of selectors) {
+    const el = document.querySelector(sel);
+    if (el) return el;
+  }
+  
+  const labels = Array.from(document.querySelectorAll('label, span, td, div'));
+  const targetLabel = labels.find(el => {
+    const txt = el.textContent.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    return keywords.some(k => txt.includes(k));
+  });
+  
+  if (targetLabel) {
+    if (targetLabel.tagName === 'LABEL' && targetLabel.getAttribute('for')) {
+      const el = document.getElementById(targetLabel.getAttribute('for'));
+      if (el) return el;
+    }
+    let parent = targetLabel.parentElement;
+    for (let i = 0; i < 3; i++) {
+      if (!parent) break;
+      const inputs = Array.from(parent.querySelectorAll('input')).filter(inp => inp.type !== 'hidden');
+      if (inputs.length > 0) return inputs[0];
+      parent = parent.parentElement;
+    }
+  }
+  
+  const allInputs = Array.from(document.querySelectorAll('input')).filter(inp => inp.type !== 'hidden');
+  for (const inp of allInputs) {
+    const name = String(inp.name || '').toLowerCase();
+    const id = String(inp.id || '').toLowerCase();
+    if (isStart) {
+      if (name.includes('start') || name.includes('begin') || id.includes('start') || id.includes('begin')) return inp;
+    } else {
+      if (name.includes('end') || id.includes('end')) return inp;
+    }
+  }
+  
+  return null;
+}
+
 /**
  * Mengatur Tanggal Mulai Pencarian pada Kalender Admin.
  * @param {string} startDate - Tanggal dalam format YYYY-MM-DD.
@@ -155,15 +329,27 @@ async function setStartDateInCalendar(startDate, todayDate) {
     const [year, month, day] = startDate.split('-');
     const [ty, tm] = todayDate ? todayDate.split('-') : [year, month];
     
-    // 1. Temukan dan klik input tanggal
-    const startDateInput = document.querySelector('input[name="startDate"]#startDate'); 
+    // 1. Temukan dan klik input tanggal secara robust
+    const startDateInput = findDateInput(true); 
     if (!startDateInput) {
         console.warn("⚠️ Element input 'startDate' tidak ditemukan!");
         return false;
     }
     
+    // Format tanggal dinamis: hilangkan leading zero jika format di input tidak menggunakannya (mis: 2026-6-25)
+    let formattedDate = startDate;
+    const currentVal = startDateInput.value.trim();
+    if (currentVal && currentVal.split('-').length === 3) {
+        const parts = currentVal.split('-');
+        const hasLeadingZeroInMonth = parts[1].startsWith('0');
+        const hasLeadingZeroInDay = parts[2].startsWith('0');
+        if (!hasLeadingZeroInMonth || !hasLeadingZeroInDay) {
+            formattedDate = `${year}-${parseInt(month, 10)}-${parseInt(day, 10)}`;
+        }
+    }
+    
     // Set nilai input dan picu event agar datepicker sinkron
-    startDateInput.value = startDate; 
+    startDateInput.value = formattedDate; 
     startDateInput.dispatchEvent(new Event('input', { bubbles: true }));
     startDateInput.dispatchEvent(new Event('change', { bubbles: true }));
     
@@ -245,15 +431,27 @@ async function setEndDateInCalendar(endDate, todayDate) {
     const [year, month, day] = endDate.split('-');
     const [ty, tm] = todayDate ? todayDate.split('-') : [year, month];
     
-    // 1. Temukan dan klik input tanggal untuk memicu kalender
-    const endDateInput = document.querySelector('input[name="endDate"]#endDate'); 
+    // 1. Temukan dan klik input tanggal untuk memicu kalender secara robust
+    const endDateInput = findDateInput(false); 
     if (!endDateInput) {
         console.warn("⚠️ Element input 'endDate' tidak ditemukan!");
         return false;
     }
     
+    // Format tanggal dinamis: hilangkan leading zero jika format di input tidak menggunakannya (mis: 2026-6-25)
+    let formattedDate = endDate;
+    const currentVal = endDateInput.value.trim();
+    if (currentVal && currentVal.split('-').length === 3) {
+        const parts = currentVal.split('-');
+        const hasLeadingZeroInMonth = parts[1].startsWith('0');
+        const hasLeadingZeroInDay = parts[2].startsWith('0');
+        if (!hasLeadingZeroInMonth || !hasLeadingZeroInDay) {
+            formattedDate = `${year}-${parseInt(month, 10)}-${parseInt(day, 10)}`;
+        }
+    }
+    
     // Set nilai input dan picu event agar datepicker sinkron
-    endDateInput.value = endDate; 
+    endDateInput.value = formattedDate; 
     endDateInput.dispatchEvent(new Event('input', { bubbles: true }));
     endDateInput.dispatchEvent(new Event('change', { bubbles: true }));
     
@@ -825,11 +1023,23 @@ async function clickLinkCaptureUrlThenOpenTab(linkEl, openerTabId) {
   }
 
   const urlPromise = waitForUrl();
+  const oldHref = linkEl.getAttribute('href');
+  const isJsHref = oldHref && oldHref.toLowerCase().startsWith('javascript:');
+  if (isJsHref) {
+    linkEl.removeAttribute('href');
+  }
+
   try {
     linkEl.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
     linkEl.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
     linkEl.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-  } catch {}
+  } catch (e) {
+    console.error('[BonusScatter] Error dispatching click:', e);
+  } finally {
+    if (isJsHref) {
+      linkEl.setAttribute('href', oldHref);
+    }
+  }
 
   const url = await urlPromise;
 

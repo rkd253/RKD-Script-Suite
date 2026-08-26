@@ -1,3 +1,16 @@
+// Show NEW badge for v3.5.0
+(function checkNewBadge() {
+  const badge = document.getElementById('newBadge');
+  if (badge) {
+    const expireDate = new Date('2026-12-31T23:59:59Z').getTime();
+    if (Date.now() > expireDate) {
+      badge.style.display = 'none';
+    } else {
+      badge.style.display = 'inline-block';
+    }
+  }
+})();
+
 async function showCenterNotif(text, duration = 3000) {
   const notif = el.centerNotif;
   if (!notif) return;
@@ -9,7 +22,7 @@ async function showCenterNotif(text, duration = 3000) {
   notif.innerHTML = `
     <img class="notif-img-el" src="${localSrc}" 
          onerror="this.src='${onlineSrc}'; this.onerror=null;"
-         style="width:180px; height:180px; border-radius:25px; border:3px solid #ff99cc; 
+         style="width:200px; height:300px; border-radius:25px; border:3px solid #ff99cc; 
                 box-shadow:0 0 30px rgba(255,153,204,0.6); margin-bottom:15px; 
                 object-fit:cover; animation:notif-pulse 2s infinite ease-in-out;">
     <div class="notif-text">${text.replace(/\n/g, '<br>')}</div>
@@ -21,82 +34,228 @@ async function showCenterNotif(text, duration = 3000) {
   }, duration);
 }
 
-async function playRocketAnimation(customMsg = '') {
+function showCustomConfirm(title, message) {
   return new Promise((resolve) => {
-    const r = el.rocket;
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+
+    const modal = document.createElement('div');
+    modal.className = 'confirm-modal';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'confirm-title';
+    titleEl.textContent = title;
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'confirm-msg';
+    msgEl.innerHTML = message.replace(/\n/g, '<br>');
+
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'confirm-buttons';
+
+    const okBtn = document.createElement('button');
+    okBtn.className = 'confirm-btn ok';
+    okBtn.textContent = 'PROSES';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'confirm-btn cancel';
+    cancelBtn.textContent = 'BATAL';
+
+    const handleKeydown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cleanup(false);
+      } else if (e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        cleanup(true);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        cleanup(true);
+      }
+    };
+
+    const cleanup = (val) => {
+      window.removeEventListener('keydown', handleKeydown);
+      overlay.classList.remove('show');
+      setTimeout(() => {
+        overlay.remove();
+        resolve(val);
+      }, 300);
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+
+    okBtn.addEventListener('click', () => cleanup(true));
+    cancelBtn.addEventListener('click', () => cleanup(false));
+
+    btnContainer.appendChild(cancelBtn);
+    btnContainer.appendChild(okBtn);
+    modal.appendChild(titleEl);
+    modal.appendChild(msgEl);
+    modal.appendChild(btnContainer);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+      overlay.classList.add('show');
+    }, 10);
+  });
+}
+
+async function playLightningAnimation(customMsg = '') {
+  return new Promise((resolve) => {
     const moon = el.targetMoon;
     const btn = el.sendBtn;
     const userIdEl = el.userId;
     const ticketEl = el.ticketCode;
 
-    if (!r || !moon) {
-      resolve();
-      return;
+    if (!moon) { resolve(); return; }
+
+    // Helper: get center point of an element
+    function getCenter(elem) {
+      const r = elem.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     }
 
-    // Kembalikan ke roket terbang
-    r.innerHTML = '🚀';
+    // Helper: generate jagged lightning path between two points
+    function generateLightningPath(x1, y1, x2, y2, segments = 8) {
+      let path = `M ${x1} ${y1}`;
+      const dx = (x2 - x1) / segments;
+      const dy = (y2 - y1) / segments;
+      for (let i = 1; i < segments; i++) {
+        const jitterX = (Math.random() - 0.5) * 40;
+        const jitterY = (Math.random() - 0.5) * 20;
+        path += ` L ${x1 + dx * i + jitterX} ${y1 + dy * i + jitterY}`;
+      }
+      path += ` L ${x2} ${y2}`;
+      return path;
+    }
 
-    // 1. Position at button
-    const btnRect = btn.getBoundingClientRect();
-    r.style.display = 'block';
-    r.style.left = `${btnRect.left + btnRect.width / 2 - 20}px`;
-    r.style.top = `${btnRect.top}px`;
-    r.style.transform = 'rotate(-45deg)';
+    // Helper: draw a single lightning bolt between two points
+    function drawBolt(x1, y1, x2, y2, color = '#00d4ff', duration = 400) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'lightning-svg');
+      svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+      svg.style.cssText = `position:fixed;inset:0;width:100%;height:100%;z-index:9998;pointer-events:none;`;
+      
+      // Main bolt
+      const mainPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      mainPath.setAttribute('d', generateLightningPath(x1, y1, x2, y2, 10));
+      mainPath.setAttribute('fill', 'none');
+      mainPath.setAttribute('stroke', color);
+      mainPath.setAttribute('stroke-width', '3');
+      mainPath.setAttribute('stroke-linecap', 'round');
+      mainPath.setAttribute('filter', 'url(#lightning-glow)');
+      mainPath.style.cssText = 'animation: lightning-flash-bolt 0.3s ease-out forwards;';
+      
+      // Branch bolt (thinner, offset)
+      const branchPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const midX = x1 + (x2 - x1) * (0.3 + Math.random() * 0.3);
+      const midY = y1 + (y2 - y1) * (0.3 + Math.random() * 0.3);
+      const branchEndX = midX + (Math.random() - 0.5) * 80;
+      const branchEndY = midY + (Math.random() * 60);
+      branchPath.setAttribute('d', generateLightningPath(midX, midY, branchEndX, branchEndY, 4));
+      branchPath.setAttribute('fill', 'none');
+      branchPath.setAttribute('stroke', '#ffffff');
+      branchPath.setAttribute('stroke-width', '1.5');
+      branchPath.setAttribute('opacity', '0.7');
+      branchPath.style.cssText = 'animation: lightning-flash-bolt 0.25s ease-out 0.05s forwards;';
+      
+      // Glow filter
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      defs.innerHTML = `<filter id="lightning-glow"><feGaussianBlur stdDeviation="4" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+      
+      svg.appendChild(defs);
+      svg.appendChild(mainPath);
+      svg.appendChild(branchPath);
+      document.body.appendChild(svg);
+      
+      setTimeout(() => svg.remove(), duration);
+      return svg;
+    }
+
+    // Helper: create impact spark burst at a point
+    function createImpactSparks(x, y, count = 8) {
+      for (let i = 0; i < count; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'lightning-spark';
+        spark.style.left = x + 'px';
+        spark.style.top = y + 'px';
+        const angle = (Math.PI * 2 / count) * i + (Math.random() * 0.5);
+        const dist = 20 + Math.random() * 35;
+        spark.style.setProperty('--spark-dx', `${Math.cos(angle) * dist}px`);
+        spark.style.setProperty('--spark-dy', `${Math.sin(angle) * dist}px`);
+        document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), 500);
+      }
+    }
+
+    // Helper: full screen flash
+    function screenFlash(duration = 120) {
+      const flash = document.createElement('div');
+      flash.className = 'lightning-screen-flash';
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), duration);
+    }
+
+    // ===== SEQUENCE START =====
+    const btnCenter = getCenter(btn);
+    const userCenter = getCenter(userIdEl);
+    const ticketCenter = getCenter(ticketEl);
+    const moonCenter = getCenter(moon);
+
+    // Step 1: Flash + Lightning from Button to UserID
+    screenFlash(100);
+    drawBolt(btnCenter.x, btnCenter.y, userCenter.x, userCenter.y, '#00d4ff', 500);
+    createImpactSparks(userCenter.x, userCenter.y, 6);
+    userIdEl.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.8), inset 0 0 10px rgba(0, 212, 255, 0.3)';
 
     setTimeout(() => {
-      // 2. Fly to UserID
-      const userRect = userIdEl.getBoundingClientRect();
-      r.style.transition = 'all 0.8s ease-in-out';
-      r.style.left = `${userRect.left + 20}px`;
-      r.style.top = `${userRect.top}px`;
-      r.style.transform = 'rotate(-90deg) scale(1.2)';
+      // Step 2: Lightning from UserID to TicketCode
+      drawBolt(userCenter.x, userCenter.y, ticketCenter.x, ticketCenter.y, '#ffd700', 500);
+      createImpactSparks(ticketCenter.x, ticketCenter.y, 6);
+      ticketEl.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.8), inset 0 0 10px rgba(255, 215, 0, 0.3)';
+      userIdEl.style.boxShadow = '';
+
+      // Pick up values
+      const txId = ticketEl.value;
+      ticketEl.value = '';
+      el.betting.value = '';
+      el.bulk.value = '';
 
       setTimeout(() => {
-        // 3. Fly to TicketCode
-        const ticketRect = ticketEl.getBoundingClientRect();
-        r.style.left = `${ticketRect.left + 20}px`;
-        r.style.top = `${ticketRect.top}px`;
-        r.style.transform = 'rotate(-90deg) scale(1.4)';
+        // Step 3: BIG Lightning from TicketCode to Moon (Results)
+        screenFlash(150);
+        drawBolt(ticketCenter.x, ticketCenter.y, moonCenter.x, moonCenter.y, '#ffffff', 600);
+        drawBolt(ticketCenter.x + 10, ticketCenter.y - 5, moonCenter.x - 10, moonCenter.y + 5, '#00d4ff', 550);
+        createImpactSparks(moonCenter.x, moonCenter.y, 12);
+        ticketEl.style.boxShadow = '';
+
+        // Impact on moon
+        moon.classList.add('hit');
 
         setTimeout(() => {
-          // Pick up values
-          const txId = ticketEl.value;
-          ticketEl.value = ''; 
-          el.betting.value = ''; 
-          el.bulk.value = '';
+          moon.classList.remove('hit');
 
-          // 4. Fly to Moon (Results)
-          const moonRect = moon.getBoundingClientRect();
-          r.style.left = `${moonRect.left}px`;
-          r.style.top = `${moonRect.top}px`;
-          r.style.transform = 'rotate(135deg) scale(1)';
+          // Notification
+          if (customMsg) {
+            showCenterNotif(customMsg);
+          } else if (txId) {
+            showCenterNotif(`⚡ Tiket Berhasil Di-input!\n${txId}`);
+          } else {
+            showCenterNotif('⚡ Antrian Berhasil Di-input!');
+          }
 
-          setTimeout(() => {
-            // 5. Impact!
-            moon.textContent = '🌙'; 
-            moon.classList.add('hit');
-            r.style.display = 'none';
-            
-            // Notification
-            if (customMsg) {
-              showCenterNotif(customMsg);
-            } else if (txId) {
-              showCenterNotif(`🎯 Tiket Berhasil Di-input!\n${txId}`);
-            } else {
-              showCenterNotif('🎯 Antrian Berhasil Di-input!');
-            }
-
-            setTimeout(() => {
-              moon.classList.remove('hit');
-              resolve();
-            }, 800);
-          }, 1000);
-        }, 1000);
-      }, 800);
-    }, 100);
+          setTimeout(() => resolve(), 400);
+        }, 600);
+      }, 450);
+    }, 400);
   });
 }
+
+// Keep backward compat â€” alias for sendBtn handler
+const playRocketAnimation = playLightningAnimation;
+
 
 el.sendBtn.addEventListener('click', async () => {
   const bulkItems = parseBulk(el.bulk.value);
@@ -110,16 +269,78 @@ el.sendBtn.addEventListener('click', async () => {
     return;
   }
 
+  // Warning if betting is below 1600
+  if (bulkItems.length > 0) {
+    let lowBettingFound = false;
+    for (const item of bulkItems) {
+      if (item.betting) {
+        const bVal = parseFloat(String(item.betting).replace(/[^0-9.]/g, ''));
+        if (!isNaN(bVal) && bVal < 1600) {
+          lowBettingFound = true;
+          break;
+        }
+      }
+    }
+    if (lowBettingFound) {
+      const proceed = await showCustomConfirm(
+        '⚠️ PERINGATAN BETTING!',
+        'Ada tiket dengan nilai betting di bawah 1.600 di dalam antrian multi input!\nApakah Anda yakin ingin melanjutkan?'
+      );
+      if (!proceed) return;
+    }
+  } else if (betting) {
+    const bVal = parseFloat(betting.replace(/[^0-9.]/g, ''));
+    if (!isNaN(bVal) && bVal < 1600) {
+      const proceed = await showCustomConfirm(
+        '⚠️ PERINGATAN BETTING!',
+        `Nilai betting yang Anda masukkan (${betting}) di bawah 1.600!\nApakah Anda yakin ingin melanjutkan?`
+      );
+      if (!proceed) return;
+    }
+  }
+
+  // Anti-Duplicate Check
+  if (typeof state !== 'undefined' && state.results && state.results.length > 0) {
+    if (bulkItems.length > 0) {
+      let duplicateTxIds = [];
+      for (const item of bulkItems) {
+        const found = state.results.find(r => r.transactionId === item.transactionId);
+        if (found) {
+          duplicateTxIds.push(item.transactionId);
+        }
+      }
+      if (duplicateTxIds.length > 0) {
+        const listStr = duplicateTxIds.slice(0, 3).join(', ') + (duplicateTxIds.length > 3 ? '...' : '');
+        const proceed = await showCustomConfirm(
+          '⚠️ TIKET GANDA TERDETEKSI!',
+          `Ada ${duplicateTxIds.length} tiket di multi input yang sudah pernah di-input sebelumnya:\n[${listStr}]\n\nApakah Anda yakin ingin tetap memproses ulang tiket-tiket ganda ini?`
+        );
+        if (!proceed) return;
+      }
+    } else if (transactionId) {
+      const found = state.results.find(r => r.transactionId === transactionId);
+      if (found) {
+        const proceed = await showCustomConfirm(
+          '⚠️ TIKET GANDA TERDETEKSI!',
+          `Tx ID ini (${transactionId}) sudah pernah di-input sebelumnya untuk User ID: ${found.userId}.\n\nApakah Anda yakin ingin tetap memproses ulang tiket ini?`
+        );
+        if (!proceed) return;
+      }
+    }
+  }
+
   // Play animation first
   el.sendBtn.disabled = true;
-  el.targetMoon.textContent = '🌕'; 
   const msg = bulkItems.length > 0 ? `🎯 ${bulkItems.length} Tiket Antrian Berhasil Di-input!` : '';
   await playRocketAnimation(msg);
 
   if (bulkItems.length > 0) {
     postQueue(bulkItems);
   } else {
-    const item = { userId, userIdRaw, transactionId };
+    const isTS = (el.isTS && el.isTS.checked) || userIdRaw.toLowerCase().endsWith(' ts');
+    const finalUserIdRaw = (isTS && !userIdRaw.toLowerCase().endsWith(' ts')) ? `${userIdRaw} TS` : userIdRaw;
+    const item = { userId, userIdRaw: finalUserIdRaw, transactionId };
+    if (isTS) item.isTS = true;
     if (betting) item.betting = betting;
     postQueue([item]);
   }
@@ -153,25 +374,37 @@ if (el.searchStatusBtnHeader) {
   });
 }
 
-// Cursor Star Trail Logic
+// Premium Black Smoke Cursor Trail
 document.addEventListener('mousemove', (e) => {
-  const star = document.createElement('div');
-  star.className = 'star-particle';
-  star.style.left = e.clientX + 'px';
-  star.style.top = e.clientY + 'px';
-  
-  // Randomize color a bit
-  const colors = ['#ffffff', '#00ffff', '#ff00ff', '#ffff00', '#00ff00'];
-  const color = colors[Math.floor(Math.random() * colors.length)];
-  star.style.background = color;
-  star.style.boxShadow = `0 0 15px ${color}, 0 0 30px ${color}`;
-  
-  document.body.appendChild(star);
-  
-  setTimeout(() => {
-    star.remove();
-  }, 800);
+  if (Math.random() < 0.4) { // Throttle generation rate for maximum performance
+    const p = document.createElement('div');
+    p.className = 'smoke-particle';
+    const jitterX = (Math.random() - 0.5) * 6;
+    const jitterY = (Math.random() - 0.5) * 6;
+    p.style.left = (e.clientX + 36 + jitterX) + 'px';
+    p.style.top = (e.clientY + 42 + jitterY) + 'px';
+    
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+  }
 });
+
+// ===== UPGRADE 7: AMBIENT FLOATING PARTICLES (Ultra Light) =====
+// Created once on load, pure CSS animation, zero ongoing JS cost
+(function initAmbientParticles() {
+  const count = 10;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'ambient-particle';
+    const size = 4 + Math.random() * 8; // 4px to 12px
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.animationDuration = (15 + Math.random() * 25) + 's'; // 15s to 40s
+    p.style.animationDelay = (Math.random() * 20) + 's';
+    document.body.appendChild(p);
+  }
+})();
 
 // Force load signature image & Handle CSP Visibility
 const signImg = document.querySelector('.rkd-sign-img');
@@ -262,6 +495,7 @@ if (el.saveSettingsBtn) {
       if (config.executorName) configLines.push('  executorName:  "' + config.executorName + '",');
       if (config.startDate) configLines.push('  startDate:     "' + config.startDate + '",');
       if (config.endDate) configLines.push('  endDate:       "' + config.endDate + '",');
+      if (config.yesterdayDate) configLines.push('  yesterdayDate: "' + config.yesterdayDate + '",');
       if (config.todayDate) configLines.push('  todayDate:     "' + config.todayDate + '",');
       configLines.push('  processMode:   "' + (config.processMode || 'auto') + '",');
       configLines.push('  autoStatusCheck: ' + autoStatus + ',');
@@ -383,7 +617,9 @@ el.resultBody.addEventListener('click', (ev) => {
   btn.disabled = true;
   btn.textContent = 'Mengulang...';
 
-  const item = { userId, userIdRaw: userId, transactionId };
+  const isTS = btn.dataset.isTs === 'true';
+  const item = { userId, userIdRaw: isTS ? `${userId} TS` : userId, transactionId };
+  if (isTS) item.isTS = true;
   if (betting) item.betting = betting;
   postQueue([item]);
 
@@ -451,4 +687,232 @@ el.resultBody.addEventListener('click', (ev) => {
     }
   });
 });
+
+// ===== LOGIC ASISTEN CEK STATUS =====
+let assistantTimer = null;
+let assistantRetries = new Map();
+let assistantCheckedKeys = new Set();
+state.assistantRunning = false;
+
+function stopAssistant() {
+  state.assistantRunning = false;
+  if (assistantTimer) {
+    clearTimeout(assistantTimer);
+    assistantTimer = null;
+  }
+  if (el.assistantBtn) {
+    el.assistantBtn.textContent = '🤖 Asisten Cek';
+    el.assistantBtn.classList.remove('running');
+  }
+  setStatus('🤖 Asisten Cek dihentikan.');
+}
+
+async function startAssistant() {
+  assistantRetries.clear();
+  assistantCheckedKeys.clear();
+  state.assistantRunning = true;
+  if (el.assistantBtn) {
+    el.assistantBtn.textContent = '🛑 Hentikan Asisten';
+    el.assistantBtn.classList.add('running');
+  }
+  setStatus('🤖 Asisten Cek dimulai...');
+  runAssistantLoop();
+}
+
+function isFinalStatus(status, userId, transactionId) {
+  const s = String(status || '').trim().toUpperCase();
+  if (s === 'APPROVED' || s === 'REJECTED' || s === 'LIMIT') return true;
+  if (s === 'NOT_FOUND' || s === 'NOT FOUND') {
+    const key = `${userId}|${transactionId}`;
+    const retries = assistantRetries.get(key) || 0;
+    if (retries >= 2) {
+      return true; // Final jika sudah diulangi 2 kali
+    }
+    return false; // Belum final, akan dicoba cek ulang
+  }
+  return false;
+}
+
+function runAssistantLoop() {
+  if (!state.assistantRunning) return;
+
+  // 1. Cari tiket yang perlu dicek statusnya (statusnya bukan final)
+  const badges = Array.from(el.resultBody.querySelectorAll('.clickable-badge[data-action="verifyStatusSingle"]'));
+  const candidates = badges.filter(badge => {
+    const text = String(badge.textContent || '').trim().toUpperCase();
+    const uId = badge.dataset.userId;
+    const txId = badge.dataset.transactionId;
+    const key = `${uId}|${txId}`;
+
+    // Lewati jika sudah pernah dicek dalam putaran asisten ini
+    if (assistantCheckedKeys.has(key)) return false;
+
+    return !isFinalStatus(text, uId, txId) && text !== 'CHECKING...';
+  });
+
+  // Proses dari bawah ke atas (oldest/paling bawah dulu)
+  candidates.reverse();
+
+  if (candidates.length === 0) {
+    showCenterNotif('🎉 Asisten: Semua status selesai dicek!');
+    stopAssistant();
+    return;
+  }
+
+  // Ambil kandidat pertama di layar
+  const targetBadge = candidates[0];
+  const userId = targetBadge.dataset.userId;
+  const transactionId = targetBadge.dataset.transactionId;
+  const currentText = String(targetBadge.textContent || '').trim().toUpperCase();
+
+  const key = `${userId}|${transactionId}`;
+  if (currentText === 'NOT_FOUND' || currentText === 'NOT FOUND') {
+    const retries = assistantRetries.get(key) || 0;
+    assistantRetries.set(key, retries + 1);
+    setStatus(`🤖 Asisten: Mengulangi cek status ${userId} (Percobaan ${retries + 1}/2)...`);
+  } else {
+    setStatus(`🤖 Asisten: Mengklik cek status untuk ${userId}...`);
+  }
+
+  // Rekam status awal untuk memantau perubahan
+  const currentResults = Array.isArray(state.results) ? state.results : [];
+  const initialItem = currentResults.find(r => String(r.userId) === userId && String(r.transactionId) === transactionId);
+  const initialStatus = initialItem ? String(initialItem.verifiedStatus || '').trim().toUpperCase() : '';
+
+  try {
+    targetBadge.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  } catch (e) {}
+  
+  // Klik tombol
+  targetBadge.click();
+
+  // Tunggu sampai status berubah di state.results
+  const checkStart = Date.now();
+  
+  function checkStatusUpdated() {
+    if (!state.assistantRunning) return;
+
+    // Cari data terbaru di state.results
+    const currentResults = Array.isArray(state.results) ? state.results : [];
+    const item = currentResults.find(r => String(r.userId) === userId && String(r.transactionId) === transactionId);
+    
+    const status = item ? String(item.verifiedStatus || '').trim().toUpperCase() : '';
+    const elapsed = Date.now() - checkStart;
+
+    const statusChanged = (status !== initialStatus);
+
+    if (statusChanged || elapsed > 15000) {
+      // Selesai (berhasil/gagal/timeout)
+      if (elapsed > 15000) {
+        setStatus(`🤖 Asisten: Timeout pengecekan ${userId}. Beralih ke baris berikutnya...`);
+      } else {
+        setStatus(`🤖 Asisten: Status ${userId} terupdate (${status}).`);
+      }
+
+      // Masukkan ke checked keys agar tidak dicek lagi (kecuali NOT FOUND yang masih perlu diulangi)
+      const isNotFound = (status === 'NOT_FOUND' || status === 'NOT FOUND');
+      const isRetryingNotFound = isNotFound && !isFinalStatus(status, userId, transactionId);
+
+      if (!isRetryingNotFound || elapsed > 15000) {
+        assistantCheckedKeys.add(key);
+      }
+
+      // Jeda acak yang manusiawi (2-4 detik) sebelum baris berikutnya
+      const nextDelay = 2000 + Math.random() * 2000;
+      setStatus(`🤖 Asisten: Jeda ${Math.round(nextDelay/100)/10}s sebelum tiket berikutnya...`);
+      
+      assistantTimer = setTimeout(() => {
+        runAssistantLoop();
+      }, nextDelay);
+    } else {
+      // Masih mengecek, periksa lagi dalam 500ms
+      assistantTimer = setTimeout(checkStatusUpdated, 500);
+    }
+  }
+
+  // Mulai memantau perubahan
+  assistantTimer = setTimeout(checkStatusUpdated, 1000);
+}
+
+if (el.assistantBtn) {
+  el.assistantBtn.addEventListener('click', () => {
+    if (state.assistantRunning) {
+      stopAssistant();
+    } else {
+      startAssistant();
+    }
+  });
+}
+
+// ===== FLOATING UPDATE MODAL EVENT LISTENERS =====
+(function initUpdateModal() {
+  const modal = document.getElementById('updateModal');
+  const infoBtn = document.getElementById('infoUpdateBtn');
+  const closeBtn = document.getElementById('closeModalBtn');
+  const infoDot = document.getElementById('infoUpdateDot');
+  
+  if (modal && infoBtn && closeBtn && infoDot) {
+    const hideUntil = localStorage.getItem('hide_update_banner_v3_5_0');
+    const now = Date.now();
+    
+    // Show glowing dot if quiet period has expired
+    if (!hideUntil || now > Number(hideUntil)) {
+      infoDot.style.display = 'block';
+      // Auto-popup once on page load if quiet period expired
+      modal.style.display = 'flex';
+    }
+    
+    // Click info button to open modal
+    infoBtn.addEventListener('click', () => {
+      modal.style.display = 'flex';
+      infoDot.style.display = 'none';
+    });
+    
+    // Close modal
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+      const threeDays = 3 * 24 * 60 * 60 * 1000;
+      localStorage.setItem('hide_update_banner_v3_5_0', Date.now() + threeDays);
+      infoDot.style.display = 'none';
+    });
+    
+    // Close if click outside content
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        const threeDays = 3 * 24 * 60 * 60 * 1000;
+        localStorage.setItem('hide_update_banner_v3_5_0', Date.now() + threeDays);
+        infoDot.style.display = 'none';
+      }
+    });
+  }
+
+  // Welcome toast notification on initial load
+  setTimeout(() => {
+    if (typeof showCenterNotif === 'function') {
+      showCenterNotif("✨ BONUS SCATTER v3.5.0 AKTIF!\n📅 Auto Rollover 00:00 & 🤖 Auto-Check 10 Pending Siap!", 3500);
+    }
+  }, 1000);
+
+  // Toggle Stats Charts Dashboard
+  const toggleBtn = document.getElementById('toggleChartsBtn');
+  const chartsDashboard = document.getElementById('statsChartsDashboard');
+  if (toggleBtn && chartsDashboard) {
+    toggleBtn.addEventListener('click', () => {
+      if (chartsDashboard.style.display === 'none') {
+        chartsDashboard.style.display = 'grid';
+        toggleBtn.textContent = '📊 Sembunyikan Grafik';
+        toggleBtn.classList.add('active');
+        // Trigger redrawing to animate on open
+        if (typeof state !== 'undefined' && state.results && typeof updateStats === 'function') {
+          updateStats(state.results);
+        }
+      } else {
+        chartsDashboard.style.display = 'none';
+        toggleBtn.textContent = '📊 Lihat Grafik';
+        toggleBtn.classList.remove('active');
+      }
+    });
+  }
+})();
 
