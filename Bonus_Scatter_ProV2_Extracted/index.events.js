@@ -1,10 +1,12 @@
-// Hide NEW badge after 7 days (July 2, 2026)
+// Show NEW badge for v3.5.0
 (function checkNewBadge() {
   const badge = document.getElementById('newBadge');
   if (badge) {
-    const expireDate = new Date('2026-07-02T23:59:59Z').getTime();
+    const expireDate = new Date('2026-12-31T23:59:59Z').getTime();
     if (Date.now() > expireDate) {
       badge.style.display = 'none';
+    } else {
+      badge.style.display = 'inline-block';
     }
   }
 })();
@@ -850,7 +852,7 @@ if (el.assistantBtn) {
   const infoDot = document.getElementById('infoUpdateDot');
   
   if (modal && infoBtn && closeBtn && infoDot) {
-    const hideUntil = localStorage.getItem('hide_update_banner_until');
+    const hideUntil = localStorage.getItem('hide_update_banner_v3_5_0');
     const now = Date.now();
     
     // Show glowing dot if quiet period has expired
@@ -870,7 +872,7 @@ if (el.assistantBtn) {
     closeBtn.addEventListener('click', () => {
       modal.style.display = 'none';
       const threeDays = 3 * 24 * 60 * 60 * 1000;
-      localStorage.setItem('hide_update_banner_until', Date.now() + threeDays);
+      localStorage.setItem('hide_update_banner_v3_5_0', Date.now() + threeDays);
       infoDot.style.display = 'none';
     });
     
@@ -879,11 +881,18 @@ if (el.assistantBtn) {
       if (e.target === modal) {
         modal.style.display = 'none';
         const threeDays = 3 * 24 * 60 * 60 * 1000;
-        localStorage.setItem('hide_update_banner_until', Date.now() + threeDays);
+        localStorage.setItem('hide_update_banner_v3_5_0', Date.now() + threeDays);
         infoDot.style.display = 'none';
       }
     });
   }
+
+  // Welcome toast notification on initial load
+  setTimeout(() => {
+    if (typeof showCenterNotif === 'function') {
+      showCenterNotif("✨ BONUS SCATTER v3.5.0 AKTIF!\n📅 Auto Rollover 00:00 & 🤖 Auto-Check 10 Pending Siap!", 3500);
+    }
+  }, 1000);
 
   // Toggle Stats Charts Dashboard
   const toggleBtn = document.getElementById('toggleChartsBtn');
