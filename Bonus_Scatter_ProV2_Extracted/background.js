@@ -239,7 +239,25 @@ function ensureBonussmbAlarm() {
     }
 }
 
+function checkAndPerformMidnightRollover() {
+    try {
+        const currentToday = getTodayDateString();
+        chrome.storage.local.get(['todayDate', 'startDate', 'endDate', 'yesterdayDate'], (res) => {
+            if (!res.todayDate || res.todayDate !== currentToday) {
+                console.log(`[CekBonus] 📅 Pergantian Hari (00:00) terdeteksi di Background. Mengupdate tanggal ke ${currentToday}`);
+                chrome.storage.local.set({
+                    todayDate: currentToday,
+                    startDate: currentToday,
+                    endDate: currentToday,
+                    yesterdayDate: getYesterdayDateString()
+                });
+            }
+        });
+    } catch (e) {}
+}
+
 function initAutoBackground() {
+    checkAndPerformMidnightRollover();
     ensureKeepAliveAlarm();
     ensureBonussmbAlarm();
     Promise.resolve(ensureOffscreenDocument()).catch(() => {});
@@ -264,6 +282,8 @@ try {
     });
     chrome.alarms.onAlarm.addListener((alarm) => {
         if (!alarm) return;
+
+        checkAndPerformMidnightRollover();
 
         if (alarm.name === KEEPALIVE_ALARM) {
             chrome.storage.local.get(['autoStartEnabled'], (res) => {
@@ -443,7 +463,10 @@ try {
         if (next.length === 0) return;
         chrome.storage.local.get(['autoStartEnabled'], (res) => {
             const enabled = typeof res.autoStartEnabled === 'boolean' ? res.autoStartEnabled : true;
-            if (enabled) startNextProcess();
+            // Otomatis jalan jika antrian pending mencapai minimal 10 atau jika ada proses yang sedang berjalan
+            if (enabled && (next.length >= 10 || activeProcesses > 0)) {
+                startNextProcess();
+            }
         });
     });
 } catch {
@@ -1144,14 +1167,24 @@ function startNextProcess() {
         let txQueue = res.txQueue || [];
         const agentHeaders = res.agentHeaders || null;
         const adminUrl = res.adminUrl || DEFAULT_ADMIN_URL;
-        const todayDate = res.todayDate || getTodayDateString();
-        const startDate = res.startDate || todayDate;
-        const endDate = res.endDate || todayDate;
-        const yesterdayDate = res.yesterdayDate || startDate;
+
+        const currentToday = getTodayDateString();
+        const storedToday = res.todayDate;
+        const isNewDay = storedToday && storedToday !== currentToday;
+        const todayDate = currentToday;
+        const startDate = isNewDay ? currentToday : (res.startDate || todayDate);
+        const endDate = isNewDay ? currentToday : (res.endDate || todayDate);
+        const yesterdayDate = isNewDay ? getYesterdayDateString() : (res.yesterdayDate || getYesterdayDateString());
+
+        if (isNewDay) {
+            console.log(`[CekBonus] 📅 Pergantian hari terdeteksi di startNextProcess: ${currentToday}`);
+            chrome.storage.local.set({ todayDate, startDate, endDate, yesterdayDate });
+        }
+
         const executorName = res.executorName || (agentHeaders ? agentHeaders["X-Agent-User"] : "") || "executor";
         const processMode = res.processMode || "auto";
         try {
-            console.log('[CekBonus] startNextProcess build=3.1.0 mode=', processMode, 'hasToken=', hasUsableAccessToken(agentHeaders));
+            console.log('[CekBonus] startNextProcess build=3.5.0 mode=', processMode, 'hasToken=', hasUsableAccessToken(agentHeaders));
         } catch {}
 
         // Jika antrian kosong, proses selesai
@@ -1290,6 +1323,15 @@ const DEFAULT_ADMIN_URL = "https://lapak99.idrbo2.com";
 
 function getTodayDateString() {
     const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function getYesterdayDateString() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
@@ -2279,7 +2321,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             });
 
             chrome.storage.local.set(toSave, () => {
-                startNextProcess();
+                const shouldAutoStart = finalQueue.length >= 10 || config.forceStart === true || config.processMode === 'auto_immediate' || activeProcesses > 0;
+                if (shouldAutoStart) {
+                    console.log(`[CekBonus] 🚀 Memulai batch process. Pending count: ${finalQueue.length} (Threshold >= 10 atau forceStart/active).`);
+                    startNextProcess();
+                } else {
+                    console.log(`[CekBonus] ⏳ Antrian pending: ${finalQueue.length}/10. Menunggu hingga 10 pending untuk auto-check, atau klik proses.`);
+                }
                 sendResponse({ status: 'accepted', count: finalQueue.length });
             });
         });
@@ -2587,9 +2635,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (changes.txQueue) {
         chrome.storage.local.get(["txQueue", "agentHeaders", "executorName", "adminUrl", "startDate", "endDate"], (res) => {
-            const hasQueue = Array.isArray(res.txQueue) && res.txQueue.length > 0;
+            const queueLen = Array.isArray(res.txQueue) ? res.txQueue.length : 0;
             const cfgOk = !!(res.agentHeaders && res.agentHeaders["X-Access-Token"]);
-            if (hasQueue && cfgOk) {
+            // Otomatis jalan jika antrian pending mencapai minimal 10 atau ada proses berjalan
+            if (cfgOk && (queueLen >= 10 || activeProcesses > 0)) {
+                console.log(`[CekBonus] 🤖 Auto-Check triggered via storage change: pending = ${queueLen} (>= 10).`);
                 startNextProcess();
             }
         });
