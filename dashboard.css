@@ -1,938 +1,688 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RKD Suite God-Mode 2030 — Cyber Automation Suite</title>
-<meta name="description" content="God-Mode Cyberpunk Automation Suite for LiveChat scripts, Chrome extensions, and tools by RKD.">
-<link rel="icon" type="image/png" href="rkd_logo_transparent.png">
-<link rel="stylesheet" href="dashboard.css">
-<style>
-  body {
-    background-image: url('bg_main.jpg') !important;
-    background-size: cover !important;
-    background-position: center center !important;
-    background-attachment: fixed !important;
-    background-repeat: no-repeat !important;
-  }
-  .cyber-bg {
-    position: fixed !important;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-image: url('bg_main.jpg') !important;
-    background-size: cover !important;
-    background-position: center center !important;
-    background-attachment: fixed !important;
-    z-index: -2;
-    pointer-events: none;
-  }
-  .cyber-bg::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 5, 18, 0.62);
-    z-index: 0;
-  }
-</style>
-</head>
-<body data-theme="cyan">
-<div class="cyber-bg"></div>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-<!-- FEATURE 1: 60FPS MATRIX PARTICLE CANVAS -->
-<canvas id="cyberMatrixCanvas"></canvas>
-
-<!-- ===== ULTIMATE TOP CONTROL CENTER (FULL WIDTH) ===== -->
-<header class="ultimate-topbar">
-  <div class="topbar-left">
-    <div class="topbar-logo-circle">
-      <img src="rkd_logo_transparent.png" alt="RKD Logo" class="topbar-logo-img">
-    </div>
-    <div class="topbar-brand-group">
-      <div class="topbar-brand-title">RKD SUITE PRO <span class="v-badge">v3.5 GOD-MODE</span></div>
-      <div class="topbar-brand-sub">CYBER AUTOMATION COMMAND CENTER 2030</div>
-    </div>
-  </div>
-
-  <!-- LIVE INSTANT SEARCH BAR -->
-  <div class="topbar-search-wrap">
-    <span class="search-icon">🔍</span>
-    <input type="text" id="liveSearchInput" class="topbar-search-input" placeholder="Cari script, extension, atau kalkulator..." oninput="filterModules()">
-    <span class="search-clear-btn" onclick="clearSearch()" title="Clear search">✕</span>
-  </div>
-
-  <div class="topbar-right-group">
-    <!-- FEATURE 2: SFX AUDIO TOGGLE -->
-    <button type="button" id="sfxToggleBtn" class="sfx-toggle-btn" onclick="toggleSFX()" title="Toggle Cyber Sound Effects">🔊 SFX ON</button>
-
-    <!-- HUD Theme Switcher -->
-    <div class="theme-switcher-bar">
-      <span class="theme-label">TEMA:</span>
-      <div class="theme-dots">
-        <button type="button" class="theme-dot active" data-theme="cyan" title="Cyan Cyberpunk" style="background:#00f0ff;"></button>
-        <button type="button" class="theme-dot" data-theme="pink" title="Pink Cyberpunk" style="background:#ff007f;"></button>
-        <button type="button" class="theme-dot" data-theme="green" title="Matrix Hacker Green" style="background:#00e5a0;"></button>
-        <button type="button" class="theme-dot" data-theme="gold" title="Sultan Gold" style="background:#f59e0b;"></button>
-      </div>
-    </div>
-
-    <!-- System Status Indicator -->
-    <div class="system-status-pill">
-      <span class="status-dot"></span>
-      <span class="status-text">SYSTEM ONLINE</span>
-    </div>
-  </div>
-</header>
-
-<!-- ===== MAIN CONTAINER ===== -->
-<main class="ultimate-container">
-
-  <!-- ===== HERO SPOTLIGHT & OVERDRIVE BAR ===== -->
-  <section class="ultimate-hero">
-    <div class="radar-scanline-horizontal"></div>
-    <div class="hero-inner">
-      <div class="hero-left">
-        <div class="hero-welcome">WAKTU SISTEM: <span id="cyberClock">00:00:00</span></div>
-        <h1 class="hero-main-title">RKD AUTOMATION LAUNCHER</h1>
-        <p class="hero-main-desc">Pusat kendali otomatisasi Tampermonkey, Ekstensi Chrome, Aplikasi Desktop, dan Web Tools untuk agen LiveChat.</p>
-        
-        <!-- Quick Telemetry HUD Badges -->
-        <div class="telemetry-bar">
-          <div class="telemetry-item">
-            <span class="t-icon">📜</span>
-            <span class="t-val hud-ring-text-scripts">0/4</span>
-            <span class="t-lbl">SCRIPTS TERPASANG</span>
-          </div>
-          <div class="telemetry-item">
-            <span class="t-icon">🧩</span>
-            <span class="t-val">3/3</span>
-            <span class="t-lbl">EXTENSIONS READY</span>
-          </div>
-          <div class="telemetry-item">
-            <span class="t-icon">⚡</span>
-            <span class="t-val">12ms</span>
-            <span class="t-lbl">PING LOW LATENCY</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-right">
-        <button type="button" class="btn-overdrive-main" onclick="installAll()">
-          <span class="btn-icon">⚡</span>
-          <div class="btn-txt-wrap">
-            <span class="btn-title">OVERDRIVE INSTALL ALL</span>
-            <span class="btn-sub">Buka 4 Tampermonkey Scripts Instan</span>
-          </div>
-        </button>
-        <button type="button" class="btn-overdrive-sub" onclick="downloadAllExtensions()">
-          <span class="btn-icon">📦</span>
-          <div class="btn-txt-wrap">
-            <span class="btn-title">DOWNLOAD ALL EXTENSIONS</span>
-            <span class="btn-sub">Unduh Paket 3 File .ZIP Ekstensi</span>
-          </div>
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== CATEGORY PILL NAVIGATION ===== -->
-  <nav class="category-nav-bar">
-    <button type="button" class="cat-pill active" onclick="switchCategory('all', this)">
-      <span>🔥 ALL MODULES</span> <span class="cat-count">13</span>
-    </button>
-    <button type="button" class="cat-pill" onclick="switchCategory('scripts', this)">
-      <span>📜 SCRIPTS</span> <span class="cat-count">4</span>
-    </button>
-    <button type="button" class="cat-pill" onclick="switchCategory('extensions', this)">
-      <span>🧩 EXTENSIONS</span> <span class="cat-count">3</span>
-    </button>
-    <button type="button" class="cat-pill" onclick="switchCategory('keyboard', this)">
-      <span>⌨️ APPS</span> <span class="cat-count">2</span>
-    </button>
-    <button type="button" class="cat-pill" onclick="switchCategory('tools', this)">
-      <span>🧮 CALCULATORS</span> <span class="cat-count">4</span>
-    </button>
-    <button type="button" class="cat-pill" onclick="switchCategory('guide', this)">
-      <span>📖 GUIDE</span>
-    </button>
-  </nav>
-
-  <!-- ===== CATEGORY SECTION 1: SCRIPTS ===== -->
-  <div class="category-section-block" data-category="scripts">
-    <div class="cat-section-header scripts-hdr">
-      <h2>📜 TAMPERMONKEY SCRIPTS AUTOMATION</h2>
-      <span class="sec-badge cyan">4 MODULES</span>
-    </div>
-    <div class="ultimate-grid">
-      <!-- SCRIPT 1 -->
-      <div class="module-card card-type-scripts" data-search="word highlighter lapak1 ctrl+h gm_storage plugin_01 domain red">
-        <div class="card-top">
-          <div class="badge-emblem cyan">P1</div>
-          <div class="card-title-group">
-            <span class="card-code">PLUGIN_01</span>
-            <h3 class="card-title">Word Highlighter & Dashboard</h3>
-          </div>
-          <button type="button" class="btn-inspect-trigger" onclick="inspectModule('PLUGIN_01', 'Word Highlighter & Dashboard', 'Visual word marking dengan control panel drag-and-drop real-time.')" title="Pratinjau Kode">🔍 CODE</button>
-          <span class="card-status-badge ready" id="status-lapak1">⚡ SIAP INSTALL</span>
-        </div>
-        <p class="card-description">Visual word marking dengan control panel drag-and-drop real-time untuk penanda kata otomatis.</p>
-        <div class="card-tag-row">
-          <span class="tag red">HOTKEY: CTRL+H</span>
-          <span class="tag">STORE: GM_STORAGE</span>
-        </div>
-        <div class="card-footer">
-          <a href="lapak1.user.js" class="btn-card btn-red" id="install-btn-lapak1" data-install-key="lapak1">
-            🔴 Install <span class="btn-sub">DOMAIN RED</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- SCRIPT 2 -->
-      <div class="module-card card-type-scripts" data-search="neural shield anti-spam lapak2 passive shield_ui plugin_02 domain blue">
-        <div class="card-top">
-          <div class="badge-emblem blue">P2</div>
-          <div class="card-title-group">
-            <span class="card-code">PLUGIN_02</span>
-            <h3 class="card-title">Neural Shield: Anti-Spam</h3>
-          </div>
-          <button type="button" class="btn-inspect-trigger" onclick="inspectModule('PLUGIN_02', 'Neural Shield: Anti-Spam', 'Engine analisis duplikasi pesan real-time untuk memblokir spam.')" title="Pratinjau Kode">🔍 CODE</button>
-          <span class="card-status-badge ready" id="status-lapak2">⚡ SIAP INSTALL</span>
-        </div>
-        <p class="card-description">Engine analisis duplikasi pesan real-time untuk memblokir spam dan pesan berulang secara otomatis.</p>
-        <div class="card-tag-row">
-          <span class="tag blue">MODE: PASSIVE</span>
-          <span class="tag">ALERT: SHIELD_UI</span>
-        </div>
-        <div class="card-footer">
-          <a href="lapak2.user.js" class="btn-card btn-blue" id="install-btn-lapak2" data-install-key="lapak2">
-            🔵 Install <span class="btn-sub">DOMAIN BLUE</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- SCRIPT 3 -->
-      <div class="module-card card-type-scripts" data-search="wallpaper queue indication lapak3 manga_skin dynamic plugin_03 domain purple">
-        <div class="card-top">
-          <div class="badge-emblem purple">P3</div>
-          <div class="card-title-group">
-            <span class="card-code">PLUGIN_03</span>
-            <h3 class="card-title">Wallpaper & Queue Indication</h3>
-          </div>
-          <button type="button" class="btn-inspect-trigger" onclick="inspectModule('PLUGIN_03', 'Wallpaper & Queue Indication', 'Kustomisasi latar belakang deep wallpaper dengan indikator antrean.')" title="Pratinjau Kode">🔍 CODE</button>
-          <span class="card-status-badge ready" id="status-lapak3">⚡ SIAP INSTALL</span>
-        </div>
-        <p class="card-description">Kustomisasi latar belakang deep wallpaper dengan sistem indikator prioritas antrean dinamis.</p>
-        <div class="card-tag-row">
-          <span class="tag">UI: MANGA_SKIN</span>
-          <span class="tag green">PRIO: DYNAMIC</span>
-        </div>
-        <div class="card-footer">
-          <a href="lapak3.user.js" class="btn-card btn-purple" id="install-btn-lapak3" data-install-key="lapak3">
-            💜 Install <span class="btn-sub">DOMAIN PURPLE</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- SCRIPT 4 -->
-      <div class="module-card card-type-scripts" data-search="manga theme booster pack lapak4 alt+x manga_booster plugin_04 domain purple">
-        <div class="card-top">
-          <div class="badge-emblem purple">P4</div>
-          <div class="card-title-group">
-            <span class="card-code">PLUGIN_04</span>
-            <h3 class="card-title">Manga Theme (Booster Pack)</h3>
-          </div>
-          <button type="button" class="btn-inspect-trigger" onclick="inspectModule('PLUGIN_04', 'Manga Theme (Booster Pack)', 'Tampilan skin manga/AoT dengan tekstur kertas khusus & SFX speed lines.')" title="Pratinjau Kode">🔍 CODE</button>
-          <span class="card-status-badge ready" id="status-lapak4">⚡ SIAP INSTALL</span>
-        </div>
-        <p class="card-description">Tampilan skin manga/AoT dengan tekstur kertas khusus, elemen visual melayang, dan SFX speed lines.</p>
-        <div class="card-tag-row">
-          <span class="tag">UI: MANGA_BOOSTER</span>
-          <span class="tag purple">HOTKEY: ALT+X</span>
-        </div>
-        <div class="card-footer">
-          <a href="lapak4.user.js" class="btn-card btn-purple" id="install-btn-lapak4" data-install-key="lapak4">
-            💜 Install <span class="btn-sub">DOMAIN PURPLE</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== CATEGORY SECTION 2: EXTENSIONS ===== -->
-  <div class="category-section-block" data-category="extensions">
-    <div class="cat-section-header extensions-hdr">
-      <h2>🧩 CHROME EXTENSION PACKAGES (.ZIP)</h2>
-      <span class="sec-badge gold">3 PACKAGES</span>
-    </div>
-    <div class="ultimate-grid">
-      <!-- EXTENSION 1 -->
-      <div class="module-card card-type-extensions" data-search="imagelens ocr extension chrome ext .zip tesseract">
-        <div class="card-top">
-          <div class="badge-emblem cyan">E1</div>
-          <div class="card-title-group">
-            <span class="card-code">EXTENSION_01</span>
-            <h3 class="card-title">ImageLens OCR Extension</h3>
-          </div>
-          <span class="card-status-badge ready" id="status-ocr">⚡ SIAP DOWNLOAD</span>
-        </div>
-        <p class="card-description">Ekstensi Chrome pintar untuk menyalin teks dari gambar secara instan. Powered by Tesseract.js OCR engine.</p>
-        <div class="card-tag-row">
-          <span class="tag blue">TYPE: CHROME EXT</span>
-          <span class="tag">FORMAT: .ZIP</span>
-        </div>
-        <div class="card-footer">
-          <a href="imagelens-ocr.zip" download class="btn-card btn-cyan" id="install-btn-ocr" data-install-key="ocr">
-            ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- EXTENSION 2 -->
-      <div class="module-card card-type-extensions" data-search="bonus scatter pro v3.5 premium chrome ext automation">
-        <div class="card-top">
-          <div class="badge-emblem gold">E2</div>
-          <div class="card-title-group">
-            <span class="card-code">EXTENSION_02</span>
-            <h3 class="card-title">Bonus Scatter Pro V3.5 Premium <span class="new-tag">NEW UPDATE</span></h3>
-          </div>
-          <span class="card-status-badge ready" id="status-scatter">⚡ SIAP DOWNLOAD</span>
-        </div>
-        <p class="card-description">Extension premium untuk automation bonus scatter. Fitur lengkap: auto-check status, ticket filler, grafik visual, dan hotkeys.</p>
-        <div class="card-tag-row">
-          <span class="tag gold">TYPE: CHROME EXT</span>
-          <span class="tag">VERSION: 3.5 Premium</span>
-        </div>
-        <div class="card-footer">
-          <a href="Bonus_Scatter_ProV2.zip" download class="btn-card btn-gold" id="install-btn-scatter" data-install-key="scatter">
-            ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- EXTENSION 3 -->
-      <div class="module-card card-type-extensions" data-search="password generator template copier chrome ext">
-        <div class="card-top">
-          <div class="badge-emblem purple">E3</div>
-          <div class="card-title-group">
-            <span class="card-code">EXTENSION_03</span>
-            <h3 class="card-title">Password Generator & Template Copier</h3>
-          </div>
-          <span class="card-status-badge ready" id="status-passgen">⚡ SIAP DOWNLOAD</span>
-        </div>
-        <p class="card-description">Generate passwords and copy them pre-formatted with custom text templates instantly.</p>
-        <div class="card-tag-row">
-          <span class="tag">TYPE: CHROME EXT</span>
-          <span class="tag">VERSION: 1.0.0</span>
-        </div>
-        <div class="card-footer">
-          <a href="password_generator.zip" download class="btn-card btn-purple" id="install-btn-passgen" data-install-key="passgen">
-            ⬇️ Download <span class="btn-sub">FILE .ZIP</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== CATEGORY SECTION 3: APPS ===== -->
-  <div class="category-section-block" data-category="keyboard">
-    <div class="cat-section-header apps-hdr">
-      <h2>⌨️ DESKTOP EXECUTABLE APPS (.EXE)</h2>
-      <span class="sec-badge green">2 APPLICATIONS</span>
-    </div>
-    <div class="ultimate-grid">
-      <!-- APP 1 -->
-      <div class="module-card card-type-apps" data-search="perfect keyboard 9.1 app_01 exe installer">
-        <div class="card-top">
-          <div class="badge-emblem blue">K1</div>
-          <div class="card-title-group">
-            <span class="card-code">APP_01</span>
-            <h3 class="card-title">Perfect Keyboard 9.1</h3>
-          </div>
-          <span class="card-status-badge ready">⚡ SIAP DOWNLOAD</span>
-        </div>
-        <p class="card-description">Aplikasi Perfect Keyboard versi 9.1 standar installer executable file.</p>
-        <div class="card-tag-row">
-          <span class="tag blue">TYPE: EXE</span>
-          <span class="tag">INSTALLER</span>
-        </div>
-        <div class="card-footer">
-          <a href="pk versi 9.1.exe" download class="btn-card btn-blue">
-            ⬇️ Download <span class="btn-sub">FILE .EXE</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- APP 2 -->
-      <div class="module-card card-type-apps" data-search="perfect keyboard free 9.2.0 app_02 exe free">
-        <div class="card-top">
-          <div class="badge-emblem green">K2</div>
-          <div class="card-title-group">
-            <span class="card-code">APP_02</span>
-            <h3 class="card-title">Perfect Keyboard Free 9.2.0</h3>
-          </div>
-          <span class="card-status-badge ready">⚡ SIAP DOWNLOAD</span>
-        </div>
-        <p class="card-description">Aplikasi Perfect Keyboard versi terbaru 9.2.0 (Free version installer).</p>
-        <div class="card-tag-row">
-          <span class="tag green">TYPE: EXE</span>
-          <span class="tag">FREE VER</span>
-        </div>
-        <div class="card-footer">
-          <a href="pk_free versi 9.2.0.exe" download class="btn-card btn-green">
-            ⬇️ Download <span class="btn-sub">FILE .EXE</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== CATEGORY SECTION 4: CALCULATORS & TOOLS ===== -->
-  <div class="category-section-block" data-category="tools">
-    <div class="cat-section-header tools-hdr">
-      <h2>🧮 WEB CALCULATORS & LOCAL TOOLS</h2>
-      <span class="sec-badge purple">4 WEB TOOLS</span>
-    </div>
-    <div class="ultimate-grid">
-      <!-- TOOL 1 -->
-      <div class="module-card card-type-tools" data-search="calculator mahjong web_tool_01 web app netlify">
-        <div class="card-top">
-          <div class="badge-emblem green">W1</div>
-          <div class="card-title-group">
-            <span class="card-code">WEB_TOOL_01</span>
-            <h3 class="card-title">Calculator Mahjong</h3>
-          </div>
-          <span class="card-status-badge ready">🌐 ONLINE APP</span>
-        </div>
-        <p class="card-description">Alat hitung otomatis khusus untuk permainan Mahjong. Web app responsif, hitung instan & akurat.</p>
-        <div class="card-tag-row">
-          <span class="tag green">TYPE: WEB APP</span>
-          <span class="tag">NETLIFY HOST</span>
-        </div>
-        <div class="card-footer">
-          <a href="https://calculatormahjong.netlify.app/" target="_blank" class="btn-card btn-green">
-            🌐 BUKA WEB APP <span class="btn-sub">NEW TAB</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- TOOL 2 -->
-      <div class="module-card card-type-tools" data-search="calculator hadiah togel 303 web_tool_02 web app github pages">
-        <div class="card-top">
-          <div class="badge-emblem red">W2</div>
-          <div class="card-title-group">
-            <span class="card-code">WEB_TOOL_02</span>
-            <h3 class="card-title">Calculator Hadiah Togel 303</h3>
-          </div>
-          <span class="card-status-badge ready">🌐 ONLINE APP</span>
-        </div>
-        <p class="card-description">Sistem perhitungan otomatis untuk hadiah togel. Cepat, tepat, dan memudahkan rekapitulasi data harian.</p>
-        <div class="card-tag-row">
-          <span class="tag red">TYPE: WEB APP</span>
-          <span class="tag">GITHUB PAGES</span>
-        </div>
-        <div class="card-footer">
-          <a href="https://rkd253.github.io/calculatorhadiahtogel303/file%20upload/" target="_blank" class="btn-card btn-red">
-            🌐 BUKA WEB APP <span class="btn-sub">NEW TAB</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- TOOL 3 -->
-      <div class="module-card card-type-tools" data-search="calculator standar web_tool_03 local app cyber ui">
-        <div class="card-top">
-          <div class="badge-emblem purple">W3</div>
-          <div class="card-title-group">
-            <span class="card-code">WEB_TOOL_03</span>
-            <h3 class="card-title">Calculator Standar</h3>
-          </div>
-          <span class="card-status-badge ready">⚡ LOCAL APP</span>
-        </div>
-        <p class="card-description">Kalkulator standar dengan desain cyberpunk premium. Mendukung fitur dasar matematika dengan layout grid glassmorphism.</p>
-        <div class="card-tag-row">
-          <span class="tag purple">TYPE: LOCAL APP</span>
-          <span class="tag">CYBER UI</span>
-        </div>
-        <div class="card-footer">
-          <a href="calc-standard.html" class="btn-card btn-purple">
-            🌐 BUKA KALKULATOR <span class="btn-sub">LOCAL</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- TOOL 4 -->
-      <div class="module-card card-type-tools" data-search="currency converter web_tool_04 local app live api">
-        <div class="card-top">
-          <div class="badge-emblem cyan">W4</div>
-          <div class="card-title-group">
-            <span class="card-code">WEB_TOOL_04</span>
-            <h3 class="card-title">Currency Converter</h3>
-          </div>
-          <span class="card-status-badge ready">⚡ LOCAL APP</span>
-        </div>
-        <p class="card-description">Kalkulator konversi mata uang lengkap. Otomatis mengambil kurs (exchange rates) real-time dari Live API.</p>
-        <div class="card-tag-row">
-          <span class="tag cyan">TYPE: LOCAL APP</span>
-          <span class="tag">LIVE API</span>
-        </div>
-        <div class="card-footer">
-          <a href="calc-currency.html" class="btn-card btn-cyan">
-            🌐 BUKA KONVERTER <span class="btn-sub">LOCAL</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== CATEGORY SECTION 5: GUIDE ===== -->
-  <div class="category-section-block" data-category="guide">
-    <div class="cat-section-header guide-hdr">
-      <h2>📖 PANDUAN INSTALASI & SISTEM</h2>
-      <span class="sec-badge blue">DOCUMENTATION</span>
-    </div>
-    <div class="ultimate-grid">
-      <div class="module-card guide-full-card" data-search="panduan install step tampermonkey chrome extension">
-        <div class="card-top">
-          <div class="badge-emblem cyan">DOC</div>
-          <div class="card-title-group">
-            <span class="card-code">SYSTEM_GUIDE</span>
-            <h3 class="card-title">Panduan Langkah Instalasi</h3>
-          </div>
-        </div>
-        <div class="guide-steps-grid">
-          <div class="guide-step">
-            <div class="step-num">1</div>
-            <div class="step-content">
-              <h4>Klik Tombol Install / Download</h4>
-              <p>Untuk <strong>Tampermonkey Script</strong>: klik tombol Install pada modul yang diinginkan. Tab baru akan terbuka otomatis.<br>Untuk <strong>Chrome Extension</strong>: klik Download, lalu extract file .ZIP yang terunduh.</p>
-            </div>
-          </div>
-          <div class="guide-step">
-            <div class="step-num">2</div>
-            <div class="step-content">
-              <h4>Konfirmasi di Tampermonkey / Chrome</h4>
-              <p>Untuk <strong>Script</strong>: Tampermonkey akan menampilkan konfirmasi install, klik "Install".<br>Untuk <strong>Extension</strong>: Buka <code>chrome://extensions</code>, aktifkan Developer Mode, lalu klik "Load Unpacked" dan pilih folder hasil extract.</p>
-            </div>
-          </div>
-          <div class="guide-step">
-            <div class="step-num">3</div>
-            <div class="step-content">
-              <h4>Selesai — Siap Digunakan!</h4>
-              <p>Script atau Extension langsung aktif. Buka LiveChat dan fitur otomatisasi akan berjalan secara real-time.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- NO RESULTS MESSAGE -->
-  <div class="no-results-msg" id="noResultsMsg" style="display: none;">
-    <div class="no-results-icon">🔍</div>
-    <h3>Modul Tidak Ditemukan</h3>
-    <p>Tidak ada script, extension, atau kalkulator yang cocok dengan kata kunci pencarian kamu.</p>
-  </div>
-
-  <!-- SIGNATURE FOOTER -->
-  <footer class="ultimate-footer">
-    <div class="sig-scanner-frame">
-      <div class="sig-scanner-line"></div>
-      <img src="signature.png" alt="RKD Signature" class="sig-img">
-    </div>
-    <div class="sig-title">TERTANDA PEMBUAT — Made By RKD</div>
-    <div class="sig-sub">LiveChat Automation Suite Pro © 2030 God-Mode Edition</div>
-  </footer>
-
-</main>
-
-<!-- FEATURE 4: QUICK INSPECTION MODAL -->
-<div class="modal-overlay" id="inspectModal" onclick="closeInspectModal(event)">
-  <div class="modal-card" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <div class="modal-title-group">
-        <span class="modal-badge" id="modalBadge">PLUGIN_01</span>
-        <h3 class="modal-title" id="modalTitle">Module Code Inspector</h3>
-      </div>
-      <button type="button" class="modal-close-btn" onclick="closeInspectModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-info-row">
-        <div class="info-pill"><span>STATUS:</span> <strong id="modalStatus">SIAP INSTALL</strong></div>
-        <div class="info-pill"><span>AUTHOR:</span> <strong>RKD SUITE PRO</strong></div>
-        <div class="info-pill"><span>VERSION:</span> <strong>v3.5 GOD-MODE</strong></div>
-      </div>
-      <div class="code-box-wrap">
-        <div class="code-box-header">
-          <span>📜 MANIFEST & SCRIPT HEADER</span>
-          <button type="button" class="btn-copy-code" onclick="copyModalCode()">📋 COPY CODE</button>
-        </div>
-        <pre class="code-box-content" id="modalCodeSnippet">// Loading manifest...</pre>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<script>
-// ===== FEATURE 1: 60FPS MATRIX PARTICLE CANVAS ENGINE =====
-const canvas = document.getElementById('cyberMatrixCanvas');
-if (canvas) {
-  const ctx = canvas.getContext('2d');
-  let width = canvas.width = window.innerWidth;
-  let height = canvas.height = window.innerHeight;
-  let mouse = { x: width / 2, y: height / 2, radius: 140 };
-
-  window.addEventListener('resize', () => {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-  });
-
-  const particles = [];
-  const particleCount = Math.min(75, Math.floor(width / 22));
-
-  for (let i = 0; i < particleCount; i++) {
-    particles.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 1.1,
-      vy: (Math.random() - 0.5) * 1.1,
-      size: Math.random() * 2 + 1,
-      color: ['#00f0ff', '#ff007f', '#00e5a0', '#a855f7'][Math.floor(Math.random() * 4)]
-    });
-  }
-
-  function renderMatrixCanvas() {
-    ctx.clearRect(0, 0, width, height);
-
-    for (let i = 0; i < particles.length; i++) {
-      let p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-
-      if (p.x < 0 || p.x > width) p.vx *= -1;
-      if (p.y < 0 || p.y > height) p.vy *= -1;
-
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      ctx.fill();
-
-      let dx = mouse.x - p.x;
-      let dy = mouse.y - p.y;
-      let dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < mouse.radius) {
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(mouse.x, mouse.y);
-        ctx.strokeStyle = p.color;
-        ctx.lineWidth = 0.5 * (1 - dist / mouse.radius);
-        ctx.stroke();
-      }
-
-      for (let j = i + 1; j < particles.length; j++) {
-        let p2 = particles[j];
-        let pdx = p2.x - p.x;
-        let pdy = p2.y - p.y;
-        let pdist = Math.sqrt(pdx * pdx + pdy * pdy);
-
-        if (pdist < 90) {
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.strokeStyle = p.color;
-          ctx.lineWidth = 0.35 * (1 - pdist / 90);
-          ctx.stroke();
-        }
-      }
-    }
-    requestAnimationFrame(renderMatrixCanvas);
-  }
-  renderMatrixCanvas();
+:root {
+  --p: #00f0ff;
+  --p2: #ffffff;
+  --p3: #0088ff;
+  --bg: #030814;
+  --card-bg: rgba(4, 14, 32, 0.52);
+  --border: rgba(0, 240, 255, 0.35);
+  --border-glow: rgba(0, 240, 255, 0.6);
+  --radius: 16px;
 }
 
-// ===== FEATURE 2: SYNTHETIC WEB AUDIO API SFX ENGINE =====
-let audioCtx = null;
-let sfxEnabled = localStorage.getItem('rkdSFX') !== 'false';
-
-function initAudio() {
-  if (!audioCtx) {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (AudioContext) audioCtx = new AudioContext();
-  }
+/* THEME COLOR VARIATIONS */
+body[data-theme="pink"] {
+  --p: #ff007f; --p2: #ff99cc; --p3: #99004d;
+  --border: rgba(255, 0, 127, 0.35); --border-glow: rgba(255, 0, 127, 0.7);
+}
+body[data-theme="green"] {
+  --p: #00e5a0; --p2: #adff2f; --p3: #008055;
+  --border: rgba(0, 229, 160, 0.35); --border-glow: rgba(0, 229, 160, 0.7);
+}
+body[data-theme="gold"] {
+  --p: #f59e0b; --p2: #fbbf24; --p3: #b45309;
+  --border: rgba(245, 158, 11, 0.35); --border-glow: rgba(245, 158, 11, 0.7);
 }
 
-function playBleep(freq = 800, type = 'sine', duration = 0.08) {
-  if (!sfxEnabled) return;
-  try {
-    initAudio();
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + duration);
-  } catch (e) {}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  background-color: var(--bg);
+  color: #e2e8f0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
 }
 
-function playWarpSFX() {
-  if (!sfxEnabled) return;
-  try {
-    initAudio();
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.35);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.35);
-  } catch (e) {}
+/* CYBER BACKGROUND OVERLAY */
+.cyber-bg {
+  position: fixed; inset: 0; z-index: -1;
+  background-image: 
+    radial-gradient(circle at 15% 20%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 85% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+    url('bg_dashboard.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  opacity: 1;
 }
 
-function toggleSFX() {
-  sfxEnabled = !sfxEnabled;
-  localStorage.setItem('rkdSFX', sfxEnabled ? 'true' : 'false');
-  const btn = document.getElementById('sfxToggleBtn');
-  if (btn) {
-    btn.textContent = sfxEnabled ? '🔊 SFX ON' : '🔇 SFX MUTE';
-    btn.classList.toggle('muted', !sfxEnabled);
-  }
-  showToast(sfxEnabled ? '🔊 Efek suara cyber AKTIF' : '🔇 Efek suara DIBUNGKAMP');
-  if (sfxEnabled) playBleep(1000, 'sine', 0.1);
+.cyber-bg::before {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(3, 8, 20, 0.35);
+  backdrop-filter: blur(2px);
 }
 
-// ===== FEATURE 3: 3D HOLOGRAPHIC PARALLAX CARD TILT =====
-document.querySelectorAll('.module-card').forEach(card => {
-  card.addEventListener('mouseenter', () => playBleep(600, 'sine', 0.05));
-  card.addEventListener('mousemove', (e) => {
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -7;
-    const rotateY = ((x - centerX) / centerX) * 7;
-
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px)`;
-  });
-
-  card.addEventListener('mouseleave', () => {
-    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
-  });
-});
-
-// ===== FEATURE 4: QUICK INSPECT MODAL ENGINE =====
-function inspectModule(codeName, titleName, descText, snippetCode) {
-  initAudio();
-  playBleep(900, 'triangle', 0.1);
-  const modal = document.getElementById('inspectModal');
-  document.getElementById('modalBadge').textContent = codeName;
-  document.getElementById('modalTitle').textContent = titleName;
-  document.getElementById('modalCodeSnippet').textContent = snippetCode || `// ==UserScript==\n// @name         ${titleName}\n// @namespace    RKD_SUITE_GODMODE\n// @version      3.5.0 GOD-MODE\n// @author       Made By RKD\n// @match        *://*/*\n// @grant        GM_setValue\n// @grant        GM_getValue\n// ==/UserScript==\n\n/* Description: ${descText} */\n\n(function() {\n    'use strict';\n    console.log('[RKD_SUITE] Module ${codeName} loaded in God-Mode.');\n})();`;
-  if (modal) modal.classList.add('show');
+/* ===== ULTIMATE TOP CONTROL CENTER ===== */
+.ultimate-topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 30px;
+  background: rgba(2, 8, 20, 0.82);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border-bottom: 1.5px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  gap: 20px; flex-wrap: wrap;
 }
 
-function closeInspectModal(e) {
-  const modal = document.getElementById('inspectModal');
-  if (modal) modal.classList.remove('show');
-  playBleep(400, 'sine', 0.06);
+.topbar-left {
+  display: flex; align-items: center; gap: 14px;
 }
 
-function copyModalCode() {
-  const code = document.getElementById('modalCodeSnippet').textContent;
-  navigator.clipboard.writeText(code).then(() => {
-    showToast('📋 Potongan kode tersalin ke clipboard!');
-    playBleep(1200, 'sine', 0.1);
-  });
+.topbar-logo-circle {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.25) 0%, rgba(2, 8, 20, 0.9) 75%);
+  border: 2px solid var(--p);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 15px var(--border);
+  padding: 5px; flex-shrink: 0;
 }
 
-// Live Clock
-function updateClock() {
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
-  const clockEl = document.getElementById('cyberClock');
-  if (clockEl) clockEl.textContent = timeStr;
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// Category Switching with Section Blocks
-function switchCategory(cat, el) {
-  playBleep(700, 'sine', 0.05);
-  document.querySelectorAll('.cat-pill').forEach(pill => pill.classList.remove('active'));
-  if (el) el.classList.add('active');
-
-  const blocks = document.querySelectorAll('.category-section-block');
-  let visibleCount = 0;
-  
-  blocks.forEach(block => {
-    const blockCat = block.dataset.category;
-    if (cat === 'all' || blockCat === cat) {
-      block.style.display = 'block';
-      block.querySelectorAll('.module-card').forEach(c => c.style.display = 'flex');
-      visibleCount++;
-    } else {
-      block.style.display = 'none';
-    }
-  });
-
-  const noRes = document.getElementById('noResultsMsg');
-  if (noRes) noRes.style.display = (visibleCount === 0) ? 'block' : 'none';
+.topbar-logo-img {
+  width: 100%; height: 100%; object-fit: contain;
+  filter: drop-shadow(0 0 8px var(--p));
 }
 
-// Live Search Filter
-function filterModules() {
-  const query = document.getElementById('liveSearchInput').value.toLowerCase().trim();
-  const blocks = document.querySelectorAll('.category-section-block');
-  let totalCardsVisible = 0;
-
-  blocks.forEach(block => {
-    const cards = block.querySelectorAll('.module-card');
-    let blockCardsVisible = 0;
-
-    cards.forEach(card => {
-      const searchText = (card.dataset.search || '') + ' ' + card.innerText.toLowerCase();
-      if (query === '' || searchText.includes(query)) {
-        card.style.display = 'flex';
-        blockCardsVisible++;
-      } else {
-        card.style.display = 'none';
-      }
-    });
-
-    if (blockCardsVisible > 0) {
-      block.style.display = 'block';
-      totalCardsVisible += blockCardsVisible;
-    } else {
-      block.style.display = 'none';
-    }
-  });
-
-  const noRes = document.getElementById('noResultsMsg');
-  if (noRes) noRes.style.display = (totalCardsVisible === 0) ? 'block' : 'none';
+.topbar-brand-title {
+  font-family: 'Orbitron', sans-serif; font-size: 17px; font-weight: 900;
+  color: #ffffff; letter-spacing: 1.5px;
+  display: flex; align-items: center; gap: 8px;
 }
 
-function clearSearch() {
-  const input = document.getElementById('liveSearchInput');
-  if (input) {
-    input.value = '';
-    filterModules();
-  }
+.v-badge {
+  font-size: 9px; font-weight: 800; background: rgba(0, 240, 255, 0.18);
+  color: var(--p); border: 1px solid var(--border);
+  padding: 2px 6px; border-radius: 6px; letter-spacing: 0.5px;
 }
 
-// Theme Engine
-function applyMainTheme(themeName) {
-  document.body.setAttribute('data-theme', themeName);
-  document.querySelectorAll('.theme-dot').forEach(dot => {
-    dot.classList.toggle('active', dot.dataset.theme === themeName);
-  });
-  localStorage.setItem('rkdMainTheme', themeName);
+.topbar-brand-sub {
+  font-size: 10px; color: var(--p); font-weight: 600; letter-spacing: 0.05em; margin-top: 1px;
 }
 
-document.querySelectorAll('.theme-dot').forEach(dot => {
-  dot.addEventListener('click', () => {
-    applyMainTheme(dot.dataset.theme);
-    playBleep(1100, 'triangle', 0.08);
-    showToast(`🎨 Tema diubah ke: ${dot.title}`);
-  });
-});
-
-const savedTheme = localStorage.getItem('rkdMainTheme') || 'cyan';
-applyMainTheme(savedTheme);
-
-// Install Tracker
-function markInstalled(moduleKey) {
-  localStorage.setItem('installed_' + moduleKey, 'true');
-  updateInstallStatuses();
+/* LIVE SEARCH BAR */
+.topbar-search-wrap {
+  flex: 1; max-width: 480px; position: relative;
+  display: flex; align-items: center;
 }
 
-function updateInstallStatuses() {
-  const modules = ['lapak1', 'lapak2', 'lapak3', 'lapak4', 'ocr', 'scatter', 'passgen'];
-  let installedCount = 0;
-  modules.forEach(key => {
-    const isInst = localStorage.getItem('installed_' + key) === 'true';
-    if (isInst) installedCount++;
-    const badge = document.getElementById('status-' + key);
-    const btn = document.getElementById('install-btn-' + key);
-    if (badge) {
-      if (isInst) {
-        badge.className = 'card-status-badge installed';
-        badge.textContent = '✓ TERPASANG';
-      } else {
-        badge.className = 'card-status-badge ready';
-        badge.textContent = key.startsWith('lapak') ? '⚡ SIAP INSTALL' : '⚡ SIAP DOWNLOAD';
-      }
-    }
-    if (btn && isInst) {
-      btn.classList.add('btn-installed');
-    }
-  });
-
-  const scriptRingText = document.querySelector('.hud-ring-text-scripts');
-  if (scriptRingText) {
-    const lapakInstalled = ['lapak1', 'lapak2', 'lapak3', 'lapak4'].filter(k => localStorage.getItem('installed_' + k) === 'true').length;
-    scriptRingText.textContent = `${lapakInstalled}/4`;
-  }
+.search-icon {
+  position: absolute; left: 14px; font-size: 14px; opacity: 0.7; pointer-events: none;
 }
 
-document.querySelectorAll('a[data-install-key]').forEach(a => {
-  a.addEventListener('click', () => {
-    const key = a.dataset.installKey;
-    markInstalled(key);
-    playBleep(1200, 'sine', 0.12);
-    showToast(`⚡ Modul ${key.toUpperCase()} ditandai terpasang.`);
-  });
-});
-
-updateInstallStatuses();
-
-// Actions
-function installAll() {
-  playWarpSFX();
-  const links = ['lapak1.user.js', 'lapak2.user.js', 'lapak3.user.js', 'lapak4.user.js'];
-  links.forEach((url, i) => {
-    setTimeout(() => { window.open(url, '_blank'); }, i * 1200);
-  });
-  showToast('📦 Membuka semua script...');
+.topbar-search-input {
+  width: 100%; padding: 10px 38px 10px 40px;
+  background: rgba(0, 15, 35, 0.6);
+  border: 1.5px solid var(--border);
+  border-radius: 25px; color: #ffffff;
+  font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500;
+  outline: none; transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
 }
 
-function downloadAllExtensions() {
-  playWarpSFX();
-  const links = ['imagelens-ocr.zip', 'Bonus_Scatter_ProV2.zip', 'password_generator.zip'];
-  links.forEach((url, i) => {
-    setTimeout(() => {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = '';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }, i * 1000);
-  });
-  showToast('📦 Mengunduh semua extension bundle...');
+.topbar-search-input:focus {
+  border-color: var(--p);
+  box-shadow: 0 0 18px var(--border-glow);
+  background: rgba(0, 20, 45, 0.85);
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+.topbar-search-input::placeholder { color: rgba(180, 210, 240, 0.5); }
+
+.search-clear-btn {
+  position: absolute; right: 14px; font-size: 12px; color: #94a3b8;
+  cursor: pointer; padding: 2px; transition: color 0.2s;
 }
-</script>
-</body>
-</html>
+.search-clear-btn:hover { color: #ffffff; }
+
+.topbar-right-group {
+  display: flex; align-items: center; gap: 16px;
+}
+
+/* HUD THEME SWITCHER */
+.theme-switcher-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(0, 10, 25, 0.6); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 12px; backdrop-filter: blur(12px);
+}
+
+.theme-label { font-size: 10px; font-weight: 800; color: var(--p); text-transform: uppercase; }
+.theme-dots { display: flex; align-items: center; gap: 6px; }
+.theme-dot {
+  width: 13px; height: 13px; border-radius: 50%; border: 2px solid transparent;
+  cursor: pointer; transition: all 0.2s ease;
+}
+.theme-dot:hover { transform: scale(1.25); }
+.theme-dot.active { border-color: #ffffff; transform: scale(1.2); box-shadow: 0 0 10px var(--p); }
+
+.system-status-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.35);
+  padding: 4px 12px; border-radius: 20px;
+}
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #22c55e;
+  box-shadow: 0 0 8px #22c55e; animation: blinkStatus 2s infinite;
+}
+@keyframes blinkStatus { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+.status-text { font-size: 10px; font-weight: 800; color: #4ade80; letter-spacing: 0.5px; }
+
+/* ===== MAIN CONTAINER ===== */
+.ultimate-container {
+  max-width: 1380px; margin: 0 auto; padding: 24px 28px 60px;
+}
+
+/* ===== HERO SPOTLIGHT BANNER ===== */
+.ultimate-hero {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.08) 0%, rgba(168, 85, 247, 0.08) 50%, rgba(2, 6, 16, 0.75) 100%), rgba(2, 8, 20, 0.75);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1.5px solid var(--border); border-radius: 20px;
+  padding: 24px 30px; margin-bottom: 24px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.65);
+}
+
+.radar-scanline-horizontal {
+  position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--p), #ffffff, var(--p), transparent);
+  box-shadow: 0 0 10px var(--p);
+  animation: radarSweep 4s ease-in-out infinite alternate; pointer-events: none;
+  z-index: 1; opacity: 0.35;
+}
+@keyframes radarSweep { 0%{top:0%; opacity:0.2;} 50%{opacity:0.6;} 100%{top:100%; opacity:0.2;} }
+
+.hero-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap; position: relative; z-index: 5;
+}
+
+.hero-left { flex: 1; min-width: 300px; }
+.hero-welcome { font-size: 11px; font-weight: 800; color: var(--p); letter-spacing: 1px; margin-bottom: 4px; }
+
+.hero-main-title {
+  font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 900;
+  letter-spacing: 1.5px;
+  background: linear-gradient(90deg, #ffffff, var(--p), #ffffff, var(--p2));
+  background-size: 200% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; animation: textShine 6s linear infinite;
+}
+@keyframes textShine { 0%{background-position:0% center;} 100%{background-position:200% center;} }
+
+.hero-main-desc { font-size: 12.5px; color: #94a3b8; margin-top: 4px; line-height: 1.5; }
+
+/* TELEMETRY BAR */
+.telemetry-bar {
+  display: flex; align-items: center; gap: 16px; margin-top: 16px; flex-wrap: wrap;
+}
+
+.telemetry-item {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(0, 15, 35, 0.5); border: 1px solid var(--border);
+  padding: 6px 12px; border-radius: 12px;
+}
+
+.t-icon { font-size: 14px; }
+.t-val { font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 800; color: var(--p); }
+.t-lbl { font-size: 9.5px; font-weight: 700; color: #94a3b8; letter-spacing: 0.5px; }
+
+.hero-right {
+  display: flex; flex-direction: column; gap: 10px; min-width: 280px;
+}
+
+.btn-overdrive-main, .btn-overdrive-sub {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px; border-radius: 14px; cursor: pointer;
+  text-align: left; transition: all 0.25s ease; border: none; outline: none;
+}
+
+.btn-overdrive-main {
+  background: linear-gradient(135deg, var(--p), #0088ff); color: #000d1a;
+  box-shadow: 0 0 20px var(--border);
+}
+.btn-overdrive-main:hover {
+  transform: translateY(-2px) scale(1.02); box-shadow: 0 0 30px var(--p); filter: brightness(1.15);
+}
+
+.btn-overdrive-sub {
+  background: rgba(0, 240, 255, 0.08); border: 1.5px solid var(--border); color: #ffffff;
+}
+.btn-overdrive-sub:hover {
+  background: rgba(0, 240, 255, 0.2); border-color: var(--p);
+  transform: translateY(-2px); box-shadow: 0 0 16px var(--border);
+}
+
+.btn-icon { font-size: 18px; }
+.btn-txt-wrap { display: flex; flex-direction: column; }
+.btn-title { font-family: 'Orbitron', sans-serif; font-size: 11.5px; font-weight: 800; letter-spacing: 0.5px; }
+.btn-sub { font-size: 9.5px; opacity: 0.85; margin-top: 1px; }
+
+/* ===== CATEGORY PILL NAVIGATION ===== */
+.category-nav-bar {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 24px; overflow-x: auto; padding-bottom: 8px;
+}
+
+.cat-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 25px;
+  background: rgba(4, 14, 32, 0.6); border: 1.5px solid var(--border);
+  color: #b0e5ff; font-family: 'Outfit', sans-serif; font-size: 12.5px; font-weight: 700;
+  cursor: pointer; transition: all 0.25s ease; backdrop-filter: blur(10px);
+  white-space: nowrap; outline: none;
+}
+
+.cat-pill:hover {
+  color: #ffffff; background: rgba(0, 240, 255, 0.12); transform: translateY(-2px);
+}
+
+.cat-pill.active {
+  background: linear-gradient(135deg, var(--p), #0088ff); color: #000d1a;
+  border-color: var(--p); box-shadow: 0 0 18px var(--p);
+}
+
+.cat-count {
+  font-size: 9.5px; font-weight: 800; background: rgba(0, 0, 0, 0.3);
+  padding: 1px 6px; border-radius: 10px;
+}
+
+.cat-pill.active .cat-count {
+  background: rgba(255, 255, 255, 0.35); color: #000d1a;
+}
+
+/* ===== MODULE CARDS GRID ===== */
+.ultimate-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.module-card {
+  display: flex; flex-direction: column; justify-content: space-between;
+  background: var(--card-bg);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1.5px solid var(--border); border-radius: 16px;
+  padding: 20px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative; overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.module-card::before {
+  content: ''; position: absolute; top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.12), transparent);
+  transition: left 0.6s ease; pointer-events: none;
+}
+
+.module-card:hover::before { left: 150%; }
+
+.module-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--p);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 20px var(--border);
+}
+
+.card-top {
+  display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;
+}
+
+.badge-emblem {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 800;
+  flex-shrink: 0; border: 1.5px solid rgba(255,255,255,0.2);
+}
+
+.badge-emblem.cyan { background: rgba(0,240,255,0.15); color: #00f0ff; border-color: #00f0ff; }
+.badge-emblem.blue { background: rgba(59,130,246,0.15); color: #60a5fa; border-color: #3b82f6; }
+.badge-emblem.purple { background: rgba(168,85,247,0.15); color: #c084fc; border-color: #a855f7; }
+.badge-emblem.gold { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: #f59e0b; }
+.badge-emblem.red { background: rgba(239,68,68,0.15); color: #f87171; border-color: #ef4444; }
+.badge-emblem.green { background: rgba(34,197,94,0.15); color: #4ade80; border-color: #22c55e; }
+
+.card-title-group { flex: 1; min-width: 0; }
+.card-code { font-family: 'Orbitron', sans-serif; font-size: 9.5px; color: var(--p); font-weight: 700; }
+.card-title { font-size: 15px; font-weight: 700; color: #ffffff; margin-top: 1px; line-height: 1.3; }
+
+.new-tag {
+  font-size: 9px; background: linear-gradient(135deg, #ec4899, #be185d);
+  color: #fff; padding: 1px 5px; border-radius: 4px; font-weight: 800;
+  margin-left: 6px; vertical-align: middle;
+}
+
+.card-status-badge {
+  font-size: 9.5px; font-weight: 800; padding: 3px 8px; border-radius: 12px;
+  text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;
+}
+
+.card-status-badge.ready {
+  background: rgba(0, 240, 255, 0.1); border: 1px solid rgba(0, 240, 255, 0.35); color: var(--p);
+}
+
+.card-status-badge.installed {
+  background: rgba(0, 229, 160, 0.18); border: 1.5px solid #00e5a0; color: #00e5a0;
+  box-shadow: 0 0 10px rgba(0, 229, 160, 0.35);
+}
+
+.card-description {
+  font-size: 12.5px; color: #94a3b8; line-height: 1.5; margin-bottom: 14px; flex: 1;
+}
+
+.card-tag-row {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 16px;
+}
+
+.tag {
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.tag.red { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
+.tag.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
+.tag.purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3); }
+.tag.green { background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+.tag.cyan { background: rgba(0, 240, 255, 0.15); color: #00f0ff; border-color: rgba(0, 240, 255, 0.3); }
+.tag.gold { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+
+.card-footer { margin-top: auto; }
+
+.btn-card {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 10px 14px; border-radius: 12px;
+  font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 800;
+  text-decoration: none; transition: all 0.25s ease; border: 1px solid transparent;
+}
+
+.btn-red { background: linear-gradient(135deg, #ef4444, #991b1b); color: #ffffff; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+.btn-blue { background: linear-gradient(135deg, #3b82f6, #1e40af); color: #ffffff; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+.btn-purple { background: linear-gradient(135deg, #a855f7, #6b21a8); color: #ffffff; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3); }
+.btn-cyan { background: linear-gradient(135deg, #06b6d4, #0e7490); color: #ffffff; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); }
+.btn-gold { background: linear-gradient(135deg, #f59e0b, #b45309); color: #ffffff; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+.btn-green { background: linear-gradient(135deg, #10b981, #047857); color: #ffffff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+
+.btn-card:hover { transform: translateY(-2px); filter: brightness(1.15); }
+
+.btn-installed {
+  background: linear-gradient(135deg, #00e5a0, #047857) !important;
+  color: #002211 !important; border-color: #00e5a0 !important;
+  box-shadow: 0 0 16px rgba(0, 229, 160, 0.45) !important;
+}
+
+/* GUIDE CARD FULL WIDTH */
+.guide-full-card {
+  grid-column: 1 / -1;
+}
+
+.guide-steps-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px; margin-top: 16px;
+}
+
+.guide-step {
+  display: flex; gap: 14px; padding: 14px; border-radius: 12px;
+  background: rgba(0, 15, 35, 0.5); border: 1px solid var(--border);
+}
+
+.step-num {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--p); color: #000d1a;
+  font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.step-content h4 { font-size: 13px; color: #ffffff; font-weight: 700; margin-bottom: 4px; }
+.step-content p { font-size: 11.5px; color: #94a3b8; line-height: 1.5; }
+
+/* NO RESULTS */
+.no-results-msg {
+  text-align: center; padding: 60px 20px; background: var(--card-bg);
+  border: 1.5px dashed var(--border); border-radius: 20px; margin-top: 20px;
+}
+
+.no-results-icon { font-size: 40px; margin-bottom: 12px; }
+.no-results-msg h3 { font-family: 'Orbitron', sans-serif; color: #ffffff; font-size: 18px; margin-bottom: 6px; }
+.no-results-msg p { color: #94a3b8; font-size: 13px; }
+
+/* ULTIMATE FOOTER */
+.ultimate-footer {
+  margin-top: 50px; text-align: center; padding-top: 30px;
+  border-top: 1px solid var(--border); display: flex; flex-direction: column; align-items: center;
+}
+
+.sig-scanner-frame {
+  width: 140px; height: 75px; position: relative; border-radius: 10px;
+  border: 1px solid var(--border); background: rgba(0, 10, 25, 0.6);
+  display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 10px;
+}
+
+.sig-scanner-line {
+  position: absolute; left: 0; width: 100%; height: 2px; background: var(--p);
+  box-shadow: 0 0 10px var(--p); animation: laserSweep 3s ease-in-out infinite; z-index: 2;
+}
+@keyframes laserSweep { 0%,100%{top:0%;} 50%{top:100%;} }
+
+.sig-img { height: 55px; width: auto; opacity: 0.85; filter: invert(1) brightness(2) drop-shadow(0 0 8px var(--p)); }
+.sig-title { font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 800; color: #f3e8ff; letter-spacing: 1px; }
+.sig-sub { font-size: 11px; color: var(--p); margin-top: 2px; }
+
+/* TOAST NOTIFICATION */
+#toast {
+  position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+  background: rgba(2, 10, 25, 0.92); border: 1.5px solid var(--p);
+  color: #ffffff; font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700;
+  padding: 12px 22px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px var(--border);
+  backdrop-filter: blur(15px); opacity: 0; transform: translateY(20px); pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+/* ===== CATEGORY SECTION BLOCKS & HEADERS ===== */
+.category-section-block {
+  margin-bottom: 35px;
+}
+
+.cat-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 22px;
+  background: rgba(4, 15, 35, 0.78);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.cat-section-header::after {
+  position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+  font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900;
+  letter-spacing: 2px; opacity: 0.12; pointer-events: none; text-transform: uppercase;
+}
+
+.cat-section-header.scripts-hdr::after { content: '📜 SCRIPTS MATRIX'; color: #00f0ff; }
+.cat-section-header.extensions-hdr::after { content: '🧩 CHROME PACKAGES'; color: #f59e0b; }
+.cat-section-header.apps-hdr::after { content: '⌨️ EXE LAUNCHER'; color: #22c55e; }
+.cat-section-header.tools-hdr::after { content: '🧮 WEB CALCULATORS'; color: #a855f7; }
+.cat-section-header.guide-hdr::after { content: '📖 DOCUMENTATION'; color: #3b82f6; }
+
+.cat-section-header h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1px;
+  position: relative; z-index: 2;
+}
+
+.sec-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.5px;
+  position: relative; z-index: 2;
+}
+
+.sec-badge.cyan { background: rgba(0, 240, 255, 0.18); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.4); }
+.sec-badge.gold { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+.sec-badge.green { background: rgba(34, 197, 94, 0.18); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); }
+.sec-badge.purple { background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); }
+.sec-badge.blue { background: rgba(59, 130, 246, 0.18); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+
+.cat-section-header.scripts-hdr { border-left: 6px solid #00f0ff; background: linear-gradient(90deg, rgba(0,240,255,0.12), rgba(4,15,35,0.78)); }
+.cat-section-header.extensions-hdr { border-left: 6px solid #f59e0b; background: linear-gradient(90deg, rgba(245,158,11,0.12), rgba(4,15,35,0.78)); }
+.cat-section-header.apps-hdr { border-left: 6px solid #22c55e; background: linear-gradient(90deg, rgba(34,197,94,0.12), rgba(4,15,35,0.78)); }
+.cat-section-header.tools-hdr { border-left: 6px solid #a855f7; background: linear-gradient(90deg, rgba(168,85,247,0.12), rgba(4,15,35,0.78)); }
+.cat-section-header.guide-hdr { border-left: 6px solid #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(4,15,35,0.78)); }
+
+/* DISTINCT CARDS BY CATEGORY WITH BACKGROUND WATERMARKS */
+.module-card.card-type-scripts {
+  border-left: 4px solid #00f0ff !important;
+  background: radial-gradient(circle at 90% 10%, rgba(0, 240, 255, 0.12) 0%, transparent 60%), linear-gradient(135deg, rgba(0, 240, 255, 0.06) 0%, rgba(4, 14, 32, 0.65) 100%) !important;
+}
+.module-card.card-type-scripts::after {
+  content: '📜'; position: absolute; right: 12px; bottom: 8px; font-size: 70px; opacity: 0.06; pointer-events: none;
+}
+
+.module-card.card-type-extensions {
+  border-left: 4px solid #f59e0b !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  background: radial-gradient(circle at 90% 10%, rgba(245, 158, 11, 0.14) 0%, transparent 60%), linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(4, 14, 32, 0.65) 100%) !important;
+}
+.module-card.card-type-extensions::after {
+  content: '🧩'; position: absolute; right: 12px; bottom: 8px; font-size: 70px; opacity: 0.06; pointer-events: none;
+}
+
+.module-card.card-type-apps {
+  border-left: 4px solid #22c55e !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  background: radial-gradient(circle at 90% 10%, rgba(34, 197, 94, 0.14) 0%, transparent 60%), linear-gradient(135deg, rgba(34, 197, 94, 0.06) 0%, rgba(4, 14, 32, 0.65) 100%) !important;
+}
+.module-card.card-type-apps::after {
+  content: '⌨️'; position: absolute; right: 12px; bottom: 8px; font-size: 70px; opacity: 0.06; pointer-events: none;
+}
+
+.module-card.card-type-tools {
+  border-left: 4px solid #a855f7 !important;
+  border-color: rgba(168, 85, 247, 0.35) !important;
+  background: radial-gradient(circle at 90% 10%, rgba(168, 85, 247, 0.14) 0%, transparent 60%), linear-gradient(135deg, rgba(168, 85, 247, 0.06) 0%, rgba(4, 14, 32, 0.65) 100%) !important;
+}
+.module-card.card-type-tools::after {
+  content: '🧮'; position: absolute; right: 12px; bottom: 8px; font-size: 70px; opacity: 0.06; pointer-events: none;
+}
+
+/* ===== FEATURE 1: MATRIX PARTICLE CANVAS ===== */
+#cyberMatrixCanvas {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0.85;
+}
+
+/* ===== FEATURE 2: SFX TOGGLE BUTTON ===== */
+.sfx-toggle-btn {
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid var(--border);
+  color: var(--p);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px; font-weight: 800;
+  padding: 5px 12px; border-radius: 20px;
+  cursor: pointer; transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+}
+.sfx-toggle-btn:hover {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 12px var(--border);
+  transform: scale(1.05);
+}
+.sfx-toggle-btn.muted {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+/* INSPECT TRIGGER BUTTON ON CARD */
+.btn-inspect-trigger {
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid var(--border);
+  color: var(--p);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px; font-weight: 800;
+  padding: 2px 7px; border-radius: 8px;
+  cursor: pointer; transition: all 0.2s ease;
+  margin-left: auto; flex-shrink: 0;
+}
+.btn-inspect-trigger:hover {
+  background: var(--p); color: #000d1a;
+  box-shadow: 0 0 10px var(--p);
+}
+
+/* ===== FEATURE 4: QUICK INSPECT MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(2, 6, 18, 0.85);
+  backdrop-filter: blur(20px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; opacity: 0; pointer-events: none;
+  transition: all 0.3s ease;
+}
+.modal-overlay.show { opacity: 1; pointer-events: auto; }
+
+.modal-card {
+  width: 100%; max-width: 650px;
+  background: rgba(4, 15, 35, 0.95);
+  border: 1.5px solid var(--border);
+  border-radius: 20px; padding: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px var(--border-glow);
+  transform: scale(0.9) translateY(20px);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.modal-overlay.show .modal-card { transform: scale(1) translateY(0); }
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.modal-title-group { display: flex; align-items: center; gap: 10px; }
+.modal-badge {
+  font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 800;
+  background: rgba(0, 240, 255, 0.15); color: var(--p);
+  border: 1px solid var(--border); padding: 3px 8px; border-radius: 8px;
+}
+.modal-title { font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 800; color: #ffffff; }
+.modal-close-btn {
+  background: none; border: none; color: #94a3b8; font-size: 18px;
+  cursor: pointer; transition: color 0.2s;
+}
+.modal-close-btn:hover { color: #ffffff; }
+
+.modal-info-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.info-pill {
+  font-size: 11px; background: rgba(0, 15, 35, 0.6);
+  border: 1px solid var(--border); padding: 5px 12px; border-radius: 10px; color: #cbd5e1;
+}
+.info-pill span { color: var(--p); font-weight: 800; font-size: 10px; }
+
+.code-box-wrap {
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #020712;
+}
+.code-box-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; background: rgba(0, 240, 255, 0.08); border-bottom: 1px solid var(--border);
+  font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: var(--p);
+}
+.btn-copy-code {
+  background: var(--p); color: #000d1a; border: none; font-family: 'Outfit', sans-serif;
+  font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-copy-code:hover { filter: brightness(1.2); transform: scale(1.05); }
+
+.code-box-content {
+  padding: 14px; font-family: 'Consolas', 'Courier New', monospace; font-size: 12px;
+  color: #38bdf8; line-height: 1.5; max-height: 220px; overflow-y: auto; white-space: pre-wrap;
+}
