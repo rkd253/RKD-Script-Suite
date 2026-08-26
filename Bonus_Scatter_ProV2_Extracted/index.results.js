@@ -152,8 +152,9 @@ function _actualRenderResults(results) {
       const statusCek = getStatusCek(r);
       
       if (filterActive === 'approved') return vStatus === 'APPROVED';
-      if (filterActive === 'rejected') return vStatus === 'REJECTED' || vStatus === 'LIMIT';
-      if (filterActive === 'pending') return vStatus === 'PENDING' || vStatus === '-' || vStatus === '';
+      if (filterActive === 'rejected') return vStatus === 'REJECTED';
+      if (filterActive === 'limit') return vStatus === 'LIMIT' || String(r?.bonussmbStatus || '').trim() === 'Batas claim' || String(r?.bonussmbStatus || '').trim() === 'Limit Claim';
+      if (filterActive === 'pending') return vStatus === 'PENDING' || vStatus === 'WAITING' || vStatus === 'PROCESS' || vStatus === '-' || vStatus === '';
       if (filterActive === 'sukses') return statusCek === 'Sukses cek';
       return true;
     });
@@ -359,29 +360,31 @@ function animateCounter(element, target) {
   requestAnimationFrame(tick);
 }
 
-let lastAutoCheckTime = 0;
-
 function updateStats(rows) {
   const data = Array.isArray(rows) ? rows : [];
   let total = data.length;
   let approved = 0;
   let rejected = 0;
   let pending = 0;
-  let suksesCek = 0;
+  let limit = 0;
 
   let s3 = 0;
   let s4 = 0;
   let s5 = 0;
 
   for (const r of data) {
-    const vStatus = String(r?.verifiedStatus || '').trim();
-    const statusCek = getStatusCek(r);
+    const vStatus = String(r?.verifiedStatus || '').trim().toUpperCase();
+    const bStatus = String(r?.bonussmbStatus || '').trim();
 
-    if (vStatus === 'APPROVED') approved++;
-    else if (vStatus === 'REJECTED') rejected++;
-    else if (vStatus === 'WAITING' || vStatus === 'PENDING' || vStatus === 'PROCESS' || vStatus === '-' || vStatus === '') pending++;
-
-    if (statusCek === 'Sukses cek') suksesCek++;
+    if (vStatus === 'APPROVED') {
+      approved++;
+    } else if (vStatus === 'REJECTED') {
+      rejected++;
+    } else if (vStatus === 'LIMIT' || bStatus === 'Batas claim' || bStatus === 'Limit Claim') {
+      limit++;
+    } else if (vStatus === 'WAITING' || vStatus === 'PENDING' || vStatus === 'PROCESS' || vStatus === '-' || vStatus === '') {
+      pending++;
+    }
 
     // Hitung sebaran scatter
     const scatterStr = getScatterDisplay(r);
@@ -395,29 +398,7 @@ function updateStats(rows) {
   animateCounter(el.statApproved, approved);
   animateCounter(el.statRejected, rejected);
   animateCounter(el.statPending, pending);
-  animateCounter(el.statSuksesCek, suksesCek);
-
-  // Auto check status if pending >= 10
-  if (pending >= 10) {
-    const now = Date.now();
-    if (now - lastAutoCheckTime > 20000) { // Throttle: max once every 20 seconds
-      lastAutoCheckTime = now;
-      console.log(`🤖 Auto-Cek dipicu karena pending mencapai ${pending}`);
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage({ type: 'BONUSSMB_TRIGGER_VERIFICATION' }, () => {
-          if (chrome.runtime.lastError) {
-            // Ignore port closed
-          }
-        });
-      }
-      if (typeof showCenterNotif === 'function') {
-        showCenterNotif(`🤖 Auto-Cek Status otomatis karena antrian pending >= 10!`, 4000);
-      }
-      if (typeof setStatus === 'function') {
-        setStatus(`🤖 Auto-Cek Status otomatis aktif (Pending: ${pending})...`);
-      }
-    }
-  }
+  animateCounter(el.statLimit || el.statSuksesCek, limit);
 
   // Update Donut Chart
   const donutApproved = document.getElementById('donutApproved');
