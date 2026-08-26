@@ -2,13 +2,15 @@
 // BACKGROUND SYSTEM — inline style (CSP-safe untuk extension)
 // ============================================================
 
-// Hide NEW badge after 7 days (July 2, 2026)
+// Show NEW badge for v3.5.0
 (function checkNewBadgePopup() {
   const badge = document.getElementById('newBadgePopup');
   if (badge) {
-    const expireDate = new Date('2026-07-02T23:59:59Z').getTime();
+    const expireDate = new Date('2026-12-31T23:59:59Z').getTime();
     if (Date.now() > expireDate) {
       badge.style.display = 'none';
+    } else {
+      badge.style.display = 'inline-block';
     }
   }
 })();
@@ -327,13 +329,13 @@ function _actualRenderTable(queue, results) {
 }
 
 function maybeAutoStartFromState(state) {
-  var txQueue     = state.txQueue || [];
+  var txQueue      = state.txQueue || [];
   var executorName = state.executorName || '';
-  var adminUrl    = state.adminUrl || 'https://lapak99.idrbo2.com/';
-  var startDate   = state.startDate || '';
-  var endDate     = state.endDate || '';
+  var adminUrl     = state.adminUrl || 'https://lapak99.idrbo2.com/';
+  var startDate    = state.startDate || '';
+  var endDate      = state.endDate || '';
   var agentHeaders = state.agentHeaders || null;
-  var statusEl    = document.getElementById('status');
+  var statusEl     = document.getElementById('status');
   if (!txQueue.length) return;
   var missing = [];
   if (!executorName) missing.push('Nama Eksekutor');
@@ -342,17 +344,23 @@ function maybeAutoStartFromState(state) {
   if (!endDate)      missing.push('Tanggal Akhir');
   if (!agentHeaders || !agentHeaders['X-Access-Token']) missing.push('Header (X-Access-Token)');
   if (missing.length) { statusEl.textContent = '⚠️ Antrian siap (' + txQueue.length + '). Lengkapi: ' + missing.join(', ') + '.'; return; }
-  if (hasAutoStarted) return;
-  hasAutoStarted = true;
-  statusEl.textContent = '🚀 Memulai otomatis untuk ' + txQueue.length + ' transaksi...';
-  chrome.runtime.sendMessage({ action: 'startBatchProcess' }, function(response) {
-    if (response && response.status === 'started') {
-      statusEl.textContent = '✅ Proses otomatis dimulai. ' + txQueue.length + ' transaksi dalam antrian.';
-    } else {
-      statusEl.textContent = '❌ Gagal memulai proses otomatis di background.';
-      hasAutoStarted = false;
-    }
-  });
+  
+  // Bot otomatis cek jika antrian pending sudah mencapai 10 atau lebih
+  if (txQueue.length >= 10) {
+    if (hasAutoStarted) return;
+    hasAutoStarted = true;
+    statusEl.textContent = '🤖 Auto-Check aktif: ' + txQueue.length + ' pending (>= 10). Memulai proses...';
+    chrome.runtime.sendMessage({ action: 'startBatchProcess' }, function(response) {
+      if (response && response.status === 'started') {
+        statusEl.textContent = '✅ Auto-Check dimulai untuk ' + txQueue.length + ' transaksi.';
+      } else {
+        statusEl.textContent = '❌ Gagal memulai proses otomatis di background.';
+        hasAutoStarted = false;
+      }
+    });
+  } else {
+    statusEl.textContent = '⏳ Antrian pending: ' + txQueue.length + '/10 tiket. (Otomatis jalan di 10, atau klik Mulai)';
+  }
 }
 
 chrome.storage.onChanged.addListener(function(changes, namespace) {
@@ -374,7 +382,7 @@ document.getElementById('clearBtn').addEventListener('click', function() {
 });
 document.getElementById('copyBtn').addEventListener('click', copyResultsToClipboard);
 
-chrome.storage.local.get(['txQueue','jutawanResults','executorName','adminUrl','startDate','endDate','scatterBridgeReady','agentHeaders'], function(res) {
+chrome.storage.local.get(['txQueue','jutawanResults','executorName','adminUrl','startDate','endDate','todayDate','scatterBridgeReady','agentHeaders'], function(res) {
   renderTable(res.txQueue || [], res.jutawanResults || []);
   if (res.executorName) document.getElementById('executorName').value = res.executorName;
   if (res.adminUrl)     document.getElementById('adminUrl').value     = res.adminUrl;
@@ -382,12 +390,29 @@ chrome.storage.local.get(['txQueue','jutawanResults','executorName','adminUrl','
     var entries = Object.entries(res.agentHeaders || {});
     if (entries.length) document.getElementById('agentHeaders').value = entries.map(function(e) { return e[0] + '\n' + e[1]; }).join('\n');
   }
+
+  // Cek pergantian hari (00:00) pada popup load
+  var currentToday = getTodayDateString();
+  var isDayChanged = res.todayDate && res.todayDate !== currentToday;
+  if (isDayChanged || !res.startDate || !res.endDate) {
+    document.getElementById('startDateInput').value = currentToday;
+    document.getElementById('endDateInput').value   = currentToday;
+    chrome.storage.local.set({
+      startDate: currentToday,
+      endDate: currentToday,
+      todayDate: currentToday
+    });
+  } else {
+    document.getElementById('startDateInput').value = res.startDate || currentToday;
+    document.getElementById('endDateInput').value   = res.endDate   || currentToday;
+  }
+
   var statusEl = document.getElementById('status');
   var qLen = Array.isArray(res.txQueue) ? res.txQueue.length : 0;
-  if (qLen > 0)                   statusEl.textContent = '📥 Antrian diterima: ' + qLen + ' transaksi (Pending).';
+  if (qLen >= 10)                  statusEl.textContent = '🤖 Antrian mencapai ' + qLen + ' pending (>= 10).';
+  else if (qLen > 0)               statusEl.textContent = '⏳ Antrian pending: ' + qLen + '/10 tiket.';
   else if (res.scatterBridgeReady) statusEl.textContent = '🔌 Bridge aktif. Kirim antrian untuk mulai.';
   else                             statusEl.textContent = '⚠️ Bridge belum aktif. Buka halaman Scatter Check dan kirim antrian.';
-  document.getElementById('startDateInput').value = res.startDate || todayDate;
-  document.getElementById('endDateInput').value   = res.endDate   || todayDate;
+  
   maybeAutoStartFromState(res);
 });
