@@ -42,7 +42,7 @@ body {
   background-image: 
     radial-gradient(circle at 15% 20%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 85% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
-    url('bg_dashboard.png');
+    url('bg_dashboard.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
