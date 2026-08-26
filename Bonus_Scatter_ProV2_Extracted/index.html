@@ -25,7 +25,7 @@
           <div class="headerText">
             <div class="titleRow">
               <h1>BONUS SCATTER PRO</h1>
-              <div class="subtitle">Auto Checker v3.0 Premium <span id="newBadge" class="badge-new-premium">NEW</span></div>
+              <div class="subtitle">Auto Checker v3.5.0 Ultra Premium <span id="newBadge" class="badge-new-premium">NEW UPDATE</span></div>
             </div>
           </div>
         </div>
@@ -171,18 +171,20 @@
       <div id="updateModal" class="update-modal-overlay" style="display: none;">
         <div class="update-modal-content">
           <div class="banner-header">
-            <span class="banner-tag">✨ INFO PEMBARUAN TERBARU (v3.5 Premium)</span>
+            <span class="banner-tag">✨ INFO PEMBARUAN TERBARU (v3.5.0 Ultra)</span>
             <button type="button" id="closeModalBtn" class="banner-close-btn" title="Tutup">&times;</button>
           </div>
           <ul class="banner-list">
-            <li>📊 <b>Statistik Grafik Neon</b>: Donut chart & progress bar horizontal untuk memantau sebaran scatter 3, 4, 5+ secara real-time.</li>
+            <li>📅 <b>Auto Midnight Rollover (00:00)</b>: Tanggal otomatis berganti ke hari berikutnya tepat jam 00:00 malam tanpa perlu refresh.</li>
+            <li>🤖 <b>Auto-Check 10 Pending</b>: Bot otomatis mengecek & memproses seketika saat antrian mencapai 10 pending (atau langsung klik Kirim & Cek).</li>
+            <li>📊 <b>Statistik Grafik Neon</b>: Donut chart & progress bar horizontal untuk memantau status approved, rejected, pending, dan sukses cek secara real-time.</li>
             <li>🚫 <b>Anti-Duplicate Alert</b>: Deteksi otomatis jika Tx ID ganda di-input agar aman dari klaim berulang member.</li>
             <li>⌨️ <b>Keyboard Hotkeys</b>: Proses kilat dengan menekan tombol <code>Space/Enter</code> untuk Proses dan <code>Esc</code> untuk Batal.</li>
-            <li>🎨 <b>HUD Eye-Comfort Fonts</b>: Peningkatan kontras font dan warna yang adem di mata untuk kerja durasi lama.</li>
+            <li>🎨 <b>HUD Eye-Comfort & Cyberpunk Glow</b>: Tampilan lebih tajam, bersih, dan segar di mata.</li>
           </ul>
           <div class="banner-footer">
             <span>Dibuat khusus untuk: <b>Bosku</b> 👑</span>
-            <span>Waktu Update: <b>03 Agustus 2026, 03:30 WIB</b> 🕒</span>
+            <span>Waktu Update: <b>27 Agustus 2026, 01:00 WIB</b> 🕒</span>
           </div>
         </div>
       </div>
@@ -221,28 +223,28 @@
         <div class="stats-bar" id="statsBar">
           <div class="stat-item">
             <span class="stat-icon">📋</span>
-            <span class="stat-label">Total</span>
+            <span class="stat-label">TOTAL</span>
             <span class="stat-value" id="statTotal">0</span>
           </div>
           <div class="stat-item stat-approved">
             <span class="stat-icon">✅</span>
-            <span class="stat-label">Approved</span>
+            <span class="stat-label">APPROVED</span>
             <span class="stat-value" id="statApproved">0</span>
           </div>
           <div class="stat-item stat-rejected">
             <span class="stat-icon">❌</span>
-            <span class="stat-label">Rejected</span>
+            <span class="stat-label">REJECTED</span>
             <span class="stat-value" id="statRejected">0</span>
           </div>
           <div class="stat-item stat-pending">
             <span class="stat-icon">⏳</span>
-            <span class="stat-label">Pending</span>
+            <span class="stat-label">PENDING</span>
             <span class="stat-value" id="statPending">0</span>
           </div>
-          <div class="stat-item stat-sukses">
-            <span class="stat-icon">🎯</span>
-            <span class="stat-label">Sukses Cek</span>
-            <span class="stat-value" id="statSuksesCek">0</span>
+          <div class="stat-item stat-limit">
+            <span class="stat-icon">🚫</span>
+            <span class="stat-label">LIMIT</span>
+            <span class="stat-value" id="statLimit">0</span>
           </div>
         </div>
 
