@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Bonus Scatter",
-  "version": "1.0.2",
+  "version": "3.5.0",
   "description": "Ekstensi otomatis untuk memeriksa transaksi dan mendeteksi scatter",
   "permissions": ["tabs", "windows", "scripting", "activeTab", "storage", "declarativeNetRequestWithHostAccess", "alarms", "offscreen"],
   "host_permissions": [
     "https://*/transaction-record.html*",
     "http://*/transaction-record.html*",
+    "https://lapak99.idrbo2.com/*",
     "https://agent.png777.com/*",
     "http://localhost/*",
     "https://localhost/*",

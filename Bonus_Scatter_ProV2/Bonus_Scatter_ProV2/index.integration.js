@@ -13,6 +13,7 @@ function postQueue(txQueue) {
   }
 
   const config = buildConfig();
+  config.forceStart = true; // Langsung proses saat tombol Kirim & Cek ditekan
   const payload = { action: 'queueTickets', txQueue, config, _ts: Date.now() };
 
   if (isExtensionPage()) {
@@ -30,7 +31,7 @@ function postQueue(txQueue) {
             return;
           }
           const count = response && typeof response.count === 'number' ? response.count : txQueue.length;
-          setStatus(`✅ Antrian diterima. Total: ${count}.`);
+          setStatus(`🚀 Antrian diterima (${count} tiket). Proses pengecekan dimulai...`);
         });
       } catch (e) {
         setStatus(`❌ Error: ${e.message}. Silakan Refresh (F5).`);
@@ -66,15 +67,33 @@ function requestRetryBonussmbInput({ userId, transactionId }, onDone) {
 
 function hydrateFromStorage() {
   if (!isExtensionPage()) return;
-  chrome.storage.local.get(['jutawanResults', 'executorName', 'adminUrl', 'startDate', 'endDate', 'yesterdayDate', 'agentHeaders'], (res) => {
+  chrome.storage.local.get(['jutawanResults', 'executorName', 'adminUrl', 'startDate', 'endDate', 'yesterdayDate', 'todayDate', 'agentHeaders', 'txQueue'], (res) => {
     if (res.executorName) el.executorName.value = String(res.executorName);
     if (res.adminUrl) el.adminUrl.value = String(res.adminUrl);
-    if (res.startDate) el.startDate.value = String(res.startDate);
-    if (res.endDate) el.endDate.value = String(res.endDate);
-    if (res.yesterdayDate && el.yesterdayDate) {
-      el.yesterdayDate.value = String(res.yesterdayDate);
-    } else if (el.yesterdayDate) {
-      el.yesterdayDate.value = yesterdayISO();
+
+    // Cek apakah hari sudah berganti sejak terakhir disimpan
+    const currentToday = todayISO();
+    const storedToday = res.todayDate;
+    const isDayChanged = storedToday && storedToday !== currentToday;
+
+    if (isDayChanged || !res.startDate || !res.endDate) {
+      el.startDate.value = currentToday;
+      el.endDate.value = currentToday;
+      if (el.yesterdayDate) el.yesterdayDate.value = yesterdayISO();
+      chrome.storage.local.set({
+        startDate: currentToday,
+        endDate: currentToday,
+        yesterdayDate: yesterdayISO(),
+        todayDate: currentToday
+      });
+    } else {
+      if (res.startDate) el.startDate.value = String(res.startDate);
+      if (res.endDate) el.endDate.value = String(res.endDate);
+      if (res.yesterdayDate && el.yesterdayDate) {
+        el.yesterdayDate.value = String(res.yesterdayDate);
+      } else if (el.yesterdayDate) {
+        el.yesterdayDate.value = yesterdayISO();
+      }
     }
 
     const hdr = res.agentHeaders && typeof res.agentHeaders === 'object' ? res.agentHeaders : null;
@@ -87,7 +106,16 @@ function hydrateFromStorage() {
 
     const rows = Array.isArray(res.jutawanResults) ? res.jutawanResults : [];
     renderResults(rows);
-    if (rows.length > 0) setStatus(`📥 Hasil ter-load: ${rows.length} baris.`);
+    
+    const queueLen = Array.isArray(res.txQueue) ? res.txQueue.length : 0;
+    if (queueLen >= 10) {
+      setStatus(`🤖 Auto-Check: Antrian mencapai ${queueLen} pending (>= 10). Sedang diproses...`);
+    } else if (queueLen > 0) {
+      setStatus(`⏳ Antrian pending: ${queueLen}/10 tiket. (Bot otomatis memproses di 10 pending, atau klik Kirim & Cek)`);
+    } else if (rows.length > 0) {
+      setStatus(`📥 Hasil ter-load: ${rows.length} baris.`);
+    }
+    if (el.assistantBtn) el.assistantBtn.style.display = 'inline-flex';
   });
 }
 
@@ -97,6 +125,14 @@ function listenStorageUpdates() {
     if (area !== 'local') return;
     if (changes.jutawanResults) {
       renderResults(changes.jutawanResults.newValue || []);
+    }
+    if (changes.txQueue) {
+      const nextQueue = Array.isArray(changes.txQueue.newValue) ? changes.txQueue.newValue : [];
+      if (nextQueue.length >= 10) {
+        setStatus(`🤖 Auto-Check: Antrian mencapai ${nextQueue.length} pending (>= 10)! Bot otomatis memproses...`);
+      } else if (nextQueue.length > 0) {
+        setStatus(`⏳ Antrian pending: ${nextQueue.length}/10 tiket. (Otomatis jalan di 10 pending)`);
+      }
     }
   });
 }
@@ -140,8 +176,10 @@ window.addEventListener('message', (event) => {
 
     if (state.bridgeUrl.includes('bonussmb.com')) {
       if (el.searchStatusBtn) el.searchStatusBtn.style.display = 'inline-block';
+      if (el.assistantBtn) el.assistantBtn.style.display = 'inline-flex';
     } else {
       if (el.searchStatusBtn) el.searchStatusBtn.style.display = 'none';
+      if (el.assistantBtn) el.assistantBtn.style.display = 'none';
     }
     setStatus('🔌 Bridge aktif. Siap kirim tiket.');
     return;
@@ -151,6 +189,7 @@ window.addEventListener('message', (event) => {
     state.bridgeReady = true;
     setBridgeBadge('ok', 'Bridge: aktif');
     setStatus('🔌 Bridge aktif. Siap kirim tiket.');
+    if (el.assistantBtn) el.assistantBtn.style.display = 'inline-flex';
     return;
   }
 

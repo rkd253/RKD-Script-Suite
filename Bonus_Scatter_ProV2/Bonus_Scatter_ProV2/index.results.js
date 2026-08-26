@@ -75,17 +75,105 @@ function renderResults(results) {
   }, 800);
 }
 
+let lastKnownStatuses = new Map();
+let isInitialRender = true;
+
+function playNotificationSound(type) {
+  const isEnabled = el.soundToggleBtn && el.soundToggleBtn.classList.contains('active');
+  if (!isEnabled) return;
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (type === 'APPROVED') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.4);
+    } else if (type === 'REJECTED' || type === 'LIMIT') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(120, audioCtx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.3);
+    }
+  } catch (e) {
+    console.error("Audio Context Error:", e);
+  }
+}
+
 function _actualRenderResults(results) {
   const rows = Array.isArray(results) ? results : [];
   state.results = rows;
   el.resultBody.innerHTML = '';
 
+  // Apply Sound Notification on Status Change
+  let playedSound = false;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const txId = r.transactionId;
+    const vStatus = String(r?.verifiedStatus || '-').trim();
+    if (txId) {
+      if (!isInitialRender && lastKnownStatuses.has(txId)) {
+        const lastStatus = lastKnownStatuses.get(txId);
+        if (lastStatus !== vStatus && (vStatus === 'APPROVED' || vStatus === 'REJECTED' || vStatus === 'LIMIT')) {
+          if (!playedSound) {
+            playNotificationSound(vStatus);
+            playedSound = true;
+          }
+        }
+      }
+      lastKnownStatuses.set(txId, vStatus);
+    }
+  }
+  isInitialRender = false;
+
+  // Apply Filters & Search query
+  const filterBtnActive = document.querySelector('.filter-btn.active');
+  const filterActive = filterBtnActive ? filterBtnActive.dataset.filter : 'all';
+  const searchQuery = el.tableSearch ? el.tableSearch.value.toLowerCase().trim() : '';
+
+  let filteredRows = [...rows];
+
+  if (filterActive !== 'all') {
+    filteredRows = filteredRows.filter(r => {
+      const vStatus = String(r?.verifiedStatus || '-').trim().toUpperCase();
+      const statusCek = getStatusCek(r);
+      
+      if (filterActive === 'approved') return vStatus === 'APPROVED';
+      if (filterActive === 'rejected') return vStatus === 'REJECTED';
+      if (filterActive === 'limit') return vStatus === 'LIMIT' || String(r?.bonussmbStatus || '').trim() === 'Batas claim' || String(r?.bonussmbStatus || '').trim() === 'Limit Claim';
+      if (filterActive === 'pending') return vStatus === 'PENDING' || vStatus === 'WAITING' || vStatus === 'PROCESS' || vStatus === '-' || vStatus === '';
+      if (filterActive === 'sukses') return statusCek === 'Sukses cek';
+      return true;
+    });
+  }
+
+  if (searchQuery) {
+    filteredRows = filteredRows.filter(r => {
+      const userId = String(r.userId || '').toLowerCase();
+      const txId = String(r.transactionId || '').toLowerCase();
+      return userId.includes(searchQuery) || txId.includes(searchQuery);
+    });
+  }
+
   // OPTIMIZATION: Only render the latest 300 rows to save memory and CPU
   const MAX_RENDER_ROWS = 300;
-  const rowsToRender = [...rows].reverse().slice(0, MAX_RENDER_ROWS);
+  const rowsToRender = filteredRows.reverse().slice(0, MAX_RENDER_ROWS);
 
   if (rowsToRender.length === 0) {
-    el.resultBody.innerHTML = '<tr><td colspan="6">Belum ada data</td></tr>';
+    el.resultBody.innerHTML = '<tr><td colspan="8">Belum ada data (Hasil filter/pencarian kosong)</td></tr>';
     updateStats(rows);
     return;
   }
@@ -111,7 +199,19 @@ function _actualRenderResults(results) {
     tr.appendChild(userIdTd);
     tr.appendChild(createTd(r.transactionId || '', 'mono'));
     tr.appendChild(createTd(r.debetValue || ''));
-    tr.appendChild(createTd(scatterDisplay || ''));
+    const scatterTd = createTd(scatterDisplay || '');
+    const scatterVal = parseInt(scatterDisplay);
+    if (scatterVal === 3) {
+      scatterTd.style.color = '#ffcc00'; // Gold
+      scatterTd.style.textShadow = '0 0 8px rgba(255, 204, 0, 0.35)';
+    } else if (scatterVal === 4) {
+      scatterTd.style.color = '#ff00aa'; // Pink/Magenta
+      scatterTd.style.textShadow = '0 0 8px rgba(255, 0, 170, 0.35)';
+    } else if (scatterVal >= 5) {
+      scatterTd.style.color = '#00ffff'; // Cyan
+      scatterTd.style.textShadow = '0 0 8px rgba(0, 255, 255, 0.4)';
+    }
+    tr.appendChild(scatterTd);
 
     const statusTd = document.createElement('td');
     const statusWrap = document.createElement('div');
@@ -196,6 +296,9 @@ function _actualRenderResults(results) {
         verifiedTd.innerHTML = badgeHtml;
       }
       tr.classList.add('tr-rejected');
+    } else if (vStatus === 'LIMIT' || String(r?.bonussmbStatus || '').trim() === 'Batas claim') {
+      verifiedTd.innerHTML = `<span class="badge limit clickable-badge" data-action="verifyStatusSingle" data-user-id="${r.userId || ''}" data-transaction-id="${r.transactionId || ''}" title="Klik untuk cek status terbaru">LIMIT</span>`;
+      tr.classList.add('tr-limit');
     } else if (vStatus === 'WAITING' || vStatus === 'PENDING' || vStatus === 'PROCESS' || vStatus === '-' || vStatus === 'NOT_FOUND') {
       const isWaiting = (vStatus === 'WAITING' || vStatus === 'PROCESS');
       const isNotFound = (vStatus === 'NOT_FOUND');
@@ -263,24 +366,89 @@ function updateStats(rows) {
   let approved = 0;
   let rejected = 0;
   let pending = 0;
-  let suksesCek = 0;
+  let limit = 0;
+
+  let s3 = 0;
+  let s4 = 0;
+  let s5 = 0;
 
   for (const r of data) {
-    const vStatus = String(r?.verifiedStatus || '').trim();
-    const statusCek = getStatusCek(r);
+    const vStatus = String(r?.verifiedStatus || '').trim().toUpperCase();
+    const bStatus = String(r?.bonussmbStatus || '').trim();
 
-    if (vStatus === 'APPROVED') approved++;
-    else if (vStatus === 'REJECTED') rejected++;
-    else if (vStatus === 'WAITING' || vStatus === 'PENDING' || vStatus === 'PROCESS' || vStatus === '-' || vStatus === '') pending++;
+    if (vStatus === 'APPROVED') {
+      approved++;
+    } else if (vStatus === 'REJECTED') {
+      rejected++;
+    } else if (vStatus === 'LIMIT' || bStatus === 'Batas claim' || bStatus === 'Limit Claim') {
+      limit++;
+    } else if (vStatus === 'WAITING' || vStatus === 'PENDING' || vStatus === 'PROCESS' || vStatus === '-' || vStatus === '') {
+      pending++;
+    }
 
-    if (statusCek === 'Sukses cek') suksesCek++;
+    // Hitung sebaran scatter
+    const scatterStr = getScatterDisplay(r);
+    const scatterVal = parseInt(scatterStr);
+    if (scatterVal === 3) s3++;
+    else if (scatterVal === 4) s4++;
+    else if (scatterVal >= 5) s5++;
   }
 
   animateCounter(el.statTotal, total);
   animateCounter(el.statApproved, approved);
   animateCounter(el.statRejected, rejected);
   animateCounter(el.statPending, pending);
-  animateCounter(el.statSuksesCek, suksesCek);
+  animateCounter(el.statLimit || el.statSuksesCek, limit);
+
+  // Update Donut Chart
+  const donutApproved = document.getElementById('donutApproved');
+  const donutRejected = document.getElementById('donutRejected');
+  const donutPercent = document.getElementById('donutPercent');
+  
+  if (donutApproved && donutRejected && donutPercent) {
+    const processed = approved + rejected;
+    const approvedPercent = processed > 0 ? Math.round((approved / processed) * 100) : 0;
+    const rejectedPercent = processed > 0 ? Math.round((rejected / processed) * 100) : 0;
+
+    donutPercent.textContent = `${approvedPercent}%`;
+
+    if (processed === 0) {
+      donutApproved.setAttribute('stroke-dasharray', '0 100');
+      donutRejected.setAttribute('stroke-dasharray', '0 100');
+    } else {
+      donutApproved.setAttribute('stroke-dasharray', `${approvedPercent} ${100 - approvedPercent}`);
+      donutApproved.setAttribute('stroke-dashoffset', '25');
+
+      donutRejected.setAttribute('stroke-dasharray', `${rejectedPercent} ${100 - rejectedPercent}`);
+      donutRejected.setAttribute('stroke-dashoffset', `${25 - approvedPercent}`);
+    }
+  }
+
+  // Update Scatter Bar Charts
+  const s3Count = document.getElementById('barCountS3');
+  const s3Fill = document.getElementById('barFillS3');
+  const s4Count = document.getElementById('barCountS4');
+  const s4Fill = document.getElementById('barFillS4');
+  const s5Count = document.getElementById('barCountS5');
+  const s5Fill = document.getElementById('barFillS5');
+
+  const totalScatters = s3 + s4 + s5;
+
+  if (s3Count && s3Fill) {
+    s3Count.textContent = `${s3} Tiket`;
+    const pct = totalScatters > 0 ? (s3 / totalScatters) * 100 : 0;
+    s3Fill.style.width = `${pct}%`;
+  }
+  if (s4Count && s4Fill) {
+    s4Count.textContent = `${s4} Tiket`;
+    const pct = totalScatters > 0 ? (s4 / totalScatters) * 100 : 0;
+    s4Fill.style.width = `${pct}%`;
+  }
+  if (s5Count && s5Fill) {
+    s5Count.textContent = `${s5} Tiket`;
+    const pct = totalScatters > 0 ? (s5 / totalScatters) * 100 : 0;
+    s5Fill.style.width = `${pct}%`;
+  }
 }
 
 // ===== STATS COUNTER =====
@@ -307,4 +475,28 @@ function copyTSV() {
     .writeText(tsv)
     .then(() => setStatus(`📋 ${rows.length} baris berhasil disalin.`))
     .catch(() => setStatus('❌ Gagal menyalin ke clipboard.'));
+}
+
+// ===== INIT SEARCH, FILTER & SOUND LISTENERS =====
+if (el.tableSearch) {
+  el.tableSearch.addEventListener('input', () => {
+    _actualRenderResults(state.results);
+  });
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _actualRenderResults(state.results);
+  });
+});
+
+if (el.soundToggleBtn) {
+  el.soundToggleBtn.addEventListener('click', () => {
+    const isAct = el.soundToggleBtn.classList.toggle('active');
+    el.soundToggleBtn.querySelector('.sound-icon').textContent = isAct ? '🔊' : '🔇';
+    el.soundToggleBtn.querySelector('.sound-text').textContent = isAct ? 'Suara ON' : 'Suara OFF';
+    setStatus(`Notifikasi Suara ${isAct ? 'diaktifkan' : 'dinonaktifkan'}.`);
+  });
 }

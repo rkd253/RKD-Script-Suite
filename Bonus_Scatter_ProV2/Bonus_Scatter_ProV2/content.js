@@ -1,6 +1,7 @@
 // Listener untuk pesan dari background.js setelah halaman utama dimuat
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === "startProcess") {
+    setRobotActive(true);
     startProcess(
       msg.userId,
       msg.transactionId,
@@ -14,6 +15,119 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     sendResponse({ status: "running" });
   }
 });
+
+// ===== ROBOT ACTIVE INDICATOR INJECTION =====
+function setRobotActive(isActive) {
+  const robot = document.getElementById('bonus-scatter-robot');
+  if (!robot) return;
+  if (isActive) {
+    robot.classList.add('checking');
+    const label = robot.querySelector('.robot-label');
+    if (label) label.textContent = 'CHECKING...';
+    robot.style.border = '1.5px solid #00d4ff';
+    robot.style.color = '#00d4ff';
+    robot.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+  } else {
+    robot.classList.remove('checking');
+    const label = robot.querySelector('.robot-label');
+    if (label) label.textContent = 'PRO ACTIVE';
+    robot.style.border = '1.5px solid #a855f7';
+    robot.style.color = '#c084fc';
+    robot.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+  }
+}
+
+function injectRobotIndicator() {
+  return; // Disabled robot indicator display on admin pages
+
+  const robot = document.createElement('div');
+  robot.id = 'bonus-scatter-robot';
+  robot.title = 'Bonus Scatter Pro Extension is ACTIVE 🤖';
+  robot.style.cssText = `
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #121214, #1a1a24);
+    border: 1.5px solid #a855f7;
+    border-radius: 8px;
+    padding: 6px 12px;
+    margin-left: 10px;
+    color: #c084fc;
+    font-family: 'Outfit', 'Segoe UI', sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    user-select: none;
+    vertical-align: middle;
+    transition: all 0.3s ease;
+  `;
+
+  robot.onmouseover = () => {
+    if (!robot.classList.contains('checking')) {
+      robot.style.border = '1.5px solid #00d4ff';
+      robot.style.color = '#00d4ff';
+      robot.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+    }
+  };
+  robot.onmouseout = () => {
+    if (!robot.classList.contains('checking')) {
+      robot.style.border = '1.5px solid #a855f7';
+      robot.style.color = '#c084fc';
+      robot.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+    }
+  };
+
+  robot.innerHTML = `
+    <span class="robot-emoji" style="font-size: 14px; display: inline-block; transition: transform 0.3s ease;">🤖</span>
+    <span class="robot-label" style="text-shadow: 0 0 5px currentColor;">PRO ACTIVE</span>
+  `;
+
+  if (!document.getElementById('bonus-scatter-robot-styles')) {
+    const style = document.createElement('style');
+    style.id = 'bonus-scatter-robot-styles';
+    style.textContent = `
+      #bonus-scatter-robot.checking {
+        animation: robotFloat 1s ease-in-out infinite;
+      }
+      #bonus-scatter-robot.checking .robot-emoji {
+        animation: robotSpin 1s linear infinite !important;
+      }
+      @keyframes robotFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+      }
+      @keyframes robotSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const targetToInsert = txInput.parentElement.classList.contains('search-input') 
+    ? txInput.parentElement 
+    : (txInput.closest('.search') || txInput.parentElement || txInput);
+
+  if (targetToInsert && targetToInsert.parentNode) {
+    targetToInsert.parentNode.insertBefore(robot, targetToInsert.nextSibling);
+    console.log('[BonusScatter] Robot active indicator successfully injected.');
+  }
+}
+
+function initRobotIndicator() {
+  injectRobotIndicator();
+  setInterval(injectRobotIndicator, 2000);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initRobotIndicator);
+} else {
+  initRobotIndicator();
+}
 
 async function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

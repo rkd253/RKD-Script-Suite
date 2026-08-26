@@ -63,52 +63,114 @@ const BONUSSMB_TICKETS_URL = 'https://bonussmb.com/tickets';
 const BONUSSMB_HISTORY_URL = 'https://bonussmb.com/history';
 
 async function verifyBonussmbStatus(userId, transactionId) {
-    return new Promise(async (resolve) => {
-        chrome.tabs.query({ url: "*://bonussmb.com/*" }, async (tabs) => {
-            let tab = tabs && tabs[0];
-            let isTemporaryTab = false;
-            
-            if (!tab) {
-                // Jika tidak ada tab bonussmb terbuka, buat tab baru di background secara temporer
-                isTemporaryTab = true;
-                const opened = await new Promise((resOpen) => {
-                    getBestNormalWindowId((targetWindowId) => {
-                        const createOpts = { url: BONUSSMB_TICKETS_URL, active: false };
-                        if (targetWindowId) createOpts.windowId = targetWindowId;
-                        chrome.tabs.create(createOpts, (newTab) => {
-                            if (!newTab || !newTab.id) {
-                                resOpen(null);
-                            } else {
-                                ensureTabLoaded(newTab.id, 20000).then(() => resOpen(newTab));
-                            }
+    return new Promise((resolve) => {
+        chrome.windows.getLastFocused((currentWindow) => {
+            const curWinId = currentWindow ? currentWindow.id : null;
+            chrome.tabs.query({ url: "*://bonussmb.com/*" }, async (tabs) => {
+                let tab = null;
+                if (tabs && tabs.length > 0) {
+                    // Urutkan tab agar tab aktif di jendela yang sedang fokus berada di posisi teratas
+                    tabs.sort((a, b) => {
+                        const aCurrentWin = curWinId && a.windowId === curWinId;
+                        const bCurrentWin = curWinId && b.windowId === curWinId;
+                        if (aCurrentWin && a.active) return -1;
+                        if (bCurrentWin && b.active) return 1;
+                        if (a.active) return -1;
+                        if (b.active) return 1;
+                        if (aCurrentWin) return -1;
+                        if (bCurrentWin) return 1;
+                        return 0;
+                    });
+                    tab = tabs[0];
+                }
+                
+                let isTemporaryTab = false;
+                if (!tab) {
+                    // Jika tidak ada tab bonussmb terbuka, buat tab baru di background secara temporer
+                    isTemporaryTab = true;
+                    const opened = await new Promise((resOpen) => {
+                        getBestNormalWindowId((targetWindowId) => {
+                            const createOpts = { url: BONUSSMB_TICKETS_URL, active: false };
+                            if (targetWindowId) createOpts.windowId = targetWindowId;
+                            chrome.tabs.create(createOpts, (newTab) => {
+                                if (!newTab || !newTab.id) {
+                                    resOpen(null);
+                                } else {
+                                    ensureTabLoaded(newTab.id, 20000).then(() => resOpen(newTab));
+                                }
+                            });
                         });
                     });
-                });
-                
-                if (!opened) {
-                    resolve({ ok: false, error: 'Failed to open temporary tab' });
-                    return;
+                    
+                    if (!opened) {
+                        resolve({ ok: false, error: 'Failed to open temporary tab' });
+                        return;
+                    }
+                    tab = opened;
                 }
-                tab = opened;
-            }
-            
-            const tabId = tab.id;
-            const currentUrl = tab.url || tab.pendingUrl || '';
-            
-            // Tentukan halaman mana yang dicek pertama berdasarkan URL tab saat ini (untuk meminimalkan redirect)
-            const firstUrl = currentUrl.includes('history') ? BONUSSMB_HISTORY_URL : BONUSSMB_TICKETS_URL;
-            const secondUrl = firstUrl === BONUSSMB_HISTORY_URL ? BONUSSMB_TICKETS_URL : BONUSSMB_HISTORY_URL;
-            
-            console.log(`[BonusScatter] Verifying status for ${userId} using tab ${tabId}. Checking first: ${firstUrl}`);
-            
-            // Cek di halaman yang sedang aktif saja (tanpa redirect ke halaman lain)
-            const result = await verifyOnPage(tabId, userId, transactionId, firstUrl);
-            if (isTemporaryTab) {
-                chrome.tabs.remove(tabId, () => {
-                    void chrome.runtime.lastError;
-                });
-            }
-            resolve(result);
+                
+                const tabId = tab.id;
+                let currentUrl = tab.url || tab.pendingUrl || '';
+
+                // Jika tab tidak berada di halaman tickets atau history, navigasikan ke tickets terlebih dahulu
+                if (!currentUrl.includes('tickets') && !currentUrl.includes('history')) {
+                    console.log(`[BonusScatter] Tab URL ${currentUrl} is not on tickets/history. Navigating to tickets page...`);
+                    await new Promise((resNav) => {
+                        chrome.tabs.update(tabId, { url: BONUSSMB_TICKETS_URL }, () => {
+                            ensureTabLoaded(tabId, 20000).then(() => resNav(true));
+                        });
+                    });
+                    currentUrl = BONUSSMB_TICKETS_URL;
+                }
+                
+                // Tentukan halaman mana yang dicek pertama berdasarkan URL tab saat ini (untuk meminimalkan redirect)
+                const firstUrl = currentUrl.includes('history') ? BONUSSMB_HISTORY_URL : BONUSSMB_TICKETS_URL;
+                const secondUrl = firstUrl === BONUSSMB_HISTORY_URL ? BONUSSMB_TICKETS_URL : BONUSSMB_HISTORY_URL;
+                
+                console.log(`[BonusScatter] Verifying status for ${userId} using tab ${tabId}. Checking first: ${firstUrl}`);
+                
+                // Cek di halaman pertama
+                let result = await verifyOnPage(tabId, userId, transactionId, firstUrl);
+
+                // Jika pengecekan pertama gagal (navigation_failed atau error lainnya), lakukan hard redirect ke firstUrl
+                if (!result || !result.ok) {
+                    console.log(`[BonusScatter] First page check failed or navigation failed. Forcing tab update to ${firstUrl}...`);
+                    await new Promise((resNav) => {
+                        chrome.tabs.update(tabId, { url: firstUrl }, () => {
+                            ensureTabLoaded(tabId, 20000).then(() => resNav(true));
+                        });
+                    });
+                    result = await verifyOnPage(tabId, userId, transactionId, firstUrl);
+                }
+
+                // TAHAP 2: Jika tidak ditemukan di halaman pertama (NOT_FOUND atau error), coba cek di halaman kedua
+                if (!result || !result.ok || result.status === 'NOT_FOUND') {
+                    console.log(`[BonusScatter] Ticket not found on ${firstUrl}. Switching to ${secondUrl} and retrying status check...`);
+                    let secondResult = await verifyOnPage(tabId, userId, transactionId, secondUrl);
+
+                    // Jika soft navigation ke halaman kedua gagal, lakukan hard redirect
+                    if (!secondResult || !secondResult.ok) {
+                        console.log(`[BonusScatter] Soft navigation to second page failed. Forcing tab update to ${secondUrl}...`);
+                        await new Promise((resNav) => {
+                            chrome.tabs.update(tabId, { url: secondUrl }, () => {
+                                ensureTabLoaded(tabId, 20000).then(() => resNav(true));
+                            });
+                        });
+                        secondResult = await verifyOnPage(tabId, userId, transactionId, secondUrl);
+                    }
+
+                    if (secondResult && secondResult.ok) {
+                        result = secondResult;
+                    }
+                }
+
+                if (isTemporaryTab) {
+                    chrome.tabs.remove(tabId, () => {
+                        void chrome.runtime.lastError;
+                    });
+                }
+                resolve(result);
+            });
         });
     });
 }
@@ -177,7 +239,25 @@ function ensureBonussmbAlarm() {
     }
 }
 
+function checkAndPerformMidnightRollover() {
+    try {
+        const currentToday = getTodayDateString();
+        chrome.storage.local.get(['todayDate', 'startDate', 'endDate', 'yesterdayDate'], (res) => {
+            if (!res.todayDate || res.todayDate !== currentToday) {
+                console.log(`[CekBonus] 📅 Pergantian Hari (00:00) terdeteksi di Background. Mengupdate tanggal ke ${currentToday}`);
+                chrome.storage.local.set({
+                    todayDate: currentToday,
+                    startDate: currentToday,
+                    endDate: currentToday,
+                    yesterdayDate: getYesterdayDateString()
+                });
+            }
+        });
+    } catch (e) {}
+}
+
 function initAutoBackground() {
+    checkAndPerformMidnightRollover();
     ensureKeepAliveAlarm();
     ensureBonussmbAlarm();
     Promise.resolve(ensureOffscreenDocument()).catch(() => {});
@@ -202,6 +282,8 @@ try {
     });
     chrome.alarms.onAlarm.addListener((alarm) => {
         if (!alarm) return;
+
+        checkAndPerformMidnightRollover();
 
         if (alarm.name === KEEPALIVE_ALARM) {
             chrome.storage.local.get(['autoStartEnabled'], (res) => {
@@ -381,7 +463,10 @@ try {
         if (next.length === 0) return;
         chrome.storage.local.get(['autoStartEnabled'], (res) => {
             const enabled = typeof res.autoStartEnabled === 'boolean' ? res.autoStartEnabled : true;
-            if (enabled) startNextProcess();
+            // Otomatis jalan jika antrian pending mencapai minimal 10 atau jika ada proses yang sedang berjalan
+            if (enabled && (next.length >= 10 || activeProcesses > 0)) {
+                startNextProcess();
+            }
         });
     });
 } catch {
@@ -744,7 +829,11 @@ function processBonussmbStatusQueue() {
                 continue;
             }
             const r = next[idx] && typeof next[idx] === 'object' ? next[idx] : {};
-            next[idx] = { ...r, bonussmbStatus: it.status, bonussmbDetail: it.detail };
+            const updatedRow = { ...r, bonussmbStatus: it.status, bonussmbDetail: it.detail };
+            if (it.status === 'Batas claim') {
+                updatedRow.verifiedStatus = 'LIMIT';
+            }
+            next[idx] = updatedRow;
         }
 
         chrome.storage.local.set({ jutawanResults: next }, () => {
@@ -1078,14 +1167,24 @@ function startNextProcess() {
         let txQueue = res.txQueue || [];
         const agentHeaders = res.agentHeaders || null;
         const adminUrl = res.adminUrl || DEFAULT_ADMIN_URL;
-        const todayDate = res.todayDate || getTodayDateString();
-        const startDate = res.startDate || todayDate;
-        const endDate = res.endDate || todayDate;
-        const yesterdayDate = res.yesterdayDate || startDate;
+
+        const currentToday = getTodayDateString();
+        const storedToday = res.todayDate;
+        const isNewDay = storedToday && storedToday !== currentToday;
+        const todayDate = currentToday;
+        const startDate = isNewDay ? currentToday : (res.startDate || todayDate);
+        const endDate = isNewDay ? currentToday : (res.endDate || todayDate);
+        const yesterdayDate = isNewDay ? getYesterdayDateString() : (res.yesterdayDate || getYesterdayDateString());
+
+        if (isNewDay) {
+            console.log(`[CekBonus] 📅 Pergantian hari terdeteksi di startNextProcess: ${currentToday}`);
+            chrome.storage.local.set({ todayDate, startDate, endDate, yesterdayDate });
+        }
+
         const executorName = res.executorName || (agentHeaders ? agentHeaders["X-Agent-User"] : "") || "executor";
         const processMode = res.processMode || "auto";
         try {
-            console.log('[CekBonus] startNextProcess build=3.1.0 mode=', processMode, 'hasToken=', hasUsableAccessToken(agentHeaders));
+            console.log('[CekBonus] startNextProcess build=3.5.0 mode=', processMode, 'hasToken=', hasUsableAccessToken(agentHeaders));
         } catch {}
 
         // Jika antrian kosong, proses selesai
@@ -1220,10 +1319,19 @@ const scriptToGetRoundCount = () => {
     };
 };
 
-const DEFAULT_ADMIN_URL = "https://agent.png777.com";
+const DEFAULT_ADMIN_URL = "https://lapak99.idrbo2.com";
 
 function getTodayDateString() {
     const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function getYesterdayDateString() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
@@ -1597,7 +1705,7 @@ function isHistoryUrl(url) {
     const u = String(url || '');
     return u.includes('public.u2uyu876x.com/history/') ||
         u.includes('public-api.u2uyu876x.com/web-api/operator-proxy/v1/History/GetBetHistory') ||
-        u.includes('agent.png777.com/keterangan-detail.html');
+        u.includes('lapak99.idrbo2.com/keterangan-detail.html') || u.includes('agent.png777.com/keterangan-detail.html');
 }
 
 function getBestNormalWindowId(callback) {
@@ -1697,6 +1805,7 @@ function updateAuthHeaderRules() {
 
         const domains = [
             adminHost,
+            'lapak99.idrbo2.com',
             'agent.png777.com',
             'public.u2uyu876x.com',
             'public-api.u2uyu876x.com',
@@ -2212,7 +2321,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             });
 
             chrome.storage.local.set(toSave, () => {
-                startNextProcess();
+                const shouldAutoStart = finalQueue.length >= 10 || config.forceStart === true || config.processMode === 'auto_immediate' || activeProcesses > 0;
+                if (shouldAutoStart) {
+                    console.log(`[CekBonus] 🚀 Memulai batch process. Pending count: ${finalQueue.length} (Threshold >= 10 atau forceStart/active).`);
+                    startNextProcess();
+                } else {
+                    console.log(`[CekBonus] ⏳ Antrian pending: ${finalQueue.length}/10. Menunggu hingga 10 pending untuk auto-check, atau klik proses.`);
+                }
                 sendResponse({ status: 'accepted', count: finalQueue.length });
             });
         });
@@ -2520,9 +2635,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (changes.txQueue) {
         chrome.storage.local.get(["txQueue", "agentHeaders", "executorName", "adminUrl", "startDate", "endDate"], (res) => {
-            const hasQueue = Array.isArray(res.txQueue) && res.txQueue.length > 0;
+            const queueLen = Array.isArray(res.txQueue) ? res.txQueue.length : 0;
             const cfgOk = !!(res.agentHeaders && res.agentHeaders["X-Access-Token"]);
-            if (hasQueue && cfgOk) {
+            // Otomatis jalan jika antrian pending mencapai minimal 10 atau ada proses berjalan
+            if (cfgOk && (queueLen >= 10 || activeProcesses > 0)) {
+                console.log(`[CekBonus] 🤖 Auto-Check triggered via storage change: pending = ${queueLen} (>= 10).`);
                 startNextProcess();
             }
         });

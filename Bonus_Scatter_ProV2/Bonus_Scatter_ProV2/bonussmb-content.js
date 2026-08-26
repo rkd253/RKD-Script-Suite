@@ -786,28 +786,55 @@ if (location.href.includes('bonussmb.com')) {
 */
 
 async function ensureTargetPage(targetUrl) {
-  if (location.href.includes(targetUrl)) return true;
+  const targetPath = targetUrl.includes('history') ? '/history' : '/tickets';
   
-  const keywords = targetUrl.includes('history') ? ['history', 'riwayat'] : ['ticket', 'tiket'];
-  const elements = Array.from(document.querySelectorAll('a, button, [role="button"], span, div.flex'));
-  
-  const match = elements.find(el => {
-    if (!isVisible(el)) return false;
-    const t = el.textContent.toLowerCase();
-    const href = (el.getAttribute && el.getAttribute('href')) || '';
-    return keywords.some(k => t.includes(k) || href.includes(k));
-  });
-
-  if (match) {
-    console.log('[BonusScatter] Clicking tab:', match.textContent);
-    match.click();
-    await sleep(1500);
-    if (location.href.includes(targetUrl)) return true;
+  if (location.pathname.includes(targetPath) || location.href.includes(targetPath)) {
+    return true;
   }
 
-  // JANGAN redirect paksa! Ini menyebabkan logout karena SPA session hilang.
-  console.warn('[BonusScatter] Target page not reached, but skipping hard redirect to prevent logout');
-  return true; // return true supaya proses tetap jalan tanpa redirect
+  console.log('[BonusScatter] Navigating to target path:', targetPath);
+
+  // Cari link menu dengan berbagai kemungkinan selector
+  let match = null;
+  if (targetPath === '/history') {
+    match = document.querySelector('a[href*="history"]') || 
+            document.querySelector('[data-slot="tab"][value="history"]') ||
+            Array.from(document.querySelectorAll('a, button, [role="button"], li, div, span')).find(el => {
+              if (!isVisible(el)) return false;
+              const href = el.getAttribute('href') || '';
+              const text = el.textContent.toLowerCase();
+              return href.includes('history') || text.includes('history') || text.includes('riwayat');
+            });
+  } else {
+    match = document.querySelector('a[href*="tickets"]') || 
+            document.querySelector('a[href*="ticket"]') || 
+            document.querySelector('[data-slot="tab"][value="tickets"]') ||
+            Array.from(document.querySelectorAll('a, button, [role="button"], li, div, span')).find(el => {
+              if (!isVisible(el)) return false;
+              const href = el.getAttribute('href') || '';
+              const text = el.textContent.toLowerCase();
+              return href.includes('ticket') || text.includes('ticket') || text.includes('tiket');
+            });
+  }
+
+  if (match) {
+    console.log('[BonusScatter] Found tab match, triggering click:', match.textContent || match.outerHTML);
+    
+    // Gunakan helper triggerClick agar mousedown & mouseup terpicu (penting untuk UI React)
+    triggerClick(match);
+    
+    // Beri jeda agar navigasi SPA selesai
+    for (let i = 0; i < 10; i++) {
+      await sleep(200);
+      if (location.pathname.includes(targetPath) || location.href.includes(targetPath)) {
+        console.log('[BonusScatter] Successfully navigated to', targetPath);
+        return true;
+      }
+    }
+  }
+
+  console.warn('[BonusScatter] Soft navigation click failed.');
+  return false;
 }
 
 function getKeteranganValue(foundRow, ticketCode, userId) {
@@ -895,19 +922,24 @@ async function checkStatusGeneric(payload) {
   
   // 1. Soft redirect via DOM menu click (prevents hard reload/logout)
   const onTarget = await ensureTargetPage(targetUrl);
-  if (!onTarget) return { ok: false, error: 'Redirecting...' };
+  if (!onTarget) return { ok: false, error: 'navigation_failed' };
   await sleep(300);
 
-  // 2. Find search input
-  let searchInput = document.querySelector('input[placeholder*="Search" i]') || 
-                    document.querySelector('input[placeholder*="search" i]') || 
-                    document.querySelector('input[type="text"]') ||
-                    document.querySelector('.search-input input') ||
-                    document.querySelector('input[name="search"]');
-
-  if (!searchInput) {
-    const ctrlF = Array.from(document.querySelectorAll('kbd, span, div')).find(el => el.textContent.includes('Ctrl F'));
-    if (ctrlF) searchInput = ctrlF.parentElement.querySelector('input');
+  // 2. Find search input (wait up to 5 seconds for SPA page rendering)
+  let searchInput = null;
+  const startWaitInput = Date.now();
+  while (Date.now() - startWaitInput < 5000) {
+    searchInput = document.querySelector('input[placeholder*="Search" i]') || 
+                  document.querySelector('input[placeholder*="search" i]') || 
+                  document.querySelector('input[type="text"]') ||
+                  document.querySelector('.search-input input') ||
+                  document.querySelector('input[name="search"]');
+    if (!searchInput) {
+      const ctrlF = Array.from(document.querySelectorAll('kbd, span, div')).find(el => el.textContent.includes('Ctrl F'));
+      if (ctrlF) searchInput = ctrlF.parentElement.querySelector('input');
+    }
+    if (searchInput && isVisible(searchInput)) break;
+    await sleep(250);
   }
 
   if (!searchInput) {
@@ -923,21 +955,44 @@ async function checkStatusGeneric(payload) {
 
   // 3. Clear search lama dan ketik kode tiket baru (tanpa double request)
   console.log('[BonusScatter] Searching ticket:', ticketCode);
+  
+  // Reset input pencarian terlebih dahulu untuk membersihkan pesan kosong / no-data sebelumnya
+  if (searchInput.value) {
+    setNativeValue(searchInput, '');
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    searchInput.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(400);
+  }
+
   setNativeValue(searchInput, ticketCode);
   searchInput.dispatchEvent(new Event('input', { bubbles: true }));
   searchInput.dispatchEvent(new Event('change', { bubbles: true }));
   searchInput.focus();
 
-  // Define findRow helper
+  // Define findRow helper (mendukung teks terpotong / truncated)
   const findRow = () => {
-    const allRows = Array.from(document.querySelectorAll('tr, [role="row"], .table-row, .ant-table-row'));
+    const allRows = Array.from(document.querySelectorAll('tbody tr, tr, [role="row"], .table-row, .ant-table-row'));
     for (const row of allRows) {
-      if (row.innerText.includes(ticketCode)) return row;
-    }
-    const allElements = document.querySelectorAll('td, span, div, p, a');
-    for (const el of allElements) {
-      if (el.children.length === 0 && el.innerText.trim() === ticketCode) {
-        return el.closest('tr') || el.closest('[role="row"]') || el.parentElement;
+      // Abaikan header tabel
+      if (row.querySelector('th') || row.closest('thead')) continue;
+      
+      const text = row.innerText;
+      // Abaikan baris "No Data" atau Empty
+      if (text.includes('No data') || text.includes('tidak ditemukan') || text.includes('out of 0')) continue;
+      
+      // 1. Jika baris mengandung ticketCode utuh (paling ideal)
+      if (text.includes(ticketCode)) return row;
+      
+      // 2. Jika baris mengandung userId (sangat kuat karena kita mencari tiket milik user tersebut)
+      if (userId && text.toLowerCase().includes(userId.toLowerCase())) {
+        // Pastikan baris ini juga mengandung setidaknya 5 angka pertama atau terakhir dari ticketCode (jika terpotong)
+        const first5 = ticketCode.substring(0, 5);
+        const last5 = ticketCode.substring(ticketCode.length - 5);
+        if (text.includes(first5) || text.includes(last5) || text.replace(/[^0-9]/g, '').includes(first5)) {
+          return row;
+        }
+        // Failsafe: Jika hanya ada 1 baris data di tabel hasil pencarian dan mengandung userId
+        return row;
       }
     }
     return null;
@@ -967,12 +1022,26 @@ async function checkStatusGeneric(payload) {
     await sleep(1200);
   }
 
-  // Final retry loop to find the row
+  // Final retry loop to find either the row OR the empty message
+  let emptyMsg = null;
   if (!foundRow) {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) { // Wait up to 4.0 seconds
       await sleep(400);
       foundRow = findRow();
       if (foundRow) break;
+      
+      // Hanya izinkan deteksi emptyMsg setelah percobaan ke-3 (setelah menunggu ~1.2 detik)
+      // agar tidak mendeteksi sisa-sisa pesan kosong dari pencarian tiket sebelumnya.
+      if (i >= 3) {
+        emptyMsg = 
+          document.querySelector('.ant-empty-description') || 
+          document.querySelector('.no-data') ||
+          Array.from(document.querySelectorAll('div, span, p')).find(el => {
+            const t = el.innerText;
+            return t.includes('out of 0') || t.includes('No data') || t.includes('tidak ditemukan') || t.toLowerCase().includes('tidak ada data');
+          });
+        if (emptyMsg) break;
+      }
     }
   }
 
@@ -982,18 +1051,9 @@ async function checkStatusGeneric(payload) {
   }
 
   if (!foundRow) {
-    const emptyMsg = 
-      document.querySelector('.ant-empty-description') || 
-      document.querySelector('.no-data') ||
-      Array.from(document.querySelectorAll('div, span, p')).find(el => {
-        const t = el.innerText;
-        return t.includes('out of 0') || t.includes('No data') || t.includes('tidak ditemukan');
-      });
-
     if (emptyMsg) {
       return { ok: true, status: 'NOT_FOUND', detail: 'Tiket tidak ditemukan di web' };
     }
-
     return { ok: false, error: 'Row not found on page' };
   }
 
@@ -1022,7 +1082,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return;
   }
   if (msg.type === 'BONUSSMB_CHECK_STATUS') {
-    Promise.resolve(checkStatusGeneric(msg.payload || {})).then(sendResponse);
+    setRobotActive(true);
+    checkStatusGeneric(msg.payload || {})
+      .then(res => {
+        setRobotActive(false);
+        sendResponse(res);
+      })
+      .catch(err => {
+        setRobotActive(false);
+        sendResponse({ ok: false, error: err.message || String(err) });
+      });
     return true;
   }
   if (msg.type === 'BONUSSMB_COUNT_CLAIMS') {
@@ -1031,9 +1100,133 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return;
   }
   if (msg.type !== 'BONUSSMB_FILL_TICKET') return;
-  Promise.resolve(fillTicket(msg.payload || {})).then(sendResponse);
+  setRobotActive(true);
+  fillTicket(msg.payload || {})
+    .then(res => {
+      setRobotActive(false);
+      sendResponse(res);
+    })
+    .catch(err => {
+      setRobotActive(false);
+      sendResponse({ ok: false, error: err.message || String(err) });
+    });
   return true;
 });
+
+// ===== ROBOT ACTIVE INDICATOR INJECTION =====
+function setRobotActive(isActive) {
+  const robot = document.getElementById('bonus-scatter-robot');
+  if (!robot) return;
+  if (isActive) {
+    robot.classList.add('checking');
+    const label = robot.querySelector('.robot-label');
+    if (label) label.textContent = 'CHECKING...';
+    robot.style.border = '1.5px solid #00d4ff';
+    robot.style.color = '#00d4ff';
+    robot.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+  } else {
+    robot.classList.remove('checking');
+    const label = robot.querySelector('.robot-label');
+    if (label) label.textContent = 'PRO ACTIVE';
+    robot.style.border = '1.5px solid #a855f7';
+    robot.style.color = '#c084fc';
+    robot.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+  }
+}
+
+function injectRobotIndicator() {
+  return; // Disabled robot indicator display on admin pages
+
+  const robot = document.createElement('div');
+  robot.id = 'bonus-scatter-robot';
+  robot.title = 'Bonus Scatter Pro Extension is ACTIVE 🤖';
+  robot.style.cssText = `
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #121214, #1a1a24);
+    border: 1.5px solid #a855f7;
+    border-radius: 8px;
+    padding: 6px 12px;
+    margin-left: 10px;
+    color: #c084fc;
+    font-family: 'Outfit', 'Segoe UI', sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    user-select: none;
+    vertical-align: middle;
+    transition: all 0.3s ease;
+  `;
+
+  robot.onmouseover = () => {
+    if (!robot.classList.contains('checking')) {
+      robot.style.border = '1.5px solid #00d4ff';
+      robot.style.color = '#00d4ff';
+      robot.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+    }
+  };
+  robot.onmouseout = () => {
+    if (!robot.classList.contains('checking')) {
+      robot.style.border = '1.5px solid #a855f7';
+      robot.style.color = '#c084fc';
+      robot.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+    }
+  };
+
+  robot.innerHTML = `
+    <span class="robot-emoji" style="font-size: 14px; display: inline-block; transition: transform 0.3s ease;">🤖</span>
+    <span class="robot-label" style="text-shadow: 0 0 5px currentColor;">PRO ACTIVE</span>
+  `;
+
+  if (!document.getElementById('bonus-scatter-robot-styles')) {
+    const style = document.createElement('style');
+    style.id = 'bonus-scatter-robot-styles';
+    style.textContent = `
+      #bonus-scatter-robot.checking {
+        animation: robotFloat 1s ease-in-out infinite;
+      }
+      #bonus-scatter-robot.checking .robot-emoji {
+        animation: robotSpin 1s linear infinite !important;
+      }
+      @keyframes robotFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+      }
+      @keyframes robotSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const targetToInsert = searchInput.parentElement.classList.contains('search-input') 
+    ? searchInput.parentElement 
+    : (searchInput.closest('.search') || searchInput.parentElement);
+
+  if (targetToInsert && targetToInsert.parentNode) {
+    targetToInsert.parentNode.insertBefore(robot, targetToInsert.nextSibling);
+    console.log('[BonusScatter] Robot active indicator successfully injected.');
+  }
+}
+
+function initRobotIndicator() {
+  injectRobotIndicator();
+  setInterval(injectRobotIndicator, 2000);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initRobotIndicator);
+} else {
+  initRobotIndicator();
+}
+
+
 
 // ===== COUNT USER CLAIMS ON HISTORY PAGE =====
 function isDataRow(row) {

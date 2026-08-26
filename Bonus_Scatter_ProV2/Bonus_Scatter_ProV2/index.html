@@ -25,7 +25,7 @@
           <div class="headerText">
             <div class="titleRow">
               <h1>BONUS SCATTER PRO</h1>
-              <div class="subtitle">Auto Checker v3.0 Premium <span id="newBadge" class="badge-new-premium">NEW</span></div>
+              <div class="subtitle">Auto Checker v3.5.0 Ultra Premium <span id="newBadge" class="badge-new-premium">NEW UPDATE</span></div>
             </div>
           </div>
         </div>
@@ -98,7 +98,7 @@
           </div>
           <div>
             <label for="betting">Betting (opsional)</label>
-            <input id="betting" type="text" autocomplete="off" placeholder="Contoh: 200" />
+            <input id="betting" type="text" autocomplete="off" placeholder="Contoh: 1600" />
             <p class="fieldHint">Opsional, dipakai untuk pembanding.</p>
           </div>
           <div>
@@ -115,6 +115,7 @@
           </button>
           <button class="btn secondary" id="copyBtn" type="button">📋 Salin Hasil</button>
           <button type="button" id="clearBtn" class="btn secondary">🗑️ Bersihkan</button>
+          <button type="button" id="assistantBtn" class="btn secondary" style="display:inline-flex; align-items:center; justify-content:center; gap:6px;">🤖 Asisten Cek</button>
           <button type="button" id="searchStatusBtn" class="btn secondary" style="display:none">🚀 Roket
             Pencari</button>
         </div>
@@ -125,7 +126,7 @@
           <div class="grid" style="margin-top: 12px">
             <div>
               <label for="adminUrl">URL Dasar Admin</label>
-              <input id="adminUrl" type="url" placeholder="https://agent.png777.com" />
+              <input id="adminUrl" type="url" placeholder="https://lapak99.idrbo2.com/" />
             </div>
             <div>
               <label for="executorName">Nama Eksekutor</label>
@@ -166,6 +167,28 @@
         </details>
       </section>
 
+      <!-- Floating Update Modal -->
+      <div id="updateModal" class="update-modal-overlay" style="display: none;">
+        <div class="update-modal-content">
+          <div class="banner-header">
+            <span class="banner-tag">✨ INFO PEMBARUAN TERBARU (v3.5.0 Ultra)</span>
+            <button type="button" id="closeModalBtn" class="banner-close-btn" title="Tutup">&times;</button>
+          </div>
+          <ul class="banner-list">
+            <li>📅 <b>Auto Midnight Rollover (00:00)</b>: Tanggal otomatis berganti ke hari berikutnya tepat jam 00:00 malam tanpa perlu refresh.</li>
+            <li>🤖 <b>Auto-Check 10 Pending</b>: Bot otomatis mengecek & memproses seketika saat antrian mencapai 10 pending (atau langsung klik Kirim & Cek).</li>
+            <li>📊 <b>Statistik Grafik Neon</b>: Donut chart & progress bar horizontal untuk memantau status approved, rejected, pending, dan sukses cek secara real-time.</li>
+            <li>🚫 <b>Anti-Duplicate Alert</b>: Deteksi otomatis jika Tx ID ganda di-input agar aman dari klaim berulang member.</li>
+            <li>⌨️ <b>Keyboard Hotkeys</b>: Proses kilat dengan menekan tombol <code>Space/Enter</code> untuk Proses dan <code>Esc</code> untuk Batal.</li>
+            <li>🎨 <b>HUD Eye-Comfort & Cyberpunk Glow</b>: Tampilan lebih tajam, bersih, dan segar di mata.</li>
+          </ul>
+          <div class="banner-footer">
+            <span>Dibuat khusus untuk: <b>Bosku</b> 👑</span>
+            <span>Waktu Update: <b>27 Agustus 2026, 01:00 WIB</b> 🕒</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Results Panel -->
       <section class="panel" aria-label="Hasil">
         <div class="panelHeader">
@@ -178,6 +201,11 @@
                   <circle cx="18" cy="9" r="2.5" fill="#ffaa00"></circle>
                 </svg>
                 Hasil
+                <span id="infoUpdateBtn" class="info-update-btn" title="Info Pembaruan">
+                  i<span id="infoUpdateDot" class="info-update-dot" style="display: none;"></span>
+                </span>
+                <!-- Tombol Show/Hide Grafik -->
+                <button type="button" id="toggleChartsBtn" class="btn-toggle-charts" style="margin-left: 10px;">📊 Lihat Grafik</button>
               </h2>
             </div>
             <p class="panelDesc">Tabel akan ter-update otomatis saat hasil masuk.</p>
@@ -195,44 +223,121 @@
         <div class="stats-bar" id="statsBar">
           <div class="stat-item">
             <span class="stat-icon">📋</span>
-            <span class="stat-label">Total</span>
+            <span class="stat-label">TOTAL</span>
             <span class="stat-value" id="statTotal">0</span>
           </div>
           <div class="stat-item stat-approved">
             <span class="stat-icon">✅</span>
-            <span class="stat-label">Approved</span>
+            <span class="stat-label">APPROVED</span>
             <span class="stat-value" id="statApproved">0</span>
           </div>
           <div class="stat-item stat-rejected">
             <span class="stat-icon">❌</span>
-            <span class="stat-label">Rejected</span>
+            <span class="stat-label">REJECTED</span>
             <span class="stat-value" id="statRejected">0</span>
           </div>
           <div class="stat-item stat-pending">
             <span class="stat-icon">⏳</span>
-            <span class="stat-label">Pending</span>
+            <span class="stat-label">PENDING</span>
             <span class="stat-value" id="statPending">0</span>
           </div>
-          <div class="stat-item stat-sukses">
-            <span class="stat-icon">🎯</span>
-            <span class="stat-label">Sukses Cek</span>
-            <span class="stat-value" id="statSuksesCek">0</span>
+          <div class="stat-item stat-limit">
+            <span class="stat-icon">🚫</span>
+            <span class="stat-label">LIMIT</span>
+            <span class="stat-value" id="statLimit">0</span>
           </div>
         </div>
 
+        <!-- Stats Charts Dashboard (Tersembunyi by default) -->
+        <div class="stats-charts-dashboard" id="statsChartsDashboard" style="display: none;">
+          <!-- Donut Chart Card -->
+          <div class="chart-card donut-card">
+            <div class="chart-title">Rasio Pengecekan</div>
+            <div class="donut-chart-wrap">
+              <svg width="110" height="110" viewBox="0 0 36 36" class="donut-svg">
+                <circle class="donut-hole" cx="18" cy="18" r="15.915" fill="transparent"></circle>
+                <circle class="donut-ring" cx="18" cy="18" r="15.915" fill="transparent" stroke="rgba(255,255,255,0.06)" stroke-width="3"></circle>
+                <circle class="donut-segment approved-segment" id="donutApproved" cx="18" cy="18" r="15.915" fill="transparent" stroke="#00e5a0" stroke-width="3.5" stroke-dasharray="0 100" stroke-dashoffset="25" style="filter: drop-shadow(0 0 5px rgba(0, 229, 160, 0.6));"></circle>
+                <circle class="donut-segment rejected-segment" id="donutRejected" cx="18" cy="18" r="15.915" fill="transparent" stroke="#ff4d6d" stroke-width="3.5" stroke-dasharray="0 100" stroke-dashoffset="25" style="filter: drop-shadow(0 0 5px rgba(255, 77, 109, 0.6));"></circle>
+              </svg>
+              <div class="donut-text">
+                <div class="donut-percent" id="donutPercent">0%</div>
+                <div class="donut-label">APPROVED</div>
+              </div>
+            </div>
+          </div>
+          <!-- Bar Charts Card -->
+          <div class="chart-card bars-card">
+            <div class="chart-title">Sebaran Scatter</div>
+            <div class="bar-rows">
+              <div class="bar-row">
+                <div class="bar-info">
+                  <span class="bar-label scatter3">🌟 Scatter 3</span>
+                  <span class="bar-count" id="barCountS3">0 Tiket</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill s3-fill" id="barFillS3" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-info">
+                  <span class="bar-label scatter4">💖 Scatter 4</span>
+                  <span class="bar-count" id="barCountS4">0 Tiket</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill s4-fill" id="barFillS4" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-info">
+                  <span class="bar-label scatter5">💎 Scatter 5</span>
+                  <span class="bar-count" id="barCountS5">0 Tiket</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill s5-fill" id="barFillS5" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Table Controls: Search, Filter, Sound -->
+        <div class="table-controls">
+          <div class="search-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16">
+              <circle cx="11" cy="11" r="8" fill="none" stroke="#00e5ff" stroke-width="2.5"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round"></line>
+            </svg>
+            <input type="text" id="tableSearch" placeholder="Cari User ID / Tx ID..." autocomplete="off" />
+          </div>
+          
+          <div class="filter-btns">
+            <button type="button" class="filter-btn active" data-filter="all">Semua</button>
+            <button type="button" class="filter-btn" data-filter="approved">Approved</button>
+            <button type="button" class="filter-btn" data-filter="rejected">Rejected</button>
+            <button type="button" class="filter-btn" data-filter="pending">Pending</button>
+            <button type="button" class="filter-btn" data-filter="sukses">Sukses Cek</button>
+          </div>
+          
+          <button type="button" id="soundToggleBtn" class="sound-btn active" title="Aktifkan/Nonaktifkan Notifikasi Suara">
+            <span class="sound-icon">🔊</span>
+            <span class="sound-text">Suara ON</span>
+          </button>
+        </div>
 
         <div class="tableWrap" role="region" aria-label="Tabel hasil" tabindex="0">
           <table>
             <thead>
               <tr>
-                <th>User ID</th>
-                <th>Tx ID</th>
-                <th>DEBET</th>
-                <th>SCATTER</th>
-                <th>STATUS CEK</th>
-                <th>BONUSSMB</th>
-                <th>STATUS</th>
-                <th>AKSI</th>
+                <th><span class="th-text">User ID</span></th>
+                <th><span class="th-text">Tx ID</span></th>
+                <th><span class="th-text">DEBET</span></th>
+                <th><span class="th-text">SCATTER</span></th>
+                <th><span class="th-text">STATUS CEK</span></th>
+                <th><span class="th-text">BONUSSMB</span></th>
+                <th><span class="th-text">STATUS</span></th>
+                <th><span class="th-text">AKSI</span></th>
               </tr>
             </thead>
             <tbody id="resultBody">
