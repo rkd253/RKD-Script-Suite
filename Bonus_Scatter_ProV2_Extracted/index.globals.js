@@ -42,7 +42,8 @@ const el = {
   statApproved: document.getElementById('statApproved'),
   statRejected: document.getElementById('statRejected'),
   statPending: document.getElementById('statPending'),
-  statSuksesCek: document.getElementById('statSuksesCek'),
+  statLimit: document.getElementById('statLimit') || document.getElementById('statSuksesCek'),
+  statSuksesCek: document.getElementById('statLimit') || document.getElementById('statSuksesCek'),
   // Duplicate warning
   duplicateWarning: document.getElementById('duplicateWarning'),
   yesterdayDate: document.getElementById('yesterdayDate'),
@@ -68,63 +69,38 @@ function yesterdayISO() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-let lastCheckedDate = todayISO();
-let lastCheckedYesterday = yesterdayISO();
+let lastTrackedDate = todayISO();
 
-function autoRolloverDates(prevToday, prevYesterday) {
-  const today = todayISO();
-  const yesterday = yesterdayISO();
+function performMidnightRollover(newDate) {
+  const targetDate = newDate || todayISO();
+  const targetYesterday = yesterdayISO();
+  console.log(`[CekBonus] 📅 Pergantian hari (00:00) terdeteksi: ${targetDate}`);
   
-  let changed = false;
-  const updates = {};
+  if (el.startDate) el.startDate.value = targetDate;
+  if (el.endDate) el.endDate.value = targetDate;
+  if (el.yesterdayDate) el.yesterdayDate.value = targetYesterday;
   
-  if (el.startDate) {
-    if (el.startDate.value === prevToday || el.startDate.value === '') {
-      el.startDate.value = today;
-      updates.startDate = today;
-      changed = true;
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({
+        startDate: targetDate,
+        endDate: targetDate,
+        yesterdayDate: targetYesterday,
+        todayDate: targetDate
+      });
     }
+  } catch (e) {}
+
+  if (typeof showCenterNotif === 'function') {
+    showCenterNotif(`📅 Pergantian Hari (00:00)!\nTanggal otomatis diperbarui ke ${targetDate}`, 4000);
   }
-  if (el.endDate) {
-    if (el.endDate.value === prevToday || el.endDate.value === '') {
-      el.endDate.value = today;
-      updates.endDate = today;
-      changed = true;
-    }
-  }
-  if (el.yesterdayDate) {
-    if (el.yesterdayDate.value === prevYesterday || el.yesterdayDate.value === '') {
-      el.yesterdayDate.value = yesterday;
-      updates.yesterdayDate = yesterday;
-      changed = true;
-    }
-  }
-  
-  if (changed && typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    chrome.storage.local.set(updates, () => {
-      console.log("⏰ Hari berganti. Tanggal Mulai/Akhir auto update & tersimpan:", updates);
-      if (typeof setStatus === 'function') {
-        setStatus("⏰ Tanggal diperbarui otomatis karena pergantian hari.");
-      }
-    });
+  if (typeof setStatus === 'function') {
+    setStatus(`📅 Tanggal otomatis diperbarui ke hari baru: ${targetDate}`);
   }
 }
 
 function updateClock() {
   const now = new Date();
-  
-  // Cek pergantian hari (00:00)
-  const currentDate = todayISO();
-  if (currentDate !== lastCheckedDate) {
-    const prevToday = lastCheckedDate;
-    const prevYesterday = lastCheckedYesterday;
-    
-    lastCheckedDate = currentDate;
-    lastCheckedYesterday = yesterdayISO();
-    
-    autoRolloverDates(prevToday, prevYesterday);
-  }
-
   const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
   
@@ -139,6 +115,13 @@ function updateClock() {
   
   if (el.clockTime) el.clockTime.textContent = `${hours}:${minutes}:${seconds}`;
   if (el.clockDate) el.clockDate.textContent = `${day}, ${date} ${month} ${year}`;
+
+  // Cek pergantian hari (00:00:00 rollover)
+  const currentISO = todayISO();
+  if (currentISO !== lastTrackedDate) {
+    lastTrackedDate = currentISO;
+    performMidnightRollover(currentISO);
+  }
 }
 
 setInterval(updateClock, 1000);
