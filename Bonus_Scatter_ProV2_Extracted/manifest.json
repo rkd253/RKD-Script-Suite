@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bonus Scatter",
-  "version": "1.0.3",
+  "version": "3.5.0",
   "description": "Ekstensi otomatis untuk memeriksa transaksi dan mendeteksi scatter",
   "permissions": ["tabs", "windows", "scripting", "activeTab", "storage", "declarativeNetRequestWithHostAccess", "alarms", "offscreen"],
   "host_permissions": [
